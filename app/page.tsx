@@ -1,0 +1,95 @@
+"use client";
+
+import { Hero } from "@/components/Hero";
+import { Services } from "@/components/Services";
+import { UseCases } from "@/components/UseCases";
+import { SecurityControl } from "@/components/SecurityControl";
+import { ProductBreakdown } from "@/components/ProductBreakdown";
+import { WhyFundex } from "@/components/WhyFundex";
+import { Team } from "@/components/Team";
+import { BookDemo } from "@/components/BookDemo";
+import AnimatedFooter from "@/components/ui/animated-footer";
+
+export default function Home() {
+  const footerLeftLinks = [
+    { href: "#services-section", label: "Services" },
+    { href: "#use-cases-section", label: "Who It's For" },
+    { href: "#product-section", label: "OS Layers" },
+    { href: "#security-section", label: "Security" },
+    { href: "#why-fundex-section", label: "Why Fundex" },
+  ];
+
+  const footerRightLinks = [
+    { href: "#team-section", label: "Team" },
+    { href: "#book-demo-section", label: "Book a Demo" },
+    { href: "mailto:info@fundex.com", label: "info@fundex.com" },
+    { href: "tel:+13055550199", label: "(305) 555-0199" },
+  ];
+
+  return (
+    <div
+      className="min-h-screen bg-background text-foreground"
+      style={{ overflow: "visible" }}
+    >
+      <main className="relative" role="main" style={{ overflow: "visible" }}>
+        <section id="hero" aria-label="Hero section">
+          <Hero />
+        </section>
+        <section
+          id="services-section"
+          aria-label="Services section"
+          className="bg-background"
+        >
+          <Services />
+        </section>
+        <section
+          id="use-cases-section"
+          aria-label="Use Cases section"
+          style={{ backgroundColor: "rgba(40, 105, 75, 0.05)" }}
+        >
+          <UseCases />
+        </section>
+        <section
+          id="product-section"
+          aria-label="Product Breakdown section"
+          className="bg-background"
+        >
+          <ProductBreakdown />
+        </section>
+        <section
+          id="security-section"
+          aria-label="Security section"
+          style={{ backgroundColor: "rgba(40, 105, 75, 0.05)" }}
+        >
+          <SecurityControl />
+        </section>
+        <section
+          id="why-fundex-section"
+          aria-label="Why Fundex section"
+          className="bg-background"
+        >
+          <WhyFundex />
+        </section>
+        <section
+          id="team-section"
+          aria-label="Team section"
+          style={{ backgroundColor: "rgba(40, 105, 75, 0.05)" }}
+        >
+          <Team />
+        </section>
+        <section
+          id="book-demo-section"
+          aria-label="Book demo section"
+          className="bg-background"
+        >
+          <BookDemo />
+        </section>
+      </main>
+      <AnimatedFooter
+        leftLinks={footerLeftLinks}
+        rightLinks={footerRightLinks}
+        copyrightText="© 2025 Fundex Capital. All rights reserved."
+      />
+    </div>
+  );
+}

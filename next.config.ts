@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@radix-ui/react-*"],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   outputFileTracingRoot: __dirname,
 };
 

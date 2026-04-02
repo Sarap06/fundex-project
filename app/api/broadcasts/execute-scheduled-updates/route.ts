@@ -6,22 +6,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-/**
- * POST /api/broadcasts/execute-scheduled-updates
- * Finds and sends all scheduled updates that are due
- * Should be called periodically (e.g., every 5 minutes) by a cron job or task scheduler
- * 
- * Example setup with Vercel Cron:
- * Add to vercel.json:
- * {
- *   "crons": [
- *     {
- *       "path": "/api/broadcasts/execute-scheduled-updates",
- *       "schedule": "*/5 * * * *"
- *     }
- *   ]
- * }
- */
+
 export async function POST(request: NextRequest) {
   try {
     // Verify the request is from a trusted source (Vercel Cron uses a header)

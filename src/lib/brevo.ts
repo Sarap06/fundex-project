@@ -1,4 +1,4 @@
-async function sendEmailViaBrevo(
+export async function sendEmailViaBrevo(
   toEmail: string,
   subject: string,
   htmlContent: string

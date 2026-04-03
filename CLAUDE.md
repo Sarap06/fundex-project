@@ -54,15 +54,23 @@ IMPORTANT: `/app/` is the active router. Do NOT create files in `/src/app/`.
 - Team members join via `company_code` generated per company
 - New users start as "pending" until admin approves
 
+## Service Layer
+
+- `/src/services/` — ALL business logic, calculations, and data access lives here
+- API routes are THIN: parse request → validate → call service → respond
+- NEVER put math, calculations, or complex queries in API routes or page components
+- Services: `access.ts` (auth), `allocation-service.ts`, `deal-service.ts`, `investor-service.ts`, `document-service.ts`, `broadcast-service.ts`, `activity-service.ts`
+- Use `requireAuth(req)` from `@/services/access` for auth in API routes
+- Use `logActivity()` from `@/services/activity-service` for audit trail
+- Financial calculations (interest, totals, percentages) MUST use service functions — never inline math
+
 ## API Route Pattern
 
 All API routes in `/app/api/` must follow this pattern:
-1. Authenticate — get Supabase session
-2. Get company context — extract `company_id` from user profile
-3. Validate — check request body with Zod schemas
-4. Query — scope ALL database queries by `company_id`
-5. Log — call `logActivity()` for mutations
-6. Respond — return `NextResponse.json()` with proper status codes
+1. Authenticate — `const ctx = await requireAuth(req)` from `@/services/access`
+2. Validate — check request body with Zod schemas from `@/schemas`
+3. Execute — call service functions from `@/services/*`
+4. Respond — return `NextResponse.json()` with proper status codes
 
 ## Design System
 

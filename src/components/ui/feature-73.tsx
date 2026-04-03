@@ -30,13 +30,13 @@ export const Feature73 = ({
             <h3 className="font-display text-3xl sm:text-4xl font-black text-foreground uppercase tracking-tight mb-4">
               {heading}
             </h3>
-            <p className="font-body text-muted-foreground leading-relaxed">
+            <p className="font-sans text-muted-foreground leading-relaxed">
               {description}
             </p>
             <a
               href={linkUrl}
-              className="mt-4 inline-flex items-center gap-2 font-body text-sm font-semibold"
-              style={{ color: 'var(--accent-emerald)' }}
+              className="mt-4 inline-flex items-center gap-2 font-sans text-sm font-semibold"
+              style={{ color: 'var(--primary)' }}
             >
               {linkText}
               <ArrowRight className="size-4" />
@@ -58,7 +58,7 @@ export const Feature73 = ({
                 <h4 className="font-display font-black text-xl text-foreground mb-2">
                   {features[0].title}
                 </h4>
-                <p className="font-body text-sm text-muted-foreground leading-relaxed">
+                <p className="font-sans text-sm text-muted-foreground leading-relaxed">
                   {features[0].description}
                 </p>
               </div>
@@ -80,7 +80,7 @@ export const Feature73 = ({
                 <h4 className="font-display font-black text-lg text-foreground mb-2">
                   {feature.title}
                 </h4>
-                <p className="font-body text-sm text-muted-foreground leading-relaxed">
+                <p className="font-sans text-sm text-muted-foreground leading-relaxed">
                   {feature.description}
                 </p>
               </div>

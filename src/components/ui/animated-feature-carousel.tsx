@@ -184,13 +184,13 @@ function FeatureCard({ children, step, steps: stepItems }: { children: React.Rea
       style={{ '--x': mouseX, '--y': mouseY } as WrapperStyle}
       className="group relative w-full overflow-hidden rounded-xl border border-border bg-gradient-to-b from-card/80 to-card p-2"
     >
-      <div className="absolute right-5 top-0 h-px w-80 bg-gradient-to-l from-transparent via-accent-emerald/30 via-10% to-transparent" />
+      <div className="absolute right-5 top-0 h-px w-80 bg-gradient-to-l from-transparent via-primary/30 via-10% to-transparent" />
       <div className="rounded-xl p-6">
         <div className="relative flex flex-col gap-6 md:flex-row md:items-start">
           <motion.div initial="inactive" animate="active" variants={stepVariants} className="flex flex-col gap-2 md:w-1/2">
-            <span className="font-body text-xs uppercase tracking-widest text-muted-foreground">{stepItems[step].name}</span>
-            <h3 className="font-display text-xl font-bold text-foreground">{stepItems[step].title}</h3>
-            <p className="font-body text-sm text-muted-foreground leading-relaxed">{stepItems[step].description}</p>
+            <span className="font-sans text-xs uppercase tracking-widest text-muted-foreground">{stepItems[step].name}</span>
+            <h3 className="font-display text-xl font-display font-bold text-foreground">{stepItems[step].title}</h3>
+            <p className="font-sans text-sm text-muted-foreground leading-relaxed">{stepItems[step].description}</p>
           </motion.div>
           {children}
         </div>
@@ -211,13 +211,13 @@ function StepsNav({ steps: stepItems, current, onChange }: { steps: readonly Ste
               <button
                 className={cn(
                   'flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-all',
-                  isCurrent ? 'bg-accent-emerald text-white' : isCompleted ? 'bg-accent-emerald/20 text-foreground' : 'text-muted-foreground hover:text-foreground'
+                  isCurrent ? 'bg-primary text-white' : isCompleted ? 'bg-primary/20 text-foreground' : 'text-muted-foreground hover:text-foreground'
                 )}
                 onClick={() => onChange(idx)}
               >
                 <span className={cn(
                   'flex size-5 items-center justify-center rounded-full text-xs',
-                  isCurrent ? 'bg-white/20' : isCompleted ? 'bg-accent-emerald text-white' : 'bg-muted'
+                  isCurrent ? 'bg-white/20' : isCompleted ? 'bg-primary text-white' : 'bg-muted'
                 )}>
                   {isCompleted ? <IconCheck /> : <span>{idx + 1}</span>}
                 </span>

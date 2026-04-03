@@ -53,11 +53,11 @@ export default function Login() {
 
       if (userRole === 'admin') {
         // Admins ALWAYS go directly to dashboard (no approval needed)
-        router.push('/dashboard/admin');
+        router.push('/admin');
       } else if (userRole === 'partner') {
-        router.push('/dashboard/partner');
+        router.push('/company');
       } else if (userRole === 'investor') {
-        router.push('/dashboard/investor');
+        router.push('/investor');
       } else {
         // pending role - goes to pending page
         router.push('/auth/pending');
@@ -76,14 +76,14 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Login</h1>
-        <p className="text-gray-700 mb-6">Sign in to your Fundex account</p>
+    <div className="min-h-screen bg-gradient-to-br from-fundex-cream to-fundex-cream flex items-center justify-center p-4">
+      <div className="bg-background rounded-lg shadow-2xl p-8 max-w-md w-full">
+        <h1 className="text-3xl font-display font-bold text-foreground mb-2">Login</h1>
+        <p className="text-muted-foreground mb-6">Sign in to your Fundex account</p>
 
         <form onSubmit={handleSubmit} className="space-y-4" suppressHydrationWarning>
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Email
             </label>
             <input
@@ -92,13 +92,13 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               required
               suppressHydrationWarning
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="your@email.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Password
             </label>
             <input
@@ -107,7 +107,7 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
               suppressHydrationWarning
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="••••••••"
             />
           </div>
@@ -122,17 +122,17 @@ export default function Login() {
             type="submit"
             disabled={loading}
             suppressHydrationWarning
-            className="w-full bg-emerald-600 text-white py-2 rounded-lg font-semibold hover:bg-emerald-700 disabled:bg-gray-400 transition"
+            className="w-full bg-primary text-white py-2 rounded-lg font-semibold hover:bg-primary/90 disabled:bg-muted-foreground transition"
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
         <div className="mt-6 border-t pt-6">
-          <p className="text-sm text-gray-700 mb-3">New to Fundex?</p>
+          <p className="text-sm text-muted-foreground mb-3">New to Fundex?</p>
           <Link
             href="/auth/signup"
-            className="block w-full text-center bg-emerald-50 text-emerald-600 py-2 rounded-lg hover:bg-emerald-100 transition text-sm"
+            className="block w-full text-center bg-fundex-cream/50 text-primary py-2 rounded-lg hover:bg-primary/10 transition text-sm"
           >
             Create an account
           </Link>

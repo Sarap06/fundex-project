@@ -11,18 +11,19 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: 'calc(var(--spacing) * 4)', // 1rem with 14px base = 14px padding
+      padding: "calc(var(--spacing) * 4)",
       screens: {
-        sm: '40rem',
-        md: '48rem', 
-        lg: '64rem',
-        xl: '80rem',
-        '2xl': '96rem',
+        sm: "40rem",
+        md: "48rem",
+        lg: "64rem",
+        xl: "80rem",
+        "2xl": "96rem",
       },
     },
     extend: {
       fontFamily: {
-        bagel: ['Bagel Fat One', 'cursive'],
+        sans: ["'General Sans'", "system-ui", "sans-serif"],
+        display: ["'Trench Slab'", "'General Sans'", "system-ui", "sans-serif"],
       },
       colors: {
         border: "var(--border)",
@@ -49,8 +50,8 @@ export default {
         accent: {
           DEFAULT: "var(--accent)",
           foreground: "var(--accent-foreground)",
-          blue: "var(--accent-blue)",
           emerald: "var(--accent-emerald)",
+          blue: "var(--accent-blue)",
           purple: "var(--accent-purple)",
         },
         popover: {
@@ -61,6 +62,13 @@ export default {
           DEFAULT: "var(--card)",
           foreground: "var(--card-foreground)",
         },
+        /* Fundex brand palette */
+        fundex: {
+          forest: "#005F02",
+          green: "#427A43",
+          gold: "#C0B87A",
+          cream: "#F2E3BB",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -69,20 +77,12 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {

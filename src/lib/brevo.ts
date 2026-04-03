@@ -151,7 +151,7 @@ export function generateApprovalEmailTemplate(userName: string, role: string): s
             <p>You have been assigned the role of <strong>${role.toUpperCase()}</strong> in our platform.</p>
             <p>You can now log in and start exploring all the features available to you.</p>
             <div class="btn-wrapper">
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://fundex.com'}/dashboard/${role}" class="btn">Go to Dashboard</a>
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://fundex.com'}/${role === 'partner' ? 'company' : role}" class="btn">Go to Dashboard</a>
             </div>
             <p style="margin-top: 20px; color: #666; font-size: 13px;">If you have any questions, please don't hesitate to reach out to our support team.</p>
           </div>

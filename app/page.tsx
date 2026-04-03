@@ -1,13 +1,13 @@
 "use client";
 
-import { Hero } from "@/components/Hero";
-import { Services } from "@/components/Services";
-import { UseCases } from "@/components/UseCases";
-import { SecurityControl } from "@/components/SecurityControl";
-import { ProductBreakdown } from "@/components/ProductBreakdown";
-import { WhyFundex } from "@/components/WhyFundex";
-import { Team } from "@/components/Team";
-import { BookDemo } from "@/components/BookDemo";
+import { Hero } from "@/components/hero";
+import { Services } from "@/components/services";
+import { UseCases } from "@/components/use-cases";
+import { SecurityControl } from "@/components/security-control";
+import { ProductBreakdown } from "@/components/product-breakdown";
+import { WhyFundex } from "@/components/why-fundex";
+import { Team } from "@/components/team";
+import { BookDemo } from "@/components/book-demo";
 import AnimatedFooter from "@/components/ui/animated-footer";
 
 export default function Home() {

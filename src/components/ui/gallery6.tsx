@@ -57,8 +57,8 @@ const Gallery6 = ({
             </h2>
             <a
               href={demoUrl}
-              className="group mt-4 flex items-center gap-1 font-body text-sm font-semibold"
-              style={{ color: 'var(--accent-emerald)' }}
+              className="group mt-4 flex items-center gap-1 font-sans text-sm font-semibold"
+              style={{ color: 'var(--primary)' }}
             >
               Book a demo
               <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5" />
@@ -105,16 +105,16 @@ const Gallery6 = ({
                         />
                       </div>
                     </div>
-                    <div className="mb-2 mt-6 line-clamp-3 break-words font-display text-lg font-bold text-foreground">
+                    <div className="mb-2 mt-6 line-clamp-3 break-words font-display text-lg font-display font-bold text-foreground">
                       {item.title}
                     </div>
-                    <div className="mb-4 line-clamp-2 font-body text-sm text-muted-foreground">
+                    <div className="mb-4 line-clamp-2 font-sans text-sm text-muted-foreground">
                       {item.summary}
                     </div>
                   </div>
                   <div
-                    className="flex items-center font-body text-sm font-semibold"
-                    style={{ color: 'var(--accent-emerald)' }}
+                    className="flex items-center font-sans text-sm font-semibold"
+                    style={{ color: 'var(--primary)' }}
                   >
                     Read more <ArrowUpRight className="ml-2 size-4" />
                   </div>

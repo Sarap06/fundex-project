@@ -83,7 +83,7 @@ const AnimatedFooter: React.FC<FooterProps> = ({
         <div className="flex flex-col md:flex-row justify-between gap-12">
           {/* Left */}
           <div className="flex flex-col gap-4">
-            <div className="font-bagel text-3xl tracking-wider" style={{ color: 'var(--background)' }}>
+            <div className="font-display text-3xl tracking-wider font-bold" style={{ color: 'var(--background)' }}>
               FUNDEX
             </div>
             {leftLinks.map((link, index) => (
@@ -123,7 +123,7 @@ const AnimatedFooter: React.FC<FooterProps> = ({
               <a
                 href="#hero"
                 className="text-xs font-semibold uppercase tracking-widest transition-colors hover:opacity-80"
-                style={{ color: 'var(--accent-emerald)' }}
+                style={{ color: 'var(--primary)' }}
               >
                 Back to top ↑
               </a>
@@ -141,7 +141,7 @@ const AnimatedFooter: React.FC<FooterProps> = ({
               ref={(el) => { waveRefs.current[index] = el; }}
               style={{
                 height: `${index + 1}px`,
-                backgroundColor: 'var(--accent-emerald)',
+                backgroundColor: 'var(--primary)',
                 transition: 'transform 0.1s ease',
                 willChange: 'transform',
                 marginTop: '-2px',

@@ -26,7 +26,7 @@ const PlusCard: React.FC<{
         <h3 className="font-display font-black text-lg md:text-xl text-foreground mb-3">
           {title}
         </h3>
-        <p className="font-body text-sm text-muted-foreground leading-relaxed">{description}</p>
+        <p className="font-sans text-sm text-muted-foreground leading-relaxed">{description}</p>
       </div>
     </div>
   );
@@ -42,7 +42,7 @@ const CornerPlusIcons = () => (
 );
 
 const PlusIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 15 15" className={className} style={{ color: 'var(--accent-emerald)' }}>
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 15 15" className={className} style={{ color: 'var(--primary)' }}>
     <path d="M7.5 0.5V14.5M0.5 7.5H14.5" stroke="currentColor" />
   </svg>
 );
@@ -92,7 +92,7 @@ export default function RuixenBentoCards({ cards, footerHeading, footerDescripti
           <h3 className="font-display text-2xl sm:text-3xl font-black text-foreground uppercase tracking-tight mb-4">
             {heading}
           </h3>
-          <p className="font-body text-muted-foreground leading-relaxed">
+          <p className="font-sans text-muted-foreground leading-relaxed">
             {desc}
           </p>
         </div>

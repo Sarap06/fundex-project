@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { adminSignUp, companySignUp } from '@/lib/auth';
 import Link from 'next/link';
@@ -9,6 +9,23 @@ import { CheckCircle, Check } from 'lucide-react';
 type SignupType = 'admin' | 'company';
 
 export default function Signup() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-fundex-cream to-fundex-cream flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg shadow-2xl p-8 max-w-md w-full">
+            <h1 className="text-3xl font-display font-bold text-foreground mb-2">Sign Up</h1>
+            <p className="text-muted-foreground mb-6">Create your Fundex account</p>
+          </div>
+        </div>
+      }
+    >
+      <SignupContent />
+    </Suspense>
+  );
+}
+
+function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [signupType, setSignupType] = useState<SignupType>('company');
@@ -65,7 +82,7 @@ export default function Signup() {
 
         // Redirect to dashboard immediately for admin (no approval needed)
         setTimeout(() => {
-          router.push('/dashboard/admin');
+          router.push('/admin');
         }, 2000);
       } else {
         await companySignUp(email, password, fullName, companyCode);
@@ -89,10 +106,10 @@ export default function Signup() {
 
   if (!isMounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Sign Up</h1>
-          <p className="text-gray-700 mb-6">Create your Fundex account</p>
+      <div className="min-h-screen bg-gradient-to-br from-fundex-cream to-fundex-cream flex items-center justify-center p-4">
+        <div className="bg-background rounded-lg shadow-2xl p-8 max-w-md w-full">
+          <h1 className="text-3xl font-display font-bold text-foreground mb-2">Sign Up</h1>
+          <p className="text-muted-foreground mb-6">Create your Fundex account</p>
         </div>
       </div>
     );
@@ -100,52 +117,52 @@ export default function Signup() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-gradient-to-br from-fundex-cream to-fundex-cream flex items-center justify-center p-4">
+        <div className="bg-background rounded-lg shadow-2xl p-8 max-w-md w-full text-center">
           <div className="flex justify-center mb-4">
-            <CheckCircle className="text-emerald-600" size={56} />
+            <CheckCircle className="text-primary" size={56} />
           </div>
-          <h2 className="text-2xl font-bold text-emerald-600 mb-4">Signup Successful!</h2>
+          <h2 className="text-2xl font-display font-bold text-primary mb-4">Signup Successful!</h2>
           
           {signupType === 'admin' ? (
             <>
-              <p className="text-gray-900 mb-4">Your account has been created.</p>
-              <div className="bg-emerald-50 border-2 border-emerald-200 rounded p-4 mb-4">
-                <p className="text-sm text-gray-900">Your Company Code:</p>
-                <p className="text-2xl font-bold text-emerald-600">{successCompanyCode}</p>
-                <p className="text-xs text-gray-700 mt-2">Share this with your team members</p>
+              <p className="text-foreground mb-4">Your account has been created.</p>
+              <div className="bg-fundex-cream/50 border-2 border-primary/20 rounded p-4 mb-4">
+                <p className="text-sm text-foreground">Your Company Code:</p>
+                <p className="text-2xl font-display font-bold text-primary">{successCompanyCode}</p>
+                <p className="text-xs text-muted-foreground mt-2">Share this with your team members</p>
               </div>
             </>
           ) : (
             <>
-              <p className="text-gray-900 mb-4">Your joining request has been sent to the admin.</p>
-              <p className="text-sm text-gray-700 mb-4">
+              <p className="text-foreground mb-4">Your joining request has been sent to the admin.</p>
+              <p className="text-sm text-muted-foreground mb-4">
                 You will be redirected once admin approves your request.
               </p>
             </>
           )}
           
-          <p className="text-sm text-gray-700">Redirecting...</p>
+          <p className="text-sm text-muted-foreground">Redirecting...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Sign Up</h1>
-        <p className="text-gray-700 mb-6">Create your Fundex account</p>
+    <div className="min-h-screen bg-gradient-to-br from-fundex-cream to-fundex-cream flex items-center justify-center p-4">
+      <div className="bg-background rounded-lg shadow-2xl p-8 max-w-md w-full">
+        <h1 className="text-3xl font-display font-bold text-foreground mb-2">Sign Up</h1>
+        <p className="text-muted-foreground mb-6">Create your Fundex account</p>
 
         {/* Type Toggle */}
-        <div className="mb-6 bg-gray-100 rounded-lg p-1 flex gap-1">
+        <div className="mb-6 bg-muted rounded-lg p-1 flex gap-1">
           <button
             type="button"
             onClick={() => setSignupType('company')}
             className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
               signupType === 'company'
-                ? 'bg-emerald-600 text-white'
-                : 'text-gray-700 hover:text-gray-900'
+                ? 'bg-primary text-white'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Company
@@ -155,8 +172,8 @@ export default function Signup() {
             onClick={() => setSignupType('admin')}
             className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
               signupType === 'admin'
-                ? 'bg-emerald-600 text-white'
-                : 'text-gray-700 hover:text-gray-900'
+                ? 'bg-primary text-white'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Admin
@@ -164,9 +181,9 @@ export default function Signup() {
         </div>
 
         {isFromInvite && signupType === 'company' && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-6 flex items-center gap-2">
-            <Check className="text-emerald-900 flex-shrink-0" size={20} />
-            <p className="text-sm text-emerald-900">You were invited to join this company</p>
+          <div className="bg-fundex-cream/50 border border-primary/20 rounded-lg p-3 mb-6 flex items-center gap-2">
+            <Check className="text-primary flex-shrink-0" size={20} />
+            <p className="text-sm text-primary">You were invited to join this company</p>
           </div>
         )}
 
@@ -175,7 +192,7 @@ export default function Signup() {
           {signupType === 'company' && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Full Name
                 </label>
                 <input
@@ -183,13 +200,13 @@ export default function Signup() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="John Doe"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Email
                 </label>
                 <input
@@ -198,16 +215,16 @@ export default function Signup() {
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isFromInvite}
                   required
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                    isFromInvite ? 'bg-gray-50 cursor-not-allowed' : ''
+                  className={`w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    isFromInvite ? 'bg-muted cursor-not-allowed' : ''
                   }`}
                   placeholder="user@example.com"
                 />
-                {isFromInvite && <p className="text-xs text-gray-700 mt-1">Pre-filled from your invitation</p>}
+                {isFromInvite && <p className="text-xs text-muted-foreground mt-1">Pre-filled from your invitation</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Password
                 </label>
                 <input
@@ -215,13 +232,13 @@ export default function Signup() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="••••••••"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Company Code
                 </label>
                 <input
@@ -230,15 +247,15 @@ export default function Signup() {
                   onChange={(e) => setCompanyCode(e.target.value.toUpperCase())}
                   disabled={isFromInvite}
                   required
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                    isFromInvite ? 'bg-gray-50 cursor-not-allowed' : ''
+                  className={`w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    isFromInvite ? 'bg-muted cursor-not-allowed' : ''
                   }`}
                   placeholder="ABC123"
                 />
                 {isFromInvite ? (
-                  <p className="text-xs text-gray-700 mt-1">Pre-filled from your invitation</p>
+                  <p className="text-xs text-muted-foreground mt-1">Pre-filled from your invitation</p>
                 ) : (
-                  <p className="text-xs text-gray-700 mt-1">Ask your admin for the company code</p>
+                  <p className="text-xs text-muted-foreground mt-1">Ask your admin for the company code</p>
                 )}
               </div>
             </>
@@ -248,7 +265,7 @@ export default function Signup() {
           {signupType === 'admin' && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Work Email
                 </label>
                 <input
@@ -256,13 +273,13 @@ export default function Signup() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="admin@company.com"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Password
                 </label>
                 <input
@@ -270,13 +287,13 @@ export default function Signup() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="••••••••"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Access Code
                 </label>
                 <input
@@ -284,7 +301,7 @@ export default function Signup() {
                   value={accessCode}
                   onChange={(e) => setAccessCode(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="Enter access code"
                 />
               </div>
@@ -300,15 +317,15 @@ export default function Signup() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-emerald-600 text-white py-2 rounded-lg font-semibold hover:bg-emerald-700 disabled:bg-gray-400 transition"
+            className="w-full bg-primary text-white py-2 rounded-lg font-semibold hover:bg-primary/90 disabled:bg-muted-foreground transition"
           >
             {loading ? 'Creating account...' : 'Sign Up'}
           </button>
         </form>
 
-        <p className="text-center text-gray-700 mt-6">
+        <p className="text-center text-muted-foreground mt-6">
           Already have an account?{' '}
-          <Link href="/auth/login" className="text-emerald-600 hover:underline font-medium">
+          <Link href="/auth/login" className="text-primary hover:underline font-medium">
             Login
           </Link>
         </p>

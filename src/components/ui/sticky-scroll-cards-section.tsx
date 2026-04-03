@@ -82,7 +82,7 @@ export function StickyFeatureSection({ heading, subheading, features }: StickyFe
           </h3>
           <p
             ref={pRef}
-            className="font-body text-muted-foreground max-w-2xl mx-auto transition-all duration-700 delay-200"
+            className="font-sans text-muted-foreground max-w-2xl mx-auto transition-all duration-700 delay-200"
             style={{
               opacity: pInView ? 1 : 0,
               transform: pInView ? 'translateY(0)' : 'translateY(20px)',
@@ -110,7 +110,7 @@ export function StickyFeatureSection({ heading, subheading, features }: StickyFe
                 {/* Text */}
                 <div className="p-8 md:p-12 flex flex-col justify-center">
                   <h4 className="font-display font-black text-2xl text-foreground mb-4">{feature.title}</h4>
-                  <p className="font-body text-muted-foreground leading-relaxed">{feature.description}</p>
+                  <p className="font-sans text-muted-foreground leading-relaxed">{feature.description}</p>
                 </div>
                 {/* Image */}
                 <div className="h-64 md:h-80 overflow-hidden">

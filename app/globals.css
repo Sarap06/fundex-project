@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,35 +6,43 @@
 
 :root {
   --font-size: 16px;
+
+  /* Fundex brand palette */
+  --fundex-forest: #005F02;
+  --fundex-green: #427A43;
+  --fundex-gold: #C0B87A;
+  --fundex-cream: #F2E3BB;
+
+  /* Semantic color tokens */
   --background: #ffffff;
-  --foreground: #0a0a0a;
-  --card: #f8faf8;
-  --card-foreground: #0a0a0a;
+  --foreground: #1a1a1a;
+  --card: #faf8f3;
+  --card-foreground: #1a1a1a;
   --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #0a0a0a;
+  --popover-foreground: #1a1a1a;
+  --primary: #005F02;
   --primary-foreground: #ffffff;
-  --secondary: #f0f5f0;
-  --secondary-foreground: #0a0a0a;
-  --muted: #f0f5f0;
+  --secondary: #427A43;
+  --secondary-foreground: #ffffff;
+  --muted: #f5f0e6;
   --muted-foreground: #5a6b5a;
-  --accent: #f0f5f0;
-  --accent-foreground: #0a0a0a;
+  --accent: #C0B87A;
+  --accent-foreground: #1a1a1a;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #d4e4d4;
-  --input: #f0f5f0;
+  --border: #d4ddd4;
+  --input: #f5f0e6;
   --input-background: #ffffff;
-  --switch-background: #d4e4d4;
+  --switch-background: #d4ddd4;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #7a9a7a;
-  
-  /* Fundex green accent colors */
-  --accent-blue: #1e5a3a;
-  --accent-emerald: #28694B;
-  --accent-purple: #1d5c3b;
-  
+  --ring: #427A43;
+
+  /* Legacy aliases — map old names to new brand colors */
+  --accent-emerald: #005F02;
+  --accent-blue: #427A43;
+  --accent-purple: #427A43;
+
   --radius: 0.75rem;
 }
 
@@ -46,21 +53,20 @@
   --card-foreground: #fafafa;
   --popover: #1a1a1a;
   --popover-foreground: #fafafa;
-  --primary: #fafafa;
+  --primary: #5a9a5c;
   --primary-foreground: #0a0a0a;
-  --secondary: #1a1a1a;
+  --secondary: #427A43;
   --secondary-foreground: #fafafa;
   --muted: #1a1a1a;
   --muted-foreground: #a1a1aa;
-  --accent: #1a1a1a;
-  --accent-foreground: #fafafa;
+  --accent: #C0B87A;
+  --accent-foreground: #0a0a0a;
   --destructive: #ef4444;
   --destructive-foreground: #fafafa;
   --border: #27272a;
   --input: #1a1a1a;
-  --ring: #71717a;
+  --ring: #5a9a5c;
 }
-
 
 @theme inline {
   --color-background: var(--background);
@@ -84,12 +90,18 @@
   --color-input-background: var(--input-background);
   --color-switch-background: var(--switch-background);
   --color-ring: var(--ring);
-  
-  /* Simplified accent colors */
-  --color-accent-blue: var(--accent-blue);
+
+  /* Brand colors for direct use */
+  --color-fundex-forest: var(--fundex-forest);
+  --color-fundex-green: var(--fundex-green);
+  --color-fundex-gold: var(--fundex-gold);
+  --color-fundex-cream: var(--fundex-cream);
+
+  /* Legacy aliases for existing components */
   --color-accent-emerald: var(--accent-emerald);
+  --color-accent-blue: var(--accent-blue);
   --color-accent-purple: var(--accent-purple);
-  
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -99,6 +111,7 @@
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
   }
 
   body {
@@ -107,101 +120,96 @@
     width: 100%;
     max-width: 100vw;
   }
-  
-  * {
-    box-sizing: border-box;
+
+  /* Heading defaults — Trench Slab for display */
+  h1, h2, h3 {
+    font-family: 'Trench Slab', 'General Sans', system-ui, sans-serif;
   }
-  
+
   /* Ensure no elements can cause horizontal overflow */
   .container {
     max-width: 100%;
     overflow-x: hidden;
   }
-  
+
   /* Font utility classes */
-  .font-bagel {
-    font-family: 'Bagel Fat One', cursive;
-  }
-  
   .font-display {
-    font-family: 'Nimbus Sans', 'Helvetica Neue', 'Arial Narrow', Arial, sans-serif;
-    font-stretch: condensed;
+    font-family: 'Trench Slab', 'General Sans', system-ui, sans-serif;
   }
-  
+
   .font-body {
-    font-family: 'Athelas', 'Libre Baskerville', 'Georgia', serif;
+    font-family: 'General Sans', system-ui, sans-serif;
   }
-  
-  /* Simplified utility classes */
+
+  /* Utility classes */
   .clean-border {
     border: 1px solid var(--border);
   }
-  
+
   .subtle-shadow {
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
   }
-  
+
   .elevated-shadow {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   }
-  
+
   .gentle-animation {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
-  /* Enhanced Glass Effect */
+
+  /* Glass Effect */
   .glass-effect {
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(25px) saturate(1.5);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 
+    box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
-  
+
   .glass-effect:hover {
     background: rgba(255, 255, 255, 0.12);
     border-color: rgba(255, 255, 255, 0.25);
     transform: translateY(-2px);
   }
-  
-  /* Enhanced glass effect for better visibility */
+
   .glass-navbar {
     background: rgba(0, 0, 0, 0.15);
     backdrop-filter: blur(30px) saturate(1.8);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 
+    box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.4),
       0 1px 1px rgba(255, 255, 255, 0.15),
       inset 0 1px 0 rgba(255, 255, 255, 0.2),
       inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   }
-  
-  /* Text shadow utilities for better readability */
+
+  /* Text shadow utilities */
   .text-shadow-strong {
-    text-shadow: 
+    text-shadow:
       0 2px 4px rgba(0, 0, 0, 0.8),
       0 1px 2px rgba(0, 0, 0, 0.9),
       1px 1px 2px rgba(0, 0, 0, 0.8),
       -1px -1px 2px rgba(0, 0, 0, 0.8);
   }
-  
+
   .text-shadow-medium {
-    text-shadow: 
+    text-shadow:
       0 1px 3px rgba(0, 0, 0, 0.7),
       0 1px 1px rgba(0, 0, 0, 0.8),
       1px 1px 1px rgba(0, 0, 0, 0.7),
       -1px -1px 1px rgba(0, 0, 0, 0.7);
   }
-  
-  /* Video Optimizations */
+
+  /* Video */
   .video-container {
     position: relative;
     width: 100%;
     height: 100vh;
     overflow: hidden;
   }
-  
+
   .video-container video {
     position: absolute;
     top: 50%;
@@ -213,188 +221,87 @@
     transform: translateX(-50%) translateY(-50%);
     object-fit: cover;
   }
-  
-  /* Advanced Animations */
+
+  /* Animations */
   @keyframes float-gentle {
-    0%, 100% { 
-      transform: translateY(0px) rotate(0deg); 
-    }
-    50% { 
-      transform: translateY(-10px) rotate(1deg); 
-    }
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(1deg); }
   }
-  
+
   @keyframes pulse-glow {
-    0%, 100% { 
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-    }
-    50% { 
-      box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
-    }
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.1); }
+    50% { box-shadow: 0 0 40px rgba(255, 255, 255, 0.3); }
   }
-  
+
   @keyframes drift-left {
     0% { transform: translateX(0px); }
     50% { transform: translateX(-15px); }
     100% { transform: translateX(0px); }
   }
-  
+
   @keyframes drift-right {
     0% { transform: translateX(0px); }
     50% { transform: translateX(15px); }
     100% { transform: translateX(0px); }
   }
-  
+
   @keyframes filmGrain {
-    0%, 100% {
-      transform: translateX(0) translateY(0);
-    }
-    25% {
-      transform: translateX(1px) translateY(1px);
-    }
-    50% {
-      transform: translateX(-1px) translateY(1px);
-    }
-    75% {
-      transform: translateX(1px) translateY(-1px);
-    }
+    0%, 100% { transform: translateX(0) translateY(0); }
+    25% { transform: translateX(1px) translateY(1px); }
+    50% { transform: translateX(-1px) translateY(1px); }
+    75% { transform: translateX(1px) translateY(-1px); }
   }
-  
+
   @keyframes projectorLight {
-    0%, 100% {
-      opacity: 0.05;
-      transform: translate(-50%, -50%) scale(1);
-    }
-    50% {
-      opacity: 0.15;
-      transform: translate(-50%, -50%) scale(1.1);
-    }
+    0%, 100% { opacity: 0.05; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.15; transform: translate(-50%, -50%) scale(1.1); }
   }
-  
+
   @keyframes filmScroll {
-    from {
-      transform: translateX(0px);
-    }
-    to {
-      transform: translateX(-2272px);
-    }
+    from { transform: translateX(0px); }
+    to { transform: translateX(-2272px); }
   }
-  
+
   @keyframes perforationsScroll {
-    from {
-      transform: translateX(0px);
-    }
-    to {
-      transform: translateX(-50%);
-    }
+    from { transform: translateX(0px); }
+    to { transform: translateX(-50%); }
   }
-  
+
   @keyframes photoSway1 {
-    0%, 100% { 
-      transform: rotate(2deg) translateY(0px); 
-    }
-    50% { 
-      transform: rotate(-1deg) translateY(-3px); 
-    }
+    0%, 100% { transform: rotate(2deg) translateY(0px); }
+    50% { transform: rotate(-1deg) translateY(-3px); }
   }
-  
+
   @keyframes photoSway2 {
-    0%, 100% { 
-      transform: rotate(-1deg) translateY(0px); 
-    }
-    50% { 
-      transform: rotate(3deg) translateY(-2px); 
-    }
+    0%, 100% { transform: rotate(-1deg) translateY(0px); }
+    50% { transform: rotate(3deg) translateY(-2px); }
   }
-  
+
   @keyframes photoSway3 {
-    0%, 100% { 
-      transform: rotate(1deg) translateY(0px); 
-    }
-    50% { 
-      transform: rotate(-2deg) translateY(-4px); 
-    }
+    0%, 100% { transform: rotate(1deg) translateY(0px); }
+    50% { transform: rotate(-2deg) translateY(-4px); }
   }
-  
+
   @keyframes ropeSlackSway {
-    0%, 100% { 
-      transform: scaleY(1) translateY(0px); 
-    }
-    50% { 
-      transform: scaleY(1.02) translateY(1px); 
-    }
+    0%, 100% { transform: scaleY(1) translateY(0px); }
+    50% { transform: scaleY(1.02) translateY(1px); }
   }
-  
-  .float-gentle {
-    animation: float-gentle 6s ease-in-out infinite;
-    animation-duration: 6s !important;
-  }
-  
-  .pulse-glow {
-    animation: pulse-glow 3s ease-in-out infinite;
-    animation-duration: 3s !important;
-  }
-  
-  .drift-left {
-    animation: drift-left 8s ease-in-out infinite;
-    animation-duration: 8s !important;
-  }
-  
-  .drift-right {
-    animation: drift-right 7s ease-in-out infinite;
-    animation-duration: 7s !important;
-  }
-  
-  .photo-sway-1 {
-    animation: photoSway1 8s ease-in-out infinite;
-    animation-duration: 8s !important;
-  }
-  
-  .photo-sway-2 {
-    animation: photoSway2 9s ease-in-out infinite;
-    animation-duration: 9s !important;
-  }
-  
-  .photo-sway-3 {
-    animation: photoSway3 7s ease-in-out infinite;
-    animation-duration: 7s !important;
-  }
-  
-  .rope-sway {
-    animation: ropeSlackSway 12s ease-in-out infinite;
-    animation-duration: 12s !important;
-  }
-  
-  .film-scroll-animation {
-    animation: 28s linear infinite filmScroll;
-    animation-duration: 28s !important;
-  }
-  
-  .perforations-scroll-animation {
-    animation: perforationsScroll 28s linear infinite;
-    animation-duration: 28s !important;
-  }
-  
-  /* Global animation slowdowns */
-  .animate-pulse {
-    animation-duration: 8s !important;
-  }
-  
-  /* Clean scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    background: var(--background);
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 3px;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--ring);
-  }
+
+  .float-gentle { animation: float-gentle 6s ease-in-out infinite; }
+  .pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+  .drift-left { animation: drift-left 8s ease-in-out infinite; }
+  .drift-right { animation: drift-right 7s ease-in-out infinite; }
+  .photo-sway-1 { animation: photoSway1 8s ease-in-out infinite; }
+  .photo-sway-2 { animation: photoSway2 9s ease-in-out infinite; }
+  .photo-sway-3 { animation: photoSway3 7s ease-in-out infinite; }
+  .rope-sway { animation: ropeSlackSway 12s ease-in-out infinite; }
+  .film-scroll-animation { animation: 28s linear infinite filmScroll; }
+  .perforations-scroll-animation { animation: perforationsScroll 28s linear infinite; }
+  .animate-pulse { animation-duration: 8s !important; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--background); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ring); }
 }

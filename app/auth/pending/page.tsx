@@ -23,9 +23,9 @@ export default function Pending() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-fundex-cream to-fundex-cream p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-2xl p-8">
+        <div className="bg-background rounded-lg shadow-2xl p-8">
           {/* Icon */}
           <div className="flex justify-center mb-6">
             <div className="p-4 bg-blue-100 rounded-full">
@@ -34,12 +34,12 @@ export default function Pending() {
           </div>
 
           {/* Title */}
-          <h1 className="text-2xl font-bold text-center text-gray-900 mb-2">
+          <h1 className="text-2xl font-display font-bold text-center text-foreground mb-2">
             Pending Approval
           </h1>
 
           {/* Description */}
-          <p className="text-center text-gray-600 mb-6">
+          <p className="text-center text-muted-foreground mb-6">
             Your account is currently pending approval by an administrator. You'll receive an email once your account has been reviewed and approved.
           </p>
 
@@ -75,7 +75,7 @@ export default function Pending() {
           </button>
 
           {/* Return to Landing Link */}
-          <p className="text-center text-gray-600 text-sm mt-4">
+          <p className="text-center text-muted-foreground text-sm mt-4">
             <button
               onClick={() => router.push('/')}
               className="text-blue-600 hover:text-blue-700 underline"

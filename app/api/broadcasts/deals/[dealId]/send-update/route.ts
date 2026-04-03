@@ -122,13 +122,13 @@ export async function POST(
     // Handle file upload if present
     if (file) {
       try {
-        const fileName = `${dealId}/${Date.now()}_${file.name}`;
+        const uploadPath = `${dealId}/${Date.now()}_${file.name}`;
         const arrayBuffer = await file.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
 
         const { data: uploadData, error: uploadError } = await authSupabase.storage
           .from('documents')
-          .upload(fileName, uint8Array, {
+          .upload(uploadPath, uint8Array, {
             contentType: file.type,
           });
 
@@ -142,7 +142,7 @@ export async function POST(
 
         const { data: urlData } = authSupabase.storage
           .from('documents')
-          .getPublicUrl(fileName);
+          .getPublicUrl(uploadPath);
 
         fileUrl = urlData.publicUrl;
         fileName = file.name;

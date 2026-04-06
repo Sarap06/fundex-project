@@ -1,6 +1,6 @@
 "use client";
 
-import { Hero } from "@/components/hero";
+import { KubricHero } from "@/components/kubric-hero";
 import { Services } from "@/components/services";
 import { UseCases } from "@/components/use-cases";
 import { SecurityControl } from "@/components/security-control";
@@ -8,7 +8,7 @@ import { ProductBreakdown } from "@/components/product-breakdown";
 import { WhyFundex } from "@/components/why-fundex";
 import { Team } from "@/components/team";
 import { BookDemo } from "@/components/book-demo";
-import AnimatedFooter from "@/components/ui/animated-footer";
+import { AnimatedFooter } from "@/components/ui/animated-footer";
 
 export default function Home() {
   const footerLeftLinks = [
@@ -33,7 +33,7 @@ export default function Home() {
     >
       <main className="relative" role="main" style={{ overflow: "visible" }}>
         <section id="hero" aria-label="Hero section">
-          <Hero />
+          <KubricHero />
         </section>
         <section
           id="services-section"

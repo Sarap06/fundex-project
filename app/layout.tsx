@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
 import "./globals.css";
+import "./kubric/kubric.css";
 
 export const metadata: Metadata = {
   title: "Fundex - Private Lending Solutions | Miami, FL",

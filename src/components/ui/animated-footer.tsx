@@ -1,157 +1,230 @@
-'use client'
-import React, { useEffect, useRef, useState } from 'react';
+"use client";
 
-interface LinkItem {
-  href: string;
-  label: string;
+import { useRef } from "react";
+import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import { ArrowUp, ArrowUpRight } from "lucide-react";
+import { easeOutExpo } from "@/lib/animations";
+
+/* ═══════════════════════════════════════════
+   FOOTER LINK
+   ═══════════════════════════════════════════ */
+function FooterLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      className="font-sans text-sm text-white/60 no-underline relative inline-block self-start transition-colors duration-300 hover:text-white group"
+    >
+      {label}
+      <span className="absolute -bottom-0.5 left-0 right-0 h-px origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300 bg-fundex-gold" />
+    </a>
+  );
 }
 
-interface FooterProps {
-  leftLinks: LinkItem[];
-  rightLinks: LinkItem[];
-  copyrightText: string;
-  barCount?: number;
-}
+/* ═══════════════════════════════════════════
+   MAIN FOOTER
+   ═══════════════════════════════════════════ */
+export function AnimatedFooter({
+  leftLinks = [
+    { href: "#product", label: "Product" },
+    { href: "#use-cases", label: "Use Cases" },
+    { href: "#security", label: "Security" },
+    { href: "#why-fundex", label: "Why Fundex" },
+  ],
+  rightLinks = [
+    { href: "#", label: "Privacy Policy" },
+    { href: "#", label: "Terms of Service" },
+    { href: "#", label: "Careers" },
+    { href: "#", label: "Contact" },
+  ],
+  copyrightText = "\u00A9 2025 Fundex. All rights reserved.",
+}: {
+  leftLinks?: { href: string; label: string }[];
+  rightLinks?: { href: string; label: string }[];
+  copyrightText?: string;
+}) {
+  const footerRef = useRef<HTMLElement>(null);
+  const isInView = useInView(footerRef, { once: true, amount: 0.1 });
 
-const AnimatedFooter: React.FC<FooterProps> = ({
-  leftLinks,
-  rightLinks,
-  copyrightText,
-  barCount = 23,
-}) => {
-  const waveRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const footerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const animationFrameRef = useRef<number | null>(null);
+  const { scrollYProgress } = useScroll({
+    target: footerRef,
+    offset: ["start end", "end end"],
+  });
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        setIsVisible(entry.isIntersecting);
-      },
-      { threshold: 0.2 }
-    );
-
-    if (footerRef.current) {
-      observer.observe(footerRef.current);
-    }
-
-    return () => {
-      if (footerRef.current) {
-        observer.unobserve(footerRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    let t = 0;
-
-    const animateWave = () => {
-      const waveElements = waveRefs.current;
-      let offset = 0;
-
-      waveElements.forEach((element, index) => {
-        if (element) {
-          offset += Math.max(0, 20 * Math.sin((t + index) * 0.3));
-          element.style.transform = `translateY(${index + offset}px)`;
-        }
-      });
-
-      t += 0.1;
-      animationFrameRef.current = requestAnimationFrame(animateWave);
-    };
-
-    if (isVisible) {
-      animateWave();
-    } else if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
-    };
-  }, [isVisible]);
+  const wordmarkY = useTransform(scrollYProgress, [0, 0.8], [80, 0]);
+  const wordmarkScale = useTransform(scrollYProgress, [0, 0.8], [0.9, 1]);
 
   return (
-    <footer ref={footerRef} className="relative w-full" style={{ backgroundColor: 'var(--foreground)' }}>
-      <div className="container mx-auto px-6 sm:px-8 lg:px-12 py-16">
-        <div className="flex flex-col md:flex-row justify-between gap-12">
-          {/* Left */}
-          <div className="flex flex-col gap-4">
-            <div className="font-display text-3xl tracking-wider font-bold" style={{ color: 'var(--background)' }}>
-              FUNDEX
-            </div>
-            {leftLinks.map((link, index) => (
-              <div key={index}>
-                <a
-                  href={link.href}
-                  className="text-sm font-medium transition-colors hover:opacity-80"
-                  style={{ color: 'rgba(255,255,255,0.7)' }}
-                >
-                  {link.label}
-                </a>
-              </div>
-            ))}
-            <div className="flex items-center gap-2 mt-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 6v6l4 2" />
-              </svg>
-              <span className="text-xs">{copyrightText}</span>
-            </div>
-          </div>
+    <footer
+      ref={footerRef}
+      className="relative overflow-hidden text-white"
+      style={{ backgroundColor: "#002d01" }}
+    >
+      <div className="relative z-[2] max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 pt-24 lg:pt-32">
+        {/* ─── Top Row: CTA + Nav ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-20 mb-16 lg:mb-24 items-start">
+          {/* Left — Heading + CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.9, ease: easeOutExpo }}
+          >
+            <h3 className="font-display text-3xl lg:text-5xl font-bold leading-[1.1] tracking-tight mb-6">
+              Ready to modernize
+              <br />
+              <span className="font-sans font-normal text-fundex-gold">
+                your fund?
+              </span>
+            </h3>
 
-          {/* Right */}
-          <div className="flex flex-col gap-4 items-start md:items-end">
-            {rightLinks.map((link, index) => (
-              <div key={index}>
-                <a
-                  href={link.href}
-                  className="text-sm font-medium transition-colors hover:opacity-80"
-                  style={{ color: 'rgba(255,255,255,0.7)' }}
-                >
-                  {link.label}
-                </a>
+            <p className="font-sans text-sm leading-[1.7] text-white/60 mb-8 max-w-[380px]">
+              Join 500+ firms already running on Fundex. Schedule a demo and
+              see the difference.
+            </p>
+
+            <a
+              href="#book-demo-section"
+              className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-white text-fundex-forest font-sans text-[15px] font-[500] no-underline rounded-full transition-all hover:bg-fundex-cream hover:-translate-y-0.5"
+            >
+              Book a Demo
+              <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />
+            </a>
+          </motion.div>
+
+          {/* Right — Link columns */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{
+              duration: 0.9,
+              delay: 0.15,
+              ease: easeOutExpo,
+            }}
+            className="grid grid-cols-2 gap-6 lg:gap-12"
+          >
+            {/* Product */}
+            <div>
+              <div className="font-sans text-[10px] font-[600] tracking-[4px] uppercase text-white/40 mb-5">
+                Product
               </div>
-            ))}
-            <div className="mt-4">
-              <a
-                href="#hero"
-                className="text-xs font-semibold uppercase tracking-widest transition-colors hover:opacity-80"
-                style={{ color: 'var(--primary)' }}
-              >
-                Back to top ↑
-              </a>
+              <div className="flex flex-col gap-3.5">
+                {leftLinks.map((link) => (
+                  <FooterLink
+                    key={link.label}
+                    href={link.href}
+                    label={link.label}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+
+            {/* Company */}
+            <div>
+              <div className="font-sans text-[10px] font-[600] tracking-[4px] uppercase text-white/40 mb-5">
+                Company
+              </div>
+              <div className="flex flex-col gap-3.5">
+                {rightLinks.map((link) => (
+                  <FooterLink
+                    key={link.label}
+                    href={link.href}
+                    label={link.label}
+                  />
+                ))}
+              </div>
+            </div>
+          </motion.div>
         </div>
-      </div>
 
-      {/* Animated wave bars */}
-      <div className="w-full overflow-hidden">
-        <div className="flex flex-col">
-          {Array.from({ length: barCount }).map((_, index) => (
-            <div
-              key={index}
-              ref={(el) => { waveRefs.current[index] = el; }}
+        {/* ─── Divider ─── */}
+        <motion.div
+          initial={{ scaleX: 0 }}
+          animate={isInView ? { scaleX: 1 } : {}}
+          transition={{ duration: 1.5, delay: 0.3, ease: easeOutExpo }}
+          className="h-px origin-left"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, rgba(255,255,255,0.15) 10%, rgba(255,255,255,0.15) 90%, transparent)",
+          }}
+        />
+
+        {/* ─── Giant Wordmark — parallax ─── */}
+        <motion.div
+          style={{ y: wordmarkY, scale: wordmarkScale }}
+          className="py-12 lg:py-16 text-center overflow-hidden"
+        >
+          <div
+            className="font-display inline-block select-none relative"
+            style={{
+              fontSize: "clamp(48px, 16vw, 240px)",
+              lineHeight: 0.85,
+              letterSpacing: "-0.06em",
+            }}
+          >
+            {/* Base dim stroke */}
+            <span
               style={{
-                height: `${index + 1}px`,
-                backgroundColor: 'var(--primary)',
-                transition: 'transform 0.1s ease',
-                willChange: 'transform',
-                marginTop: '-2px',
+                color: "transparent",
+                WebkitTextStroke: "1px rgba(255,255,255,0.1)",
               }}
-            />
-          ))}
-        </div>
+            >
+              FUNDEX
+            </span>
+
+            {/* Accent wipe overlay */}
+            <motion.span
+              initial={{ clipPath: "inset(0 100% 0 0)" }}
+              animate={isInView ? { clipPath: "inset(0 0% 0 0)" } : {}}
+              transition={{
+                duration: 2,
+                delay: 0.5,
+                ease: easeOutExpo,
+              }}
+              className="absolute inset-0"
+              style={{
+                color: "transparent",
+                WebkitTextStroke: "1px rgba(192,184,122,0.35)",
+              }}
+              aria-hidden
+            >
+              FUNDEX
+            </motion.span>
+          </div>
+        </motion.div>
+
+        {/* ─── Bottom Strip ─── */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="border-t border-white/10 py-6 flex flex-wrap items-center justify-between gap-4"
+        >
+          <span className="font-sans text-[10px] font-[500] tracking-[1.5px] text-white/30">
+            {copyrightText}
+          </span>
+
+          <div className="flex items-center gap-5">
+            {["X", "LinkedIn", "GitHub"].map((s) => (
+              <a
+                key={s}
+                href="#"
+                className="font-sans text-[10px] font-[500] tracking-[1.5px] text-white/30 no-underline transition-colors duration-300 hover:text-fundex-gold"
+              >
+                {s}
+              </a>
+            ))}
+
+            {/* Back to top */}
+            <motion.a
+              href="#hero"
+              whileHover={{ y: -3 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="w-9 h-9 border border-white/10 flex items-center justify-center text-white/40 no-underline transition-all duration-300 hover:border-fundex-gold hover:text-fundex-gold"
+            >
+              <ArrowUp className="w-3.5 h-3.5" strokeWidth={1.5} />
+            </motion.a>
+          </div>
+        </motion.div>
       </div>
     </footer>
   );
-};
-
-export default AnimatedFooter;
+}

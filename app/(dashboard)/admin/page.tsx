@@ -56,6 +56,7 @@ export default function AdminDashboard() {
   const [pendingRequests, setPendingRequests] = useState<Array<{ id: string; full_name: string; email: string; status: string; user_id: string }>>([]);
   const [selectedRoles, setSelectedRoles] = useState<Record<string, string>>({});
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'investor' | 'partner'>('investor');
   const [invitingEmail, setInvitingEmail] = useState('');
   const [inviteMessage, setInviteMessage] = useState('');
   const [codeMessage, setCodeMessage] = useState('');
@@ -285,6 +286,7 @@ export default function AdminDashboard() {
           companyId: company?.id,
           companyCode: company?.company_code,
           companyName: company?.name,
+          role: inviteRole,
         }),
       });
 
@@ -713,6 +715,15 @@ export default function AdminDashboard() {
                       className="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       disabled={invitingEmail.length > 0}
                     />
+                    <select
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value as 'investor' | 'partner')}
+                      className="px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+                      disabled={invitingEmail.length > 0}
+                    >
+                      <option value="investor">Investor</option>
+                      <option value="partner">Team Member</option>
+                    </select>
                     <button
                       onClick={handleSendInvite}
                       disabled={invitingEmail.length > 0}

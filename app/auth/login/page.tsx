@@ -19,21 +19,19 @@ export default function Login() {
     setLoading(true);
 
     try {
+      console.log('[login] Attempting login for:', email);
       const result = await logIn(email, password);
-      
-      // Store session
-      if (result.session) {
-        document.cookie = `sb-auth-token=${result.session.access_token}; path=/`;
-      }
+      console.log('[login] Login successful, session:', !!result.session);
 
       // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
+
       if (userError || !user) {
-        console.error('Failed to get user:', userError);
+        console.error('[login] Failed to get user:', userError);
         setError('Failed to retrieve user information');
         return;
       }
+      console.log('[login] Got user:', user.id);
 
       // Get user profile directly from Supabase
       const { data: profile, error: profileError } = await supabase
@@ -43,25 +41,25 @@ export default function Login() {
         .single();
 
       if (profileError || !profile) {
-        console.error('No profile found for user:', profileError);
+        console.error('[login] No profile found for user:', profileError);
         setError('User profile not found. Please contact support.');
         return;
       }
+      console.log('[login] Got profile — role:', profile.role, 'status:', profile.status);
 
-      // Redirect based on role - check role first (most reliable)
+      // Redirect based on role
       const userRole = profile.role;
+      const routes: Record<string, string> = {
+        admin: '/admin',
+        partner: '/company',
+        investor: '/investor',
+      };
 
-      if (userRole === 'admin') {
-        // Admins ALWAYS go directly to dashboard (no approval needed)
-        router.push('/admin');
-      } else if (userRole === 'partner') {
-        router.push('/company');
-      } else if (userRole === 'investor') {
-        router.push('/investor');
-      } else {
-        // pending role - goes to pending page
-        router.push('/auth/pending');
-      }
+      const dest = routes[userRole] || '/onboarding';
+      console.log('[login] Redirecting to:', dest);
+
+      // Use window.location for a hard redirect so middleware picks up the new cookies
+      window.location.href = dest;
     } catch (err: Error | unknown) {
       if (err instanceof Error) {
         console.error('Login error:', err);

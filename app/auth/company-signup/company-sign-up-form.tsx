@@ -45,9 +45,9 @@ export function CompanySignUpForm() {
       await companySignUp(email, password, fullName, companyCode);
       setSuccess(true);
 
-      // Redirect to pending page after 2 seconds
+      // Hard redirect to onboarding so middleware picks up the new cookies
       setTimeout(() => {
-        router.push('/auth/pending');
+        window.location.href = '/onboarding';
       }, 2000);
     } catch (err: Error | unknown) {
       if (err instanceof Error) {

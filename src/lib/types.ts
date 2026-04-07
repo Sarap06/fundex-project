@@ -49,11 +49,22 @@ export interface InvestorSurvey {
   phone_number: string;
   second_country_code?: string;
   second_phone_number?: string;
-  investment_amount: number;
-  investment_stage: string;
-  interested_sectors: string;
-  status: 'pending' | 'submitted';
-  created_at: string;
+  region?: string;
+  completed_at: string;
+}
+
+export interface FirmSurvey {
+  id: string;
+  user_id: string;
+  company_id: string;
+  firm_name: string;
+  business_type: string;
+  team_size: string;
+  active_investors: string;
+  annual_deal_volume: string;
+  user_role: string;
+  bank_connected: boolean;
+  completed_at: string;
 }
 
 export interface Deal {

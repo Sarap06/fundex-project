@@ -47,6 +47,11 @@ export default function DashboardLayout({
     }
   };
 
+  // Investor has its own nested layout with a different sidebar
+  if (pathname.startsWith('/investor')) {
+    return <>{children}</>;
+  }
+
   return (
     <>
       <DashboardNav

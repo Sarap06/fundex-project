@@ -11,6 +11,7 @@ interface InviteRequest {
   companyId: string;
   companyCode: string;
   companyName: string;
+  role?: 'investor' | 'partner';
 }
 
 async function sendEmailViaBrevo(
@@ -90,7 +91,7 @@ async function sendEmailViaBrevo(
 export async function POST(request: NextRequest) {
   try {
     const body: InviteRequest = await request.json();
-    const { email, companyId, companyCode, companyName } = body;
+    const { email, companyId, companyCode, companyName, role = 'investor' } = body;
 
     if (!email || !companyId || !companyCode) {
       return NextResponse.json(
@@ -148,6 +149,39 @@ export async function POST(request: NextRequest) {
         { error: 'Only admins can send invites' },
         { status: 403 }
       );
+    }
+
+    // Check if user is already registered
+    const { data: existingUser } = await authSupabase
+      .from('user_profiles')
+      .select('id, role, status')
+      .eq('email', email)
+      .single();
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: `This email is already registered as ${existingUser.role} (${existingUser.status})` },
+        { status: 409 }
+      );
+    }
+
+    // Store invite in DB with role (upsert — update role if invite already exists)
+    const { data: existingInvite } = await authSupabase
+      .from('email_invites')
+      .select('id')
+      .eq('email', email)
+      .eq('company_id', companyId)
+      .single();
+
+    if (existingInvite) {
+      await authSupabase
+        .from('email_invites')
+        .update({ role, status: 'pending' })
+        .eq('id', existingInvite.id);
+    } else {
+      await authSupabase
+        .from('email_invites')
+        .insert({ company_id: companyId, email, role, status: 'pending' });
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';

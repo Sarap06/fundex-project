@@ -75,22 +75,17 @@ function SignupContent() {
         setSuccess(true);
         setSuccessCompanyCode(result.companyCode);
 
-        // Store session if available
-        if (result.session) {
-          document.cookie = `sb-auth-token=${result.session.access_token}; path=/`;
-        }
-
-        // Redirect to dashboard immediately for admin (no approval needed)
+        // Redirect to onboarding to complete firm setup
         setTimeout(() => {
-          router.push('/admin');
+          window.location.href = '/onboarding';
         }, 2000);
       } else {
         await companySignUp(email, password, fullName, companyCode);
         setSuccess(true);
 
-        // Redirect to pending page after 2 seconds
+        // Hard redirect to onboarding so middleware picks up the new cookies
         setTimeout(() => {
-          router.push('/auth/pending');
+          window.location.href = '/onboarding';
         }, 2000);
       }
     } catch (err: Error | unknown) {
@@ -135,9 +130,9 @@ function SignupContent() {
             </>
           ) : (
             <>
-              <p className="text-foreground mb-4">Your joining request has been sent to the admin.</p>
+              <p className="text-foreground mb-4">Account created successfully!</p>
               <p className="text-sm text-muted-foreground mb-4">
-                You will be redirected once admin approves your request.
+                Setting up your account...
               </p>
             </>
           )}

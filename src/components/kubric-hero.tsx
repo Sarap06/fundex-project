@@ -134,16 +134,26 @@ export function KubricHero() {
             ))}
           </motion.nav>
 
-          {/* CTA — solid white fill */}
-          <motion.a
-            href="#book-demo"
-            className="hidden md:inline-flex font-sans text-[14px] md:text-[16px] font-medium text-[#0a1f0a] no-underline px-5 md:px-7 py-2.5 md:py-3 bg-white rounded-[5px] tracking-[0.3px] shadow-[0_2px_12px_rgba(255,255,255,0.15)] transition-all hover:bg-fundex-cream hover:-translate-y-px hover:shadow-[0_6px_24px_rgba(192,184,122,0.2)]"
+          {/* Auth buttons */}
+          <motion.div
+            className="flex items-center gap-3"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.5, ease: easeOutExpo }}
           >
-            Book Demo ↗
-          </motion.a>
+            <a
+              href="/auth/login"
+              className="font-sans text-[14px] md:text-[15px] font-medium text-white/80 no-underline tracking-[0.2px] transition-colors hover:text-white"
+            >
+              Log in
+            </a>
+            <a
+              href="/auth/signup"
+              className="font-sans text-[14px] md:text-[15px] font-medium text-[#0a1f0a] no-underline px-5 md:px-6 py-2 md:py-2.5 bg-white rounded-[5px] tracking-[0.3px] shadow-[0_2px_12px_rgba(255,255,255,0.15)] transition-all hover:bg-fundex-cream hover:-translate-y-px"
+            >
+              Sign Up
+            </a>
+          </motion.div>
         </motion.header>
 
         {/* ─── Main Hero Area ─── */}

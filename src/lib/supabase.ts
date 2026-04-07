@@ -1,4 +1,5 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 let supabaseClient: SupabaseClient | null = null;
 
@@ -14,7 +15,9 @@ export function getSupabaseClient(): SupabaseClient {
     throw new Error('Missing Supabase environment variables. Please check your .env.local file.');
   }
 
-  supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+  // createBrowserClient from @supabase/ssr stores session in cookies (not localStorage)
+  // so the middleware can read the same session via createServerClient
+  supabaseClient = createBrowserClient(supabaseUrl, supabaseAnonKey);
   return supabaseClient;
 }
 

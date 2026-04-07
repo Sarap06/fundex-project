@@ -90,6 +90,18 @@ export async function companySignUp(
   if (authError) throw authError;
   if (!authData.user) throw new Error('User creation failed');
 
+  // Check if this email was invited (role pre-assigned by admin)
+  const { data: invite } = await supabase
+    .from('email_invites')
+    .select('id, role')
+    .eq('email', email)
+    .eq('company_id', company.id)
+    .eq('status', 'pending')
+    .single();
+
+  const assignedRole = invite?.role || 'pending';
+  const assignedStatus = invite ? 'approved' : 'pending';
+
   // Create user profile
   const { error: profileError } = await supabase
     .from('user_profiles')
@@ -97,9 +109,9 @@ export async function companySignUp(
       user_id: authData.user.id,
       email,
       full_name: fullName,
-      role: 'pending',
+      role: assignedRole,
       company_id: company.id,
-      status: 'pending',
+      status: assignedStatus,
     });
 
   if (profileError) throw profileError;
@@ -112,12 +124,30 @@ export async function companySignUp(
       company_id: company.id,
       full_name: fullName,
       email,
-      status: 'pending',
+      status: assignedStatus,
+      ...(invite ? { assigned_role: assignedRole } : {}),
     });
 
   if (joinError) throw joinError;
 
-  return { user: authData.user };
+  // Mark invite as accepted
+  if (invite) {
+    const { error: inviteUpdateError } = await supabase
+      .from('email_invites')
+      .update({ status: 'accepted', accepted_at: new Date().toISOString() })
+      .eq('id', invite.id);
+    if (inviteUpdateError) console.error('Failed to mark invite as accepted:', inviteUpdateError);
+  }
+
+  // Auto-login so the user has a session for the onboarding survey
+  const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (loginError) console.error('Auto-login after signup error:', loginError);
+
+  return { user: authData.user, session: loginData?.session };
 }
 
 export async function logIn(email: string, password: string) {

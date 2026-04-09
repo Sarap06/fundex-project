@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, DollarSign, AlertCircle, Plus, X, Filter, Search, Trash2, LogOut, Edit } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/page-header';
+import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
+import { TrendingUp, DollarSign, AlertCircle, Plus, X, Filter, Search, Trash2, Edit } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { getCurrentUserCompanyId, logOut } from '@/lib/auth';
 import { CreateDealWizard } from '@/components/create-deal-wizard';
@@ -518,30 +520,30 @@ export default function DealsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Funding':
-        return 'bg-blue-100 text-blue-800';
+        return 'fdx-badge fdx-badge-info';
       case 'Active':
-        return 'bg-primary/10 text-primary';
+        return 'fdx-badge fdx-badge-active';
       case 'Due Diligence':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'fdx-badge fdx-badge-info';
       case 'Awaiting Docs':
-        return 'bg-orange-100 text-orange-800';
+        return 'fdx-badge fdx-badge-info';
       case 'Closed':
-        return 'bg-muted text-foreground';
+        return 'fdx-badge fdx-badge-pending';
       default:
-        return 'bg-muted text-foreground';
+        return 'fdx-badge fdx-badge-info';
     }
   };
 
   const getMilestoneTypeColor = (type: string) => {
     switch (type) {
       case 'urgent':
-        return 'bg-red-100 text-red-800';
+        return 'fdx-badge fdx-badge-active';
       case 'attention':
-        return 'bg-orange-100 text-orange-800';
+        return 'fdx-badge fdx-badge-info';
       case 'normal':
-        return 'bg-blue-100 text-blue-800';
+        return 'fdx-badge fdx-badge-pending';
       default:
-        return 'bg-muted text-foreground';
+        return 'fdx-badge fdx-badge-pending';
     }
   };
 
@@ -557,90 +559,74 @@ export default function DealsPage() {
 
   return (
     <>
-      {/* Header */}
-      <header className="bg-primary sticky top-0 z-30 border-b border-primary/80">
-        <div className="px-8 py-5 flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-display font-bold text-white">Deals</h1>
-            <p className="text-xs text-white/60">Manage your deal pipeline</p>
-          </div>
-          <button
-            onClick={handleLogOut}
-            className="flex items-center gap-2 bg-background/20 text-white px-4 py-2 rounded-lg hover:bg-background/30 transition font-medium"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
-        </div>
-      </header>
+      <main className="px-6 py-6 md:px-8 md:py-8">
+      <PageHeader title="Deals" subtitle="Create and manage investment deals" />
 
-      <main className="px-8 py-8">
+      <StaggerContainer className="mt-6">
       {/* KPI Cards */}
+      <StaggerItem>
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <Card className="border-border hover:shadow-md transition-shadow">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Total Contracts</p>
-              <TrendingUp className="size-4 text-muted-foreground" />
-            </div>
-            <p className="text-3xl font-display font-bold text-foreground">{totalDeals}</p>
-            <p className="text-xs text-muted-foreground mt-1">Across all stages</p>
-          </CardContent>
-        </Card>
+        <div className="fdx-card p-5 relative overflow-hidden">
+          <div className="fdx-card-glow" />
+          <div className="flex items-center justify-between mb-2">
+            <p className="fdx-label">Total Contracts</p>
+            <TrendingUp className="size-4 text-stone-500" />
+          </div>
+          <p className="fdx-value">{totalDeals}</p>
+          <p className="text-xs text-stone-500 mt-1">Across all stages</p>
+        </div>
 
-        <Card className="border-primary/20 bg-gradient-to-br from-fundex-cream to-white hover:shadow-md transition-shadow">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-primary uppercase tracking-wide">Active Contracts</p>
-              <TrendingUp className="size-4 text-primary" />
-            </div>
-            <p className="text-3xl font-display font-bold text-primary">{activeDeals}</p>
-            <p className="text-xs text-primary mt-1">Generating interest</p>
-          </CardContent>
-        </Card>
+        <div className="fdx-card p-5 relative overflow-hidden">
+          <div className="fdx-card-glow" />
+          <div className="flex items-center justify-between mb-2">
+            <p className="fdx-label">Active Contracts</p>
+            <TrendingUp className="size-4 text-stone-500" />
+          </div>
+          <p className="fdx-value">{activeDeals}</p>
+          <p className="text-xs text-stone-500 mt-1">Generating interest</p>
+        </div>
 
-        <Card className="border-border hover:shadow-md transition-shadow">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Closed Contracts</p>
-              <TrendingUp className="size-4 text-muted-foreground" />
-            </div>
-            <p className="text-3xl font-display font-bold text-foreground">{closedDeals}</p>
-            <p className="text-xs text-muted-foreground mt-1">Matured or repaid</p>
-          </CardContent>
-        </Card>
+        <div className="fdx-card p-5 relative overflow-hidden">
+          <div className="fdx-card-glow" />
+          <div className="flex items-center justify-between mb-2">
+            <p className="fdx-label">Closed Contracts</p>
+            <TrendingUp className="size-4 text-stone-500" />
+          </div>
+          <p className="fdx-value">{closedDeals}</p>
+          <p className="text-xs text-stone-500 mt-1">Matured or repaid</p>
+        </div>
 
-        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-white hover:shadow-md transition-shadow">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Monthly Interest Paid</p>
-              <DollarSign className="size-4 text-purple-500" />
-            </div>
-            <p className="text-3xl font-display font-bold text-purple-600">{formatCurrency(calculateTotalMonthlyInterest())}</p>
-            <p className="text-xs text-purple-600 mt-1">Interest distributed this month</p>
-          </CardContent>
-        </Card>
+        <div className="fdx-card p-5 relative overflow-hidden">
+          <div className="fdx-card-glow" />
+          <div className="flex items-center justify-between mb-2">
+            <p className="fdx-label">Monthly Interest Paid</p>
+            <DollarSign className="size-4 text-stone-500" />
+          </div>
+          <p className="fdx-value">{formatCurrency(calculateTotalMonthlyInterest())}</p>
+          <p className="text-xs text-stone-500 mt-1">Interest distributed this month</p>
+        </div>
 
-        <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-white hover:shadow-md transition-shadow">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Needs Attention</p>
-              <AlertCircle className="size-4 text-amber-500" />
-            </div>
-            <p className="text-3xl font-display font-bold text-amber-600">{needsAttention}</p>
-            <p className="text-xs text-amber-600 mt-1">Require action</p>
-          </CardContent>
-        </Card>
+        <div className="fdx-card p-5 relative overflow-hidden">
+          <div className="fdx-card-glow" />
+          <div className="flex items-center justify-between mb-2">
+            <p className="fdx-label">Needs Attention</p>
+            <AlertCircle className="size-4 text-stone-500" />
+          </div>
+          <p className="fdx-value">{needsAttention}</p>
+          <p className="text-xs text-stone-500 mt-1">Require action</p>
+        </div>
       </div>
+      </StaggerItem>
 
       {/* Search and Filters */}
+      <StaggerItem>
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-stone-500" />
             <Input
               placeholder="Search deals by name, ID, borrower, location, or type..."
-              className="pl-10 h-11 bg-background border-border focus:border-primary focus:ring-primary"
+              className="fdx-input pl-10 h-11"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -648,16 +634,16 @@ export default function DealsPage() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              className="gap-2 border-border hover:bg-muted"
+              className="fdx-btn-secondary gap-2"
               onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
             >
               <Filter className="size-4" />
               Filter {activeFilterCount > 0 && `(${activeFilterCount})`}
             </Button>
 
-            <Button 
+            <Button
               onClick={() => setIsDrawerOpen(true)}
-              className="gap-2 bg-primary hover:bg-primary/90"
+              className="fdx-btn-primary gap-2"
             >
               <Plus className="size-4" />
               Create Deal
@@ -665,6 +651,7 @@ export default function DealsPage() {
           </div>
         </div>
       </div>
+      </StaggerItem>
 
       {/* Create Deal Wizard Modal */}
       {isDrawerOpen && (
@@ -680,12 +667,12 @@ export default function DealsPage() {
 
       {/* Filter Panel */}
       {isFilterPanelOpen && (
-        <div ref={filterPanelRef} className="mb-6 p-5 bg-background border border-border rounded-lg shadow-lg">
+        <div ref={filterPanelRef} className="mb-6 p-5 fdx-card">
           <div className="flex items-center justify-between mb-5">
-            <h3 className="text-sm font-semibold text-foreground">Filter Deals</h3>
+            <h3 className="fdx-section-title">Filter Deals</h3>
             <button
               onClick={() => setIsFilterPanelOpen(false)}
-              className="text-muted-foreground hover:text-muted-foreground"
+              className="text-stone-500 hover:text-stone-900"
             >
               <X className="size-4" />
             </button>
@@ -694,7 +681,7 @@ export default function DealsPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-5">
             {/* Contract Status */}
             <div>
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Contract Status</h4>
+              <h4 className="fdx-label mb-3">Contract Status</h4>
               <div className="space-y-2">
                 {['Funding', 'Active', 'Due Diligence', 'Awaiting Docs', 'Closed'].map((status) => (
                   <div key={status} className="flex items-center gap-2">
@@ -703,7 +690,7 @@ export default function DealsPage() {
                       checked={filters.contractStatus.includes(status)}
                       onCheckedChange={() => toggleCheckboxFilter('contractStatus', status)}
                     />
-                    <label htmlFor={`status-${status}`} className="text-sm text-muted-foreground cursor-pointer">
+                    <label htmlFor={`status-${status}`} className="text-sm text-stone-500 cursor-pointer">
                       {status}
                     </label>
                   </div>
@@ -713,7 +700,7 @@ export default function DealsPage() {
 
             {/* Deal Type */}
             <div>
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Deal Type</h4>
+              <h4 className="fdx-label mb-3">Deal Type</h4>
               <div className="space-y-2">
                 {['Bridge Loan', 'Construction', 'Acquisition', 'Development', 'Refinance'].map((type) => (
                   <div key={type} className="flex items-center gap-2">
@@ -722,7 +709,7 @@ export default function DealsPage() {
                       checked={filters.dealType.includes(type)}
                       onCheckedChange={() => toggleCheckboxFilter('dealType', type)}
                     />
-                    <label htmlFor={`type-${type}`} className="text-sm text-muted-foreground cursor-pointer">
+                    <label htmlFor={`type-${type}`} className="text-sm text-stone-500 cursor-pointer">
                       {type}
                     </label>
                   </div>
@@ -732,15 +719,17 @@ export default function DealsPage() {
 
             {/* Location */}
             <div>
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Location</h4>
+              <h4 className="fdx-label mb-3">Location</h4>
               <div className="space-y-2">
                 <Input
+                  className="fdx-input"
                   placeholder="State (e.g., TX)"
                   maxLength={2}
                   value={filters.location.state}
                   onChange={(e) => setFilters({ ...filters, location: { ...filters.location, state: e.target.value.toUpperCase() } })}
                 />
                 <Input
+                  className="fdx-input"
                   placeholder="City"
                   value={filters.location.city}
                   onChange={(e) => setFilters({ ...filters, location: { ...filters.location, city: e.target.value } })}
@@ -752,9 +741,10 @@ export default function DealsPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             {/* Interest Rate Range */}
             <div>
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Interest Rate (%)</h4>
+              <h4 className="fdx-label mb-3">Interest Rate (%)</h4>
               <div className="space-y-2">
                 <Input
+                  className="fdx-input"
                   type="number"
                   placeholder="Min"
                   step="0.1"
@@ -762,6 +752,7 @@ export default function DealsPage() {
                   onChange={(e) => setFilters({ ...filters, interestRate: { ...filters.interestRate, min: e.target.value } })}
                 />
                 <Input
+                  className="fdx-input"
                   type="number"
                   placeholder="Max"
                   step="0.1"
@@ -773,15 +764,17 @@ export default function DealsPage() {
 
             {/* Capital Raised Range */}
             <div>
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Capital Raised ($)</h4>
+              <h4 className="fdx-label mb-3">Capital Raised ($)</h4>
               <div className="space-y-2">
                 <Input
+                  className="fdx-input"
                   type="number"
                   placeholder="Min"
                   value={filters.capitalRaised.min}
                   onChange={(e) => setFilters({ ...filters, capitalRaised: { ...filters.capitalRaised, min: e.target.value } })}
                 />
                 <Input
+                  className="fdx-input"
                   type="number"
                   placeholder="Max"
                   value={filters.capitalRaised.max}
@@ -791,11 +784,11 @@ export default function DealsPage() {
             </div>
           </div>
 
-          <div className="flex gap-3 justify-end mt-5 pt-5 border-t border-border">
-            <Button variant="outline" onClick={handleClearFilters}>
+          <div className="flex gap-3 justify-end mt-5 pt-5 border-t border-stone-100">
+            <Button variant="outline" onClick={handleClearFilters} className="fdx-btn-secondary">
               Clear Filters
             </Button>
-            <Button onClick={handleApplyFilters} className="bg-primary hover:bg-primary/90">
+            <Button onClick={handleApplyFilters} className="fdx-btn-primary">
               Apply Filters
             </Button>
           </div>
@@ -803,52 +796,53 @@ export default function DealsPage() {
       )}
 
       {/* Deals Table */}
-      <div className="bg-background rounded-lg shadow">
+      <StaggerItem>
+      <div className="fdx-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-border bg-muted">
-                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Deal ID</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Name</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Location</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Type</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Target / Raised</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Progress</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Rate</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Investors</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Close Date</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Milestone</th>
-                <th className="px-6 py-4 text-center text-xs font-semibold text-muted-foreground uppercase">Actions</th>
+              <tr className="fdx-table-header">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Deal ID</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Name</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Location</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Type</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Status</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Target / Raised</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Progress</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Rate</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Investors</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Close Date</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Milestone</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-stone-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredDeals.map((deal) => (
-                <tr key={deal.id} className="border-b border-border hover:bg-muted">
-                  <td className="px-6 py-4 text-sm font-medium text-foreground">{deal.deal_id}</td>
-                  <td className="px-6 py-4 text-sm text-foreground">{deal.name}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{deal.location}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{deal.type}</td>
+                <tr key={deal.id} className="fdx-table-row">
+                  <td className="px-6 py-4 text-sm font-medium text-stone-900">{deal.deal_id}</td>
+                  <td className="px-6 py-4 text-sm text-stone-900">{deal.name}</td>
+                  <td className="px-6 py-4 text-sm text-stone-500">{deal.location}</td>
+                  <td className="px-6 py-4 text-sm text-stone-500">{deal.type}</td>
                   <td className="px-6 py-4">
                     <Badge className={getStatusColor(deal.status)}>{deal.status}</Badge>
                   </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
+                  <td className="px-6 py-4 text-sm text-stone-500">
                     {formatCurrency(deal.target_amount)} / {formatCurrency(deal.raised_amount)}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-16 bg-muted rounded-full h-2 overflow-hidden">
+                      <div className="w-16 bg-stone-100 rounded-full h-2 overflow-hidden">
                         <div
-                          className="bg-primary h-2 rounded-full"
+                          className="bg-fundex-gold h-2 rounded-full"
                           style={{ width: `${Math.min(100, deal.progress)}%` }}
                         />
                       </div>
-                      <span className="text-sm font-medium text-muted-foreground">{deal.progress}%</span>
+                      <span className="text-sm font-medium text-stone-500">{deal.progress}%</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{deal.interest_rate}%</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{deal.investor_count}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{deal.close_date ? new Date(deal.close_date).toLocaleDateString() : 'N/A'}</td>
+                  <td className="px-6 py-4 text-sm text-stone-500">{deal.interest_rate}%</td>
+                  <td className="px-6 py-4 text-sm text-stone-500">{deal.investor_count}</td>
+                  <td className="px-6 py-4 text-sm text-stone-500">{deal.close_date ? new Date(deal.close_date).toLocaleDateString() : 'N/A'}</td>
                   <td className="px-6 py-4">
                     {deal.next_milestone && (
                       <Badge className={getMilestoneTypeColor(deal.milestone_type)}>
@@ -870,7 +864,7 @@ export default function DealsPage() {
                       </button>
                       <button
                         onClick={() => handleDeleteDeal(deal.id)}
-                        className="text-red-600 hover:text-red-800"
+                        className="fdx-btn-danger inline-flex p-1 rounded"
                         title="Delete deal"
                       >
                         <Trash2 className="size-4" />
@@ -885,10 +879,13 @@ export default function DealsPage() {
 
         {filteredDeals.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No deals found. Try adjusting your search or filters.</p>
+            <p className="text-stone-500">No deals found. Try adjusting your search or filters.</p>
           </div>
         )}
       </div>
+      </StaggerItem>
+
+      </StaggerContainer>
       </main>
     </>
   );

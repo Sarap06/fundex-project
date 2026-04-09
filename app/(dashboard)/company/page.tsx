@@ -1,192 +1,289 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { UserProfile, Company } from '@/lib/types';
-import { logOut } from '@/lib/auth';
-import { Broadcasts } from '@/components/broadcasts';
-import { Clock, TrendingUp, FileText, Briefcase } from 'lucide-react';
-import type { User } from '@supabase/supabase-js';
+import { Download, ChevronDown } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
+import { CompanyStatCard } from '@/components/company/stat-card';
+import { CapitalFlowChart } from '@/components/company/capital-flow-chart';
+import { CompanyOverview } from '@/components/company/company-overview';
+import { ActivityTable } from '@/components/company/activity-table';
+import { BroadcastPreview } from '@/components/company/broadcast-preview';
+import { formatCurrency } from '@/services/allocation-service';
+import type { Company } from '@/lib/types';
+
+interface DashboardStats {
+  totalAUM: number;
+  allocatedCapital: number;
+  monthlyInterest: number;
+  fundedAllocations: number;
+  pendingAllocations: number;
+  activeDeals: number;
+  totalDeals: number;
+  totalTarget: number;
+  totalRaised: number;
+  activeInvestors: number;
+  totalInvestors: number;
+  totalInvested: number;
+}
+
+interface FlowDataPoint {
+  month: string;
+  inflows: number;
+  outflows: number;
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 17) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
+function getTodayString(): string {
+  return new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+/** Full comma-separated display: $210,550 — not compact $0.21M */
+function displayCurrency(value: number): string {
+  return '$' + value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
 
 export default function CompanyDashboard() {
-  const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [flowData, setFlowData] = useState<FlowDataPoint[] | null>(null);
+  const [memberCount, setMemberCount] = useState(0);
+  const [firstName, setFirstName] = useState('');
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'home' | 'investors' | 'deals' | 'allocations' | 'documents' | 'broadcast'>('home');
 
   useEffect(() => {
-    loadData();
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        const headers: Record<string, string> = token
+          ? { Authorization: `Bearer ${token}` }
+          : {};
+
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!profile) return;
+        setFirstName(profile.full_name?.split(' ')[0] || '');
+
+        const { data: companyData } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', profile.company_id)
+          .single();
+
+        if (companyData) setCompany(companyData);
+
+        const { count } = await supabase
+          .from('user_profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', profile.company_id);
+
+        setMemberCount(count || 0);
+
+        const [statsRes, flowRes] = await Promise.all([
+          fetch('/api/company/dashboard-stats', { headers }),
+          fetch('/api/company/capital-flow?months=6', { headers }),
+        ]);
+
+        if (statsRes.ok) setStats(await statsRes.json());
+        if (flowRes.ok) {
+          const flowJson = await flowRes.json();
+          setFlowData(flowJson.data || []);
+        }
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  const loadData = async () => {
-    try {
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-
-      if (authError || !authUser) {
-        router.push('/auth/login');
-        return;
-      }
-
-      setUser(authUser);
-
-      const { data: userProfile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', authUser.id)
-        .single();
-
-      if (profileError || !userProfile) {
-        router.push('/auth/login');
-        return;
-      }
-
-      if (userProfile.role !== 'partner') {
-        router.push('/admin');
-        return;
-      }
-
-      setProfile(userProfile);
-
-      const { data: companyData } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('id', userProfile.company_id)
-        .single();
-
-      if (companyData) {
-        setCompany(companyData);
-      }
-
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading data:', error);
-      setLoading(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logOut();
-      router.push('/auth/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-muted flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-4xl mb-2"><Clock className="text-muted-foreground" size={32} /></div>
-          <p className="text-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <>
-      <header className="bg-primary sticky top-0 z-30 border-b border-primary/80">
-        <div className="px-8 py-5 flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-display font-bold text-white">Company Dashboard</h1>
-            <p className="text-xs text-white/60">{profile?.full_name}</p>
-          </div>
+    <StaggerContainer className="space-y-7 pb-12">
+
+      {/* ── Row 1: Greeting ── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          {loading ? (
+            <>
+              <Skeleton className="h-10 w-80" />
+              <Skeleton className="mt-2 h-4 w-56" />
+            </>
+          ) : (
+            <>
+              <h1 className="font-display text-[1.75rem] font-bold tracking-tight text-stone-900 md:text-[2rem]">
+                {getGreeting()}, {firstName}!
+              </h1>
+              <p className="mt-1 text-sm text-stone-400">
+                Today is {getTodayString()}
+              </p>
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
           <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-background/20 text-white px-4 py-2 rounded-lg hover:bg-background/30 transition font-medium"
+            type="button"
+            className="flex items-center gap-1.5 rounded-full border border-stone-200 px-4 py-2 text-sm font-normal text-stone-600 transition-colors hover:bg-stone-50"
           >
-            Logout
+            Last Month
+            <ChevronDown className="h-3.5 w-3.5 text-stone-400" />
+          </button>
+          <button
+            type="button"
+            className="flex items-center gap-1.5 rounded-full bg-fundex-gold px-5 py-2 text-sm font-semibold text-fundex-forest shadow-sm transition-colors hover:bg-fundex-gold/85"
+          >
+            <Download className="h-4 w-4" />
+            Export
           </button>
         </div>
-      </header>
+      </div>
 
-      <main className="px-8 py-8">
+      {/* ── Row 2: KPI Stats ── */}
+      <div>
+      {loading || !stats ? (
+        <div className="grid grid-cols-1 items-end gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="py-2">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="mt-3 h-12 w-44" />
+            <Skeleton className="mt-2 h-4 w-32" />
+          </div>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-stone-100 bg-white p-5 shadow-sm">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="mt-3 h-8 w-28" />
+              <Skeleton className="mt-2 h-4 w-full" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 items-end gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <CompanyStatCard
+            label="Total AUM"
+            value={displayCurrency(stats.totalAUM)}
+            change={stats.totalAUM > 0 ? `+${((stats.fundedAllocations / Math.max(stats.fundedAllocations + stats.pendingAllocations, 1)) * 100).toFixed(1)}%` : undefined}
+            changeLabel="from last month"
+            featured
+          />
+          <CompanyStatCard
+            label="Active Deals"
+            value={String(stats.activeDeals)}
+            sublabel="Growth Rate"
+            change={stats.activeDeals > 0 ? `+${((stats.activeDeals / Math.max(stats.totalDeals, 1)) * 100).toFixed(1)}%` : undefined}
+          />
+          <CompanyStatCard
+            label="Active Investors"
+            value={String(stats.activeInvestors)}
+            sublabel="Growth Rate"
+            change={stats.activeInvestors > 0 ? `+${((stats.activeInvestors / Math.max(stats.totalInvestors, 1)) * 100).toFixed(1)}%` : undefined}
+          />
+          <CompanyStatCard
+            label="Allocated Capital"
+            value={displayCurrency(stats.allocatedCapital)}
+            sublabel="Growth Rate"
+            change={stats.allocatedCapital > 0 ? `+${((stats.monthlyInterest / Math.max(stats.allocatedCapital, 1)) * 100).toFixed(1)}%` : undefined}
+          />
+        </div>
+      )}
+      </div>
 
-        {/* Home Tab */}
-        {activeTab === 'home' && (
-          <div className="bg-background rounded-lg shadow-lg p-8 border-t-4 border-primary">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Full Name</h3>
-                <p className="mt-1 text-lg text-foreground">{profile?.full_name}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Email</h3>
-                <p className="mt-1 text-lg text-foreground">{profile?.email}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Role</h3>
-                <p className="mt-1 text-lg text-foreground capitalize">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-primary/10 text-primary">
-                    {profile?.role}
-                  </span>
-                </p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Company</h3>
-                <p className="mt-1 text-lg text-foreground">{company?.name}</p>
+      {/* ── Row 3: Chart + Company Overview ── */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_380px]">
+        {loading || !flowData ? (
+          <div className="rounded-2xl border border-stone-100 bg-white p-7 shadow-sm">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="mt-4 h-9 w-36" />
+            <Skeleton className="mt-6 h-[280px] w-full rounded-lg" />
+          </div>
+        ) : (
+          <CapitalFlowChart data={flowData} />
+        )}
+
+        {loading || !company || !stats ? (
+          <div className="rounded-2xl border border-stone-100 bg-white shadow-sm">
+            <div className="p-6">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="mt-4 h-14 w-full rounded-xl" />
+              <Skeleton className="mx-auto mt-6 h-[160px] w-[180px] rounded-full" />
+            </div>
+            <div className="border-t border-stone-100 p-6">
+              <div className="grid grid-cols-2 gap-4">
+                <Skeleton className="h-14 w-full rounded-lg" />
+                <Skeleton className="h-14 w-full rounded-lg" />
               </div>
             </div>
-
-            <div className="mt-8 p-4 bg-fundex-cream/30 border border-primary/20 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                Welcome to Fundex! You have been approved as a <strong>Firm Partner</strong>. 
-                You can now access all partnership features and collaborate with other team members.
-              </p>
-            </div>
           </div>
-        )}
-
-        {/* Investors Tab - Coming Soon */}
-        {activeTab === 'investors' && (
-          <div className="bg-background rounded-lg shadow p-12 text-center">
-            <div className="flex justify-center mb-4"><FileText className="text-muted-foreground" size={64} /></div>
-            <h2 className="text-2xl font-display font-bold text-foreground mb-2">Investors</h2>
-            <p className="text-foreground">Coming soon...</p>
-          </div>
-        )}
-
-        {/* Deals Tab - Coming Soon */}
-        {activeTab === 'deals' && (
-          <div className="bg-background rounded-lg shadow p-12 text-center">
-            <div className="flex justify-center mb-4"><Briefcase className="text-muted-foreground" size={64} /></div>
-            <h2 className="text-2xl font-display font-bold text-foreground mb-2">Deals</h2>
-            <p className="text-foreground">Coming soon...</p>
-          </div>
-        )}
-
-        {/* Allocations Tab - Coming Soon */}
-        {activeTab === 'allocations' && (
-          <div className="bg-background rounded-lg shadow p-12 text-center">
-            <div className="flex justify-center mb-4"><FileText className="text-muted-foreground" size={64} /></div>
-            <h2 className="text-2xl font-display font-bold text-foreground mb-2">Allocations</h2>
-            <p className="text-foreground">Coming soon...</p>
-          </div>
-        )}
-
-        {/* Documents Tab - Coming Soon */}
-        {activeTab === 'documents' && (
-          <div className="bg-background rounded-lg shadow p-12 text-center">
-            <div className="flex justify-center mb-4"><Briefcase className="text-muted-foreground" size={64} /></div>
-            <h2 className="text-2xl font-display font-bold text-foreground mb-2">Documents</h2>
-            <p className="text-foreground">Coming soon...</p>
-          </div>
-        )}
-
-        {/* Broadcast Tab - View Only for Non-Admins */}
-        {activeTab === 'broadcast' && (
-          <Broadcasts 
-            companyId={company?.id || ''}
-            userRole={profile?.role}
-            userName={profile?.full_name}
-            userId={user?.id}
+        ) : (
+          <CompanyOverview
+            company={company}
+            stats={stats}
+            memberCount={memberCount}
           />
         )}
-      </main>
-    </>
+      </div>
+
+      {/* ── Row 4: Activity Table + Broadcasts ── */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_380px]">
+        {company ? (
+          <ActivityTable companyId={company.id} />
+        ) : (
+          <div className="rounded-2xl border border-stone-100 bg-white shadow-sm">
+            <div className="border-b border-stone-100 px-6 py-5">
+              <Skeleton className="h-5 w-36" />
+            </div>
+            <div className="space-y-0 px-6">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 border-b border-stone-50 py-4">
+                  <Skeleton className="h-4 w-4 rounded" />
+                  <Skeleton className="h-9 w-9 rounded-lg" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {company ? (
+          <BroadcastPreview companyId={company.id} />
+        ) : (
+          <div className="rounded-2xl border border-stone-100 bg-white shadow-sm">
+            <div className="border-b border-stone-100 px-6 py-5">
+              <Skeleton className="h-5 w-28" />
+            </div>
+            <div className="space-y-1 px-6 py-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-start gap-3 py-3">
+                  <Skeleton className="h-9 w-9 rounded-lg" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </StaggerContainer>
   );
 }

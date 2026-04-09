@@ -23,15 +23,15 @@ type SummaryCardProps = {
 
 function SummaryCard({ icon, title, value, sublabel }: SummaryCardProps) {
   return (
-    <div className="flex h-full min-w-0 flex-col rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm">
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+    <div className="flex h-full min-w-0 flex-col rounded-xl border border-stone-100 bg-white p-5 shadow-sm">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest">
         {icon}
       </div>
-      <p className="text-sm font-medium text-slate-500">{title}</p>
-      <p className="mt-2 text-xl font-bold tabular-nums tracking-tight text-slate-900 whitespace-nowrap sm:text-2xl">
+      <p className="text-sm font-medium text-stone-500">{title}</p>
+      <p className="mt-2 text-xl font-semibold tabular-nums tracking-tight text-stone-900 whitespace-nowrap sm:text-2xl">
         {value}
       </p>
-      {sublabel ? <p className="mt-1 text-sm text-slate-500">{sublabel}</p> : null}
+      {sublabel ? <p className="mt-1 text-sm text-stone-500">{sublabel}</p> : null}
     </div>
   );
 }
@@ -45,9 +45,9 @@ type DetailCardProps = {
 function DetailCard({ title, children, className }: DetailCardProps) {
   return (
     <div
-      className={`rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm md:p-6 ${className ?? ""}`}
+      className={`rounded-xl border border-stone-100 bg-white p-5 shadow-sm md:p-6 ${className ?? ""}`}
     >
-      <h3 className="text-sm font-bold text-slate-900">{title}</h3>
+      <h3 className="text-sm font-semibold text-stone-900">{title}</h3>
       <div className="mt-4">{children}</div>
     </div>
   );
@@ -61,10 +61,10 @@ type MetricMiniCardProps = {
 
 function MetricMiniCard({ label, value, subtext }: MetricMiniCardProps) {
   return (
-    <div className="rounded-xl border border-emerald-100/80 bg-white/90 p-4 shadow-sm">
-      <p className="text-xs font-medium text-slate-500">{label}</p>
-      <p className="mt-2 text-lg font-bold tabular-nums text-slate-900 md:text-xl">{value}</p>
-      <p className="mt-1 text-xs text-slate-500">{subtext}</p>
+    <div className="rounded-xl border border-stone-100 bg-white/90 p-4 shadow-sm">
+      <p className="text-xs font-medium text-stone-500">{label}</p>
+      <p className="mt-2 text-lg font-semibold tabular-nums text-stone-900 md:text-xl">{value}</p>
+      <p className="mt-1 text-xs text-stone-500">{subtext}</p>
     </div>
   );
 }
@@ -79,17 +79,17 @@ type PaymentScheduleItemProps = {
 
 function PaymentScheduleItem({ icon, title, date, amount, status }: PaymentScheduleItemProps) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-emerald-100/60 bg-emerald-50/50 px-4 py-3 shadow-sm">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100/80 text-emerald-700">
+    <div className="flex items-center gap-3 rounded-xl border border-stone-100 bg-fundex-gold/5 px-4 py-3 shadow-sm">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest">
         {icon}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-slate-900">{title}</p>
-        <p className="text-xs text-slate-500">{date}</p>
+        <p className="text-sm font-semibold text-stone-900">{title}</p>
+        <p className="text-xs text-stone-500">{date}</p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
-        <span className="text-sm font-semibold tabular-nums text-slate-900">{amount}</span>
-        <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+        <span className="text-sm font-semibold tabular-nums text-stone-900">{amount}</span>
+        <span className="inline-flex rounded-full bg-fundex-gold/10 px-2.5 py-0.5 text-xs font-semibold text-fundex-forest">
           {status}
         </span>
       </div>
@@ -128,7 +128,7 @@ function InvestmentDetailsDrawer({ open, onClose }: InvestmentDetailsDrawerProps
   return (
     <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-labelledby="investment-drawer-title">
       <div
-        className={`absolute inset-0 bg-slate-900/40 transition-opacity duration-300 ease-out ${
+        className={`absolute inset-0 bg-stone-900/40 backdrop-blur-sm transition-opacity duration-300 ease-out ${
           panelEntered ? "opacity-100" : "opacity-0"
         }`}
         aria-hidden
@@ -140,7 +140,7 @@ function InvestmentDetailsDrawer({ open, onClose }: InvestmentDetailsDrawerProps
         }`}
       >
         <div className="flex h-full w-full flex-col bg-white">
-          <div className="relative shrink-0 bg-gradient-to-br from-emerald-600 via-emerald-500 to-emerald-600 px-6 py-6 text-white shadow-md md:px-8 md:py-7">
+          <div className="relative shrink-0 bg-gradient-to-br from-fundex-forest to-fundex-green px-6 py-6 text-white shadow-md md:px-8 md:py-7">
             <button
               type="button"
               onClick={onClose}
@@ -149,30 +149,30 @@ function InvestmentDetailsDrawer({ open, onClose }: InvestmentDetailsDrawerProps
             >
               <X className="h-5 w-5" />
             </button>
-            <h2 id="investment-drawer-title" className="pr-12 text-xl font-bold tracking-tight md:text-2xl">
+            <h2 id="investment-drawer-title" className="pr-12 text-xl font-semibold tracking-tight md:text-2xl">
               Downtown Commercial Plaza
             </h2>
-            <p className="mt-1.5 text-sm font-medium text-emerald-50/95">Investment ID: INV-001</p>
+            <p className="mt-1.5 text-sm font-medium text-white/80">Investment ID: INV-001</p>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-7">
             <div className="space-y-6">
               <DetailCard title="Deal Overview">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
-                    <p className="text-xs font-medium text-slate-500">Contract Size</p>
-                    <p className="mt-2 text-lg font-bold tabular-nums text-slate-900">$500,000</p>
-                    <p className="mt-1 text-xs text-slate-500">Total deal value</p>
+                  <div className="rounded-xl border border-stone-100 bg-stone-50/60 p-4">
+                    <p className="text-xs font-medium text-stone-500">Contract Size</p>
+                    <p className="mt-2 text-lg font-semibold tabular-nums text-stone-900">$500,000</p>
+                    <p className="mt-1 text-xs text-stone-500">Total deal value</p>
                   </div>
-                  <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
-                    <p className="text-xs font-medium text-slate-500">Your Investment</p>
-                    <p className="mt-2 text-lg font-bold tabular-nums text-emerald-600">$250,000</p>
-                    <p className="mt-1 text-xs text-slate-500">Your allocated capital</p>
+                  <div className="rounded-xl border border-stone-100 bg-stone-50/60 p-4">
+                    <p className="text-xs font-medium text-stone-500">Your Investment</p>
+                    <p className="mt-2 text-lg font-semibold tabular-nums text-fundex-forest">$250,000</p>
+                    <p className="mt-1 text-xs text-stone-500">Your allocated capital</p>
                   </div>
-                  <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
-                    <p className="text-xs font-medium text-slate-500">Your Ownership</p>
-                    <p className="mt-2 text-lg font-bold tabular-nums text-slate-900">50.0%</p>
-                    <p className="mt-1 text-xs text-slate-500">Of total contract</p>
+                  <div className="rounded-xl border border-stone-100 bg-stone-50/60 p-4">
+                    <p className="text-xs font-medium text-stone-500">Your Ownership</p>
+                    <p className="mt-2 text-lg font-semibold tabular-nums text-stone-900">50.0%</p>
+                    <p className="mt-1 text-xs text-stone-500">Of total contract</p>
                   </div>
                 </div>
               </DetailCard>
@@ -181,55 +181,55 @@ function InvestmentDetailsDrawer({ open, onClose }: InvestmentDetailsDrawerProps
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div>
-                      <p className="text-xs font-medium text-slate-500">Asset Type</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-900">Residential Property</p>
+                      <p className="text-xs font-medium text-stone-500">Asset Type</p>
+                      <p className="mt-1 text-sm font-semibold text-stone-900">Residential Property</p>
                     </div>
                     <div className="md:col-span-2">
-                      <p className="text-xs font-medium text-slate-500">Description</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-900">4-bedroom house in Miami, FL</p>
+                      <p className="text-xs font-medium text-stone-500">Description</p>
+                      <p className="mt-1 text-sm font-semibold text-stone-900">4-bedroom house in Miami, FL</p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-slate-500">Estimated Value</p>
-                      <p className="mt-1 text-sm font-semibold tabular-nums text-slate-900">$666,667</p>
+                      <p className="text-xs font-medium text-stone-500">Estimated Value</p>
+                      <p className="mt-1 text-sm font-semibold tabular-nums text-stone-900">$666,667</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3">
+                  <div className="flex items-center justify-between rounded-xl border border-stone-100 bg-stone-50/60 px-4 py-3">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">Loan-to-Value Ratio</p>
-                      <p className="text-xs text-slate-500">LTV</p>
+                      <p className="text-sm font-semibold text-stone-900">Loan-to-Value Ratio</p>
+                      <p className="text-xs text-stone-500">LTV</p>
                     </div>
-                    <p className="text-xl font-bold tabular-nums text-slate-900">75%</p>
+                    <p className="text-xl font-semibold tabular-nums text-stone-900">75%</p>
                   </div>
                 </div>
               </DetailCard>
 
               <DetailCard title="Investment Details">
                 <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="flex justify-between gap-4 border-b border-slate-100 py-2 sm:block sm:border-0 sm:py-0">
-                    <dt className="text-sm text-slate-500">Status</dt>
-                    <dd className="text-sm font-semibold text-slate-900">
-                      <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                  <div className="flex justify-between gap-4 border-b border-stone-100 py-2 sm:block sm:border-0 sm:py-0">
+                    <dt className="text-sm text-stone-500">Status</dt>
+                    <dd className="text-sm font-semibold text-stone-900">
+                      <span className="inline-flex rounded-full bg-fundex-gold/10 px-2.5 py-0.5 text-xs font-semibold text-fundex-forest">
                         Active
                       </span>
                     </dd>
                   </div>
-                  <div className="flex justify-between gap-4 border-b border-slate-100 py-2 sm:block sm:border-0 sm:py-0">
-                    <dt className="text-sm text-slate-500">Interest Rate</dt>
-                    <dd className="text-sm font-semibold tabular-nums text-slate-900">10%</dd>
+                  <div className="flex justify-between gap-4 border-b border-stone-100 py-2 sm:block sm:border-0 sm:py-0">
+                    <dt className="text-sm text-stone-500">Interest Rate</dt>
+                    <dd className="text-sm font-semibold tabular-nums text-stone-900">10%</dd>
                   </div>
-                  <div className="flex justify-between gap-4 border-b border-slate-100 py-2 sm:block sm:border-0 sm:py-0">
-                    <dt className="text-sm text-slate-500">Start Date</dt>
-                    <dd className="text-sm font-semibold text-slate-900">Jan 1, 2026</dd>
+                  <div className="flex justify-between gap-4 border-b border-stone-100 py-2 sm:block sm:border-0 sm:py-0">
+                    <dt className="text-sm text-stone-500">Start Date</dt>
+                    <dd className="text-sm font-semibold text-stone-900">Jan 1, 2026</dd>
                   </div>
                   <div className="flex justify-between gap-4 py-2 sm:block sm:py-0">
-                    <dt className="text-sm text-slate-500">Maturity Date</dt>
-                    <dd className="text-sm font-semibold text-slate-900">Dec 31, 2027</dd>
+                    <dt className="text-sm text-stone-500">Maturity Date</dt>
+                    <dd className="text-sm font-semibold text-stone-900">Dec 31, 2027</dd>
                   </div>
                 </dl>
               </DetailCard>
 
-              <div className="rounded-2xl border border-emerald-100/90 bg-emerald-50/40 p-5 shadow-sm md:p-6">
-                <h3 className="text-sm font-bold text-slate-900">Financial Details</h3>
+              <div className="rounded-2xl border border-stone-100 bg-fundex-gold/5 p-5 shadow-sm md:p-6">
+                <h3 className="text-sm font-semibold text-stone-900">Financial Details</h3>
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <MetricMiniCard label="Interest Rate" value="10%" subtext="Annual rate" />
                   <MetricMiniCard label="Monthly Interest" value="$2,083" subtext="Per month" />
@@ -237,21 +237,21 @@ function InvestmentDetailsDrawer({ open, onClose }: InvestmentDetailsDrawerProps
                   <MetricMiniCard label="Interest Earned to Date" value="$16,664" subtext="33% earned" />
                 </div>
 
-                <div className="mt-6 rounded-xl border border-emerald-100/80 bg-white/70 p-4 shadow-sm">
+                <div className="mt-6 rounded-xl border border-stone-100 bg-white/70 p-4 shadow-sm">
                   <div className="mb-3 flex items-start justify-between gap-2">
-                    <p className="text-sm font-bold text-slate-900">Payment Progress</p>
-                    <p className="text-sm font-semibold tabular-nums text-slate-600">
+                    <p className="text-sm font-semibold text-stone-900">Payment Progress</p>
+                    <p className="text-sm font-semibold tabular-nums text-stone-600">
                       {paymentsDone} / {paymentsTotal} payments
                     </p>
                   </div>
-                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200/80">
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-stone-200/80">
                     <div
-                      className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                      className="h-full rounded-full bg-fundex-gold transition-all duration-300"
                       style={{ width: `${progressPct}%` }}
                     />
                   </div>
-                  <div className="mt-2 flex justify-between text-xs text-slate-500">
-                    <span className="font-medium tabular-nums text-slate-600">$16,664 earned</span>
+                  <div className="mt-2 flex justify-between text-xs text-stone-500">
+                    <span className="font-medium tabular-nums text-stone-600">$16,664 earned</span>
                     <span>16 payments remaining</span>
                   </div>
                 </div>
@@ -363,34 +363,34 @@ const INVESTMENT_ROWS: InvestmentRow[] = [
 
 function InvestmentsTable({ onViewClick }: { onViewClick: () => void }) {
   return (
-    <section className="rounded-xl border border-slate-200/90 bg-white p-6 shadow-sm md:p-7">
-      <h2 className="text-lg font-bold text-slate-900">All Investments</h2>
+    <section className="rounded-xl border border-stone-100 bg-white p-6 shadow-sm md:p-7">
+      <h2 className="text-lg font-semibold text-stone-900">All Investments</h2>
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
           <input
             type="search"
             placeholder="Search by deal name..."
-            className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            className="w-full rounded-lg border border-stone-200 bg-white py-2.5 pl-9 pr-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-sm outline-none focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest"
           />
         </div>
         <div className="relative w-full sm:w-44">
           <select
             aria-label="Filter by status"
-            className="w-full appearance-none rounded-lg border border-slate-200 bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            className="w-full appearance-none rounded-lg border border-stone-200 bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-stone-700 shadow-sm outline-none focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest"
             defaultValue="all"
           >
             <option value="all">All Status</option>
           </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-lg border border-slate-100">
+      <div className="mt-6 overflow-x-auto rounded-lg border border-stone-50">
         <table className="w-full min-w-[920px] text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/80 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-stone-50 bg-transparent text-xs font-semibold uppercase tracking-wide text-stone-400">
               <th className="whitespace-nowrap px-4 py-3">Deal Name</th>
               <th className="whitespace-nowrap px-4 py-3">Contract Size</th>
               <th className="whitespace-nowrap px-4 py-3">Your Investment</th>
@@ -400,32 +400,32 @@ function InvestmentsTable({ onViewClick }: { onViewClick: () => void }) {
               <th className="whitespace-nowrap px-4 py-3 text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-stone-50">
             {INVESTMENT_ROWS.map((row) => (
-              <tr key={row.dealId} className="bg-white hover:bg-slate-50/50">
+              <tr key={row.dealId} className="bg-white hover:bg-stone-50/50">
                 <td className="px-4 py-4">
-                  <p className="font-semibold text-slate-900">{row.dealName}</p>
-                  <p className="text-xs text-slate-500">{row.dealId}</p>
+                  <p className="font-semibold text-stone-900">{row.dealName}</p>
+                  <p className="text-xs text-stone-500">{row.dealId}</p>
                 </td>
-                <td className="whitespace-nowrap px-4 py-4 tabular-nums text-slate-700">{row.contractSize}</td>
+                <td className="whitespace-nowrap px-4 py-4 tabular-nums text-stone-700">{row.contractSize}</td>
                 <td className="whitespace-nowrap px-4 py-4">
-                  <span className="font-semibold tabular-nums text-emerald-600">{row.yourInvestment}</span>
+                  <span className="font-semibold tabular-nums text-fundex-forest">{row.yourInvestment}</span>
                 </td>
-                <td className="whitespace-nowrap px-4 py-4 tabular-nums text-slate-700">{row.ownershipPct}</td>
+                <td className="whitespace-nowrap px-4 py-4 tabular-nums text-stone-700">{row.ownershipPct}</td>
                 <td className="whitespace-nowrap px-4 py-4">
-                  <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                  <span className="inline-flex rounded-full bg-fundex-gold/10 px-2.5 py-0.5 text-xs font-semibold text-fundex-forest">
                     {row.status}
                   </span>
                 </td>
                 <td className="px-4 py-4">
-                  <p className="font-medium tabular-nums text-slate-900">{row.monthlyInterest}</p>
-                  <p className="text-xs text-slate-500">{row.apr}</p>
+                  <p className="font-medium tabular-nums text-stone-900">{row.monthlyInterest}</p>
+                  <p className="text-xs text-stone-500">{row.apr}</p>
                 </td>
                 <td className="whitespace-nowrap px-4 py-4 text-right">
                   <button
                     type="button"
                     onClick={onViewClick}
-                    className="rounded-lg bg-emerald-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-600"
+                    className="rounded-lg bg-fundex-gold px-4 py-2 text-xs font-semibold text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90"
                   >
                     View
                   </button>
@@ -498,60 +498,60 @@ function MaturingTable() {
   }, [selectedMaturityFilter]);
 
   return (
-    <section className="rounded-xl border border-slate-200/90 bg-white p-6 shadow-sm md:p-7">
-      <h2 className="text-lg font-bold text-slate-900">Maturing Positions — Action Required</h2>
+    <section className="rounded-xl border border-stone-100 bg-white p-6 shadow-sm md:p-7">
+      <h2 className="text-lg font-semibold text-stone-900">Maturing Positions — Action Required</h2>
 
       <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="grid w-full gap-4 sm:grid-cols-3 lg:max-w-3xl">
-          <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Capital Maturing</p>
-            <p className="mt-2 text-xl font-bold tabular-nums text-slate-900">$450,000</p>
+          <div className="rounded-xl border border-stone-100 bg-fundex-gold/10 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-fundex-forest">Total Capital Maturing</p>
+            <p className="mt-2 text-xl font-semibold tabular-nums text-stone-900">$450,000</p>
           </div>
-          <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Number of Positions</p>
-            <p className="mt-2 text-xl font-bold tabular-nums text-slate-900">3</p>
+          <div className="rounded-xl border border-stone-100 bg-fundex-gold/10 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-fundex-forest">Number of Positions</p>
+            <p className="mt-2 text-xl font-semibold tabular-nums text-stone-900">3</p>
           </div>
-          <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Next Maturity</p>
-            <p className="mt-2 text-xl font-bold tabular-nums text-slate-900">Aug 15, 2026</p>
+          <div className="rounded-xl border border-stone-100 bg-fundex-gold/10 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-fundex-forest">Next Maturity</p>
+            <p className="mt-2 text-xl font-semibold tabular-nums text-stone-900">Aug 15, 2026</p>
           </div>
         </div>
 
         <div className="flex w-full flex-shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:w-auto lg:flex-col lg:items-stretch xl:flex-row xl:items-center">
           <div className="relative w-full min-w-[10.5rem] sm:w-44">
-            <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
             <select
               aria-label="Filter maturing positions by timeframe"
               value={selectedMaturityFilter}
               onChange={(e) => setSelectedMaturityFilter(e.target.value as MaturityFilterValue)}
-              className="w-full appearance-none rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-9 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+              className="w-full appearance-none rounded-lg border border-stone-200 bg-white py-2.5 pl-9 pr-9 text-sm font-medium text-stone-700 shadow-sm outline-none focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest"
             >
               <option value="all">All</option>
               <option value="30">Next 30 Days</option>
               <option value="60">Next 60 Days</option>
               <option value="90">Next 90 Days</option>
             </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
           </div>
           <button
             type="button"
-            className="rounded-lg bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600"
+            className="rounded-lg bg-fundex-forest px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-fundex-green"
           >
             Reinvest All
           </button>
           <button
             type="button"
-            className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="rounded-lg border border-fundex-gold/30 bg-white px-5 py-2.5 text-sm font-semibold text-fundex-forest shadow-sm transition hover:bg-stone-50"
           >
             Withdraw All
           </button>
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-lg border border-slate-100">
+      <div className="mt-6 overflow-x-auto rounded-lg border border-stone-50">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/80 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-stone-50 bg-transparent text-xs font-semibold uppercase tracking-wide text-stone-400">
               <th className="whitespace-nowrap px-4 py-3">Deal Name</th>
               <th className="whitespace-nowrap px-4 py-3">Amount</th>
               <th className="whitespace-nowrap px-4 py-3">Maturity Date</th>
@@ -559,17 +559,17 @@ function MaturingTable() {
               <th className="whitespace-nowrap px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-stone-50">
             {filteredMaturingRows.map((row) => (
-              <tr key={row.dealId} className="bg-white hover:bg-slate-50/50">
+              <tr key={row.dealId} className="bg-white hover:bg-stone-50/50">
                 <td className="px-4 py-4">
-                  <p className="font-semibold text-slate-900">{row.dealName}</p>
-                  <p className="text-xs text-slate-500">{row.dealId}</p>
+                  <p className="font-semibold text-stone-900">{row.dealName}</p>
+                  <p className="text-xs text-stone-500">{row.dealId}</p>
                 </td>
                 <td className="whitespace-nowrap px-4 py-4">
-                  <span className="font-semibold tabular-nums text-emerald-600">{row.amount}</span>
+                  <span className="font-semibold tabular-nums text-fundex-forest">{row.amount}</span>
                 </td>
-                <td className="whitespace-nowrap px-4 py-4 tabular-nums text-slate-700">{row.maturityDate}</td>
+                <td className="whitespace-nowrap px-4 py-4 tabular-nums text-stone-700">{row.maturityDate}</td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
                     {row.status}
@@ -579,13 +579,13 @@ function MaturingTable() {
                   <div className="flex flex-wrap justify-end gap-2">
                     <button
                       type="button"
-                      className="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-600"
+                      className="rounded-lg bg-fundex-forest px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-fundex-green"
                     >
                       Reinvest
                     </button>
                     <button
                       type="button"
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                      className="rounded-lg border border-fundex-gold/30 bg-white px-3 py-1.5 text-xs font-semibold text-fundex-forest shadow-sm transition hover:bg-stone-50"
                     >
                       Withdraw
                     </button>
@@ -606,9 +606,9 @@ export default function MyInvestmentsPage() {
   return (
     <>
       <div className="mx-auto w-full max-w-screen-2xl space-y-8 pb-10">
-          <header className="rounded-xl border border-emerald-100/80 bg-gradient-to-br from-emerald-600 via-emerald-500 to-green-500 px-7 py-8 text-white shadow-sm shadow-emerald-600/15 md:px-9 md:py-9">
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">My Investments</h1>
-            <p className="mt-2 max-w-2xl text-base font-medium text-emerald-50/95">
+          <header className="rounded-xl border border-fundex-green/20 bg-gradient-to-br from-fundex-forest via-fundex-green to-fundex-forest px-7 py-8 text-white shadow-sm shadow-fundex-forest/15 md:px-9 md:py-9">
+            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">My Investments</h1>
+            <p className="mt-2 max-w-2xl text-base font-medium text-white/80">
               Track and manage all your investment positions
             </p>
           </header>

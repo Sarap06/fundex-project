@@ -77,17 +77,17 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900 text-center">
+      <h1 className="text-2xl font-semibold tracking-tight text-stone-900 text-center">
         Complete your account
       </h1>
-      <p className="mt-2 text-sm text-slate-500 text-center">
+      <p className="mt-2 text-sm text-stone-500 text-center">
         Just a few details to get you started
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
+      <form onSubmit={handleSubmit} className="mt-8 rounded-2xl border border-stone-100 bg-white p-6 shadow-sm space-y-5">
         {/* Email — auto-filled, read-only */}
         <div>
-          <label htmlFor="investor-email" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="investor-email" className="block text-sm font-medium text-stone-700">
             Email Address <span className="text-red-500">*</span>
           </label>
           <input
@@ -95,20 +95,20 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
             type="email"
             value={email}
             readOnly
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-600 shadow-sm outline-none cursor-not-allowed"
+            className="mt-1.5 w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-sm text-stone-600 shadow-sm outline-none cursor-not-allowed"
           />
         </div>
 
         {/* Phone Number — required */}
         <div>
-          <label htmlFor="investor-phone" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="investor-phone" className="block text-sm font-medium text-stone-700">
             Phone Number <span className="text-red-500">*</span>
           </label>
           <div className="mt-1.5 flex gap-2">
             <select
               value={countryCode}
               onChange={(e) => setCountryCode(e.target.value)}
-              className="w-20 rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-sm text-slate-700 shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+              className="w-20 rounded-xl border border-stone-200 bg-white px-2 py-2.5 text-sm text-stone-700 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
             >
               <option value="+1">+1</option>
               <option value="+44">+44</option>
@@ -122,21 +122,21 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="(555) 000-0000"
-              className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+              className="flex-1 rounded-xl border border-stone-200 px-4 py-2.5 text-sm text-stone-900 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
             />
           </div>
         </div>
 
         {/* Region — required */}
         <div>
-          <label htmlFor="investor-region" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="investor-region" className="block text-sm font-medium text-stone-700">
             Region <span className="text-red-500">*</span>
           </label>
           <select
             id="investor-region"
             value={region}
             onChange={(e) => setRegion(e.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            className="mt-1.5 w-full rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-700 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
           >
             <option value="">Select your region</option>
             {REGIONS.map((r) => (
@@ -147,14 +147,14 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
 
         {/* Secondary Phone — optional */}
         <div>
-          <label htmlFor="investor-phone2" className="block text-sm font-medium text-slate-700">
-            Secondary Phone Number <span className="text-slate-400 font-normal">(Optional)</span>
+          <label htmlFor="investor-phone2" className="block text-sm font-medium text-stone-700">
+            Secondary Phone Number <span className="text-stone-400 font-normal">(Optional)</span>
           </label>
           <div className="mt-1.5 flex gap-2">
             <select
               value={secondCountryCode}
               onChange={(e) => setSecondCountryCode(e.target.value)}
-              className="w-20 rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-sm text-slate-700 shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+              className="w-20 rounded-xl border border-stone-200 bg-white px-2 py-2.5 text-sm text-stone-700 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
             >
               <option value="+1">+1</option>
               <option value="+44">+44</option>
@@ -168,7 +168,7 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
               value={secondPhoneNumber}
               onChange={(e) => setSecondPhoneNumber(e.target.value)}
               placeholder="(555) 000-0000"
-              className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+              className="flex-1 rounded-xl border border-stone-200 px-4 py-2.5 text-sm text-stone-900 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
             />
           </div>
         </div>
@@ -180,7 +180,7 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-xl bg-fundex-forest py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-fundex-green disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? 'Submitting...' : 'Continue'}
         </button>
@@ -189,7 +189,7 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
       <button
         type="button"
         onClick={onBack}
-        className="mt-4 flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-700 mx-auto"
+        className="mt-4 flex items-center gap-1.5 text-sm text-stone-500 transition hover:text-stone-700 mx-auto"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Back

@@ -47,13 +47,23 @@ export default function DashboardLayout({
     }
   };
 
-  // Investor has its own nested layout with a different sidebar
-  if (pathname.startsWith('/investor')) {
+  // Investor and Company have their own layouts (no sidebar)
+  if (pathname.startsWith('/investor') || pathname.startsWith('/company')) {
     return <>{children}</>;
   }
 
   return (
-    <>
+    <div className="relative min-h-screen bg-white font-sans">
+      {/* Warm radial gradient glow */}
+      <div
+        className="fdx-page-glow-tr"
+        style={{ background: 'radial-gradient(ellipse at 85% 15%, rgba(192,184,122,0.13) 0%, rgba(242,227,187,0.08) 40%, transparent 70%)' }}
+      />
+      <div
+        className="fdx-page-glow-bl"
+        style={{ background: 'radial-gradient(ellipse at 15% 80%, rgba(192,184,122,0.06) 0%, transparent 60%)' }}
+      />
+
       <DashboardNav
         activeTab={activeTab}
         onTabChange={handleTabChange}
@@ -61,12 +71,12 @@ export default function DashboardLayout({
         onExpandChange={setIsSidebarExpanded}
       />
       <div
-        className={`min-h-screen bg-muted transition-all duration-300 ${
+        className={`relative z-10 min-h-screen transition-all duration-300 ${
           isSidebarExpanded ? 'ml-64' : 'ml-20'
         }`}
       >
         {children}
       </div>
-    </>
+    </div>
   );
 }

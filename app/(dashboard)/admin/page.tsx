@@ -6,6 +6,9 @@ import { supabase } from '@/lib/supabase';
 import { UserProfile, Company } from '@/lib/types';
 import { logOut } from '@/lib/auth';
 import { ActivityIcon } from '@/components/activity-icon';
+import { PageHeader } from '@/components/page-header';
+import { Skeleton } from '@/components/ui/skeleton';
+import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
 import { Clock, TrendingUp, Users, Target, DollarSign, Plus, LogOut, FileText, Briefcase, Mail, Copy, Check, Edit2, X } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
@@ -579,12 +582,12 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-muted flex items-center justify-center">
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Clock className="animate-spin text-muted-foreground" size={32} />
-            <p className="text-lg text-foreground">Loading dashboard...</p>
-          </div>
+      <div className="px-6 py-6 md:px-8 md:py-8 space-y-6">
+        <Skeleton className="h-9 w-64" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="fdx-card p-5"><Skeleton className="h-4 w-20" /><Skeleton className="mt-3 h-8 w-28" /></div>
+          ))}
         </div>
       </div>
     );
@@ -592,119 +595,107 @@ export default function AdminDashboard() {
 
   return (
     <>
-      {/* Header */}
-      <header className="bg-primary sticky top-0 z-30 border-b border-primary/80">
-        <div className="px-8 py-5 flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-display font-bold text-white">Dashboard</h1>
-            {profile && <p className="text-xs text-white/60">Welcome back, {profile.full_name?.split(' ')[0]}</p>}
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-background/20 text-white px-4 py-2 rounded-lg hover:bg-background/30 transition font-medium"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
-        </div>
-      </header>
-
-      <main className="px-8 py-8">
+      <main className="px-6 py-6 md:px-8 md:py-8">
+        <PageHeader title="Dashboard" subtitle={`Welcome back, ${profile?.full_name?.split(' ')[0]}`} />
         {/* Main Dashboard */}
-          <div className="space-y-6 pt-6">
+        <StaggerContainer className="space-y-6">
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StaggerItem>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               {Object.values(stats).map((stat) => (
-                <div key={stat.label} className="bg-background rounded-lg p-6 shadow-sm border border-border hover:shadow-md transition">
+                <div key={stat.label} className="fdx-card relative overflow-hidden p-5">
+                  <div className="fdx-card-glow" />
                   <div className="flex justify-between items-start mb-4">
-                    <div className="p-3 rounded-lg" style={{ backgroundColor: stat.bgColor }}>
-                      <div style={{ color: stat.color }}>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-stone-50 text-stone-500">
                         {stat.icon}
-                      </div>
                     </div>
                   </div>
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{stat.label}</h3>
-                  <p className="text-2xl font-display font-bold text-foreground">{stat.value}</p>
+                  <h3 className="fdx-label">{stat.label}</h3>
+                  <p className="fdx-value mt-2 font-display">{stat.value}</p>
                 </div>
               ))}
             </div>
+            </StaggerItem>
 
             {/* Quick Actions */}
-            <div className="bg-background rounded-lg shadow-sm p-6 border border-border">
-              <h2 className="text-lg font-display font-bold text-foreground mb-6">Quick Actions</h2>
+            <StaggerItem>
+            <div className="fdx-card p-6">
+              <h2 className="fdx-section-title mb-6">Quick Actions</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <button
                   onClick={() => handleQuickAction('add-investor')}
-                  className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-left hover:bg-blue-100 transition"
+                  className="fdx-card p-5 hover:shadow-md transition-shadow cursor-pointer text-left"
                 >
-                  <div className="bg-blue-500 w-10 h-10 rounded-lg flex items-center justify-center mb-4">
-                    <Users className="text-white" size={20} />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest mb-4">
+                    <Users size={20} />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm">Add Investor</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Onboard new investor</p>
+                  <h3 className="text-sm font-medium text-stone-900">Add Investor</h3>
+                  <p className="text-xs text-stone-400 mt-1">Onboard new investor</p>
                 </button>
 
                 <button
                   onClick={() => handleQuickAction('create-deal')}
-                  className="bg-fundex-cream/30 border border-primary/20 rounded-lg p-6 text-left hover:bg-primary/10 transition"
+                  className="fdx-card p-5 hover:shadow-md transition-shadow cursor-pointer text-left"
                 >
-                  <div className="bg-primary w-10 h-10 rounded-lg flex items-center justify-center mb-4">
-                    <Briefcase className="text-white" size={20} />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest mb-4">
+                    <Briefcase size={20} />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm">Create Deal</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Launch new offering</p>
+                  <h3 className="text-sm font-medium text-stone-900">Create Deal</h3>
+                  <p className="text-xs text-stone-400 mt-1">Launch new offering</p>
                 </button>
 
                 <button
                   onClick={() => handleQuickAction('manage-allocations')}
-                  className="bg-purple-50 border border-purple-200 rounded-lg p-6 text-left hover:bg-purple-100 transition"
+                  className="fdx-card p-5 hover:shadow-md transition-shadow cursor-pointer text-left"
                 >
-                  <div className="bg-purple-500 w-10 h-10 rounded-lg flex items-center justify-center mb-4">
-                    <DollarSign className="text-white" size={20} />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest mb-4">
+                    <DollarSign size={20} />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm">Manage Allocations</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Review capital deployment</p>
+                  <h3 className="text-sm font-medium text-stone-900">Manage Allocations</h3>
+                  <p className="text-xs text-stone-400 mt-1">Review capital deployment</p>
                 </button>
 
                 <button
                   onClick={() => handleQuickAction('documents')}
-                  className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-left hover:bg-orange-100 transition"
+                  className="fdx-card p-5 hover:shadow-md transition-shadow cursor-pointer text-left"
                 >
-                  <div className="bg-orange-500 w-10 h-10 rounded-lg flex items-center justify-center mb-4">
-                    <FileText className="text-white" size={20} />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest mb-4">
+                    <FileText size={20} />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm">Documents</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Upload or review files</p>
+                  <h3 className="text-sm font-medium text-stone-900">Documents</h3>
+                  <p className="text-xs text-stone-400 mt-1">Upload or review files</p>
                 </button>
               </div>
             </div>
+            </StaggerItem>
 
             {/* Company Code and Invite Members Section */}
+            <StaggerItem>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Company Code Card */}
-              <div className="bg-background rounded-lg shadow-sm p-6 border border-border">
-                <h2 className="text-lg font-display font-bold text-foreground mb-4">Company Code</h2>
-                <div className="bg-muted rounded-lg p-4 flex items-center justify-between">
+              <div className="fdx-card p-6">
+                <h2 className="fdx-section-title mb-4">Company Code</h2>
+                <div className="bg-stone-50 rounded-lg p-4 flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Share this code with team members</p>
-                    <p className="text-lg font-mono font-bold text-foreground">{company?.company_code || 'N/A'}</p>
+                    <p className="text-xs text-stone-500 mb-1">Share this code with team members</p>
+                    <p className="text-lg font-mono font-bold text-stone-900">{company?.company_code || 'N/A'}</p>
                   </div>
                   <button
                     onClick={handleCopyCompanyCode}
-                    className="bg-primary text-white p-2 rounded-lg hover:bg-primary/90 transition"
+                    className="fdx-btn-primary p-2 rounded-lg"
                     title="Copy company code"
                   >
                     <Copy size={18} />
                   </button>
                 </div>
                 {codeMessage && (
-                  <p className="text-xs text-primary mt-3">{codeMessage}</p>
+                  <p className="text-xs text-fundex-forest mt-3">{codeMessage}</p>
                 )}
               </div>
 
               {/* Invite Members Card */}
-              <div className="bg-background rounded-lg shadow-sm p-6 border border-border">
-                <h2 className="text-lg font-display font-bold text-foreground mb-4">Invite Team Members</h2>
+              <div className="fdx-card p-6">
+                <h2 className="fdx-section-title mb-4">Invite Team Members</h2>
                 <div className="space-y-3">
                   <div className="flex gap-2">
                     <input
@@ -712,13 +703,13 @@ export default function AdminDashboard() {
                       placeholder="Enter email address"
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
-                      className="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="flex-1 px-4 py-2 fdx-input"
                       disabled={invitingEmail.length > 0}
                     />
                     <select
                       value={inviteRole}
                       onChange={(e) => setInviteRole(e.target.value as 'investor' | 'partner')}
-                      className="px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+                      className="px-3 py-2 fdx-input text-sm bg-background"
                       disabled={invitingEmail.length > 0}
                     >
                       <option value="investor">Investor</option>
@@ -727,46 +718,48 @@ export default function AdminDashboard() {
                     <button
                       onClick={handleSendInvite}
                       disabled={invitingEmail.length > 0}
-                      className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition disabled:bg-muted-foreground flex items-center gap-2"
+                      className="fdx-btn-primary px-4 py-2 rounded-lg disabled:bg-stone-50-foreground flex items-center gap-2"
                     >
                       <Mail size={16} />
                       Send
                     </button>
                   </div>
                   {inviteMessage && (
-                    <p className={`text-xs ${inviteMessage.includes('sent') || inviteMessage.includes('copied') ? 'text-primary' : 'text-red-600'}`}>
+                    <p className={`text-xs ${inviteMessage.includes('sent') || inviteMessage.includes('copied') ? 'text-fundex-forest' : 'text-red-600'}`}>
                       {inviteMessage}
                     </p>
                   )}
                 </div>
               </div>
             </div>
+            </StaggerItem>
 
             {/* Team Members Section */}
-            <div className="bg-background rounded-lg shadow-sm p-6 border border-border">
-              <h2 className="text-lg font-display font-bold text-foreground mb-6">Team Members</h2>
+            <StaggerItem>
+            <div className="fdx-card p-6">
+              <h2 className="fdx-section-title mb-6">Team Members</h2>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Name</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Email</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Role</th>
+                    <tr>
+                      <th className="fdx-table-header py-3 px-4">Name</th>
+                      <th className="fdx-table-header py-3 px-4">Email</th>
+                      <th className="fdx-table-header py-3 px-4">Role</th>
                     </tr>
                   </thead>
                   <tbody>
                     {members.map((member) => (
-                      <tr key={member.id} className="border-b border-border hover:bg-muted transition">
-                        <td className="py-3 px-4 text-sm text-foreground font-medium">{member.full_name}</td>
-                        <td className="py-3 px-4 text-sm text-muted-foreground">{member.email}</td>
+                      <tr key={member.id} className="fdx-table-row">
+                        <td className="py-3 px-4 text-sm text-stone-900 font-medium">{member.full_name}</td>
+                        <td className="py-3 px-4 text-sm text-stone-500">{member.email}</td>
                         <td className="py-3 px-4 text-sm">
                           <div className="flex items-center gap-2">
                             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                               member.role === 'admin'
-                                ? 'bg-red-100 text-red-700'
+                                ? 'fdx-badge fdx-badge-role'
                                 : member.role === 'investor'
-                                ? 'bg-blue-100 text-blue-700'
-                                : 'bg-purple-100 text-purple-700'
+                                ? 'fdx-badge fdx-badge-info'
+                                : 'fdx-badge fdx-badge-active'
                             }`}>
                               {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
                             </span>
@@ -776,7 +769,7 @@ export default function AdminDashboard() {
                                   setEditingMemberId(member.id);
                                   setEditingRole(member.role);
                                 }}
-                                className="text-muted-foreground hover:text-muted-foreground transition"
+                                className="text-stone-500 hover:text-stone-500 transition"
                                 title="Edit role"
                               >
                                 <Edit2 size={16} />
@@ -790,31 +783,33 @@ export default function AdminDashboard() {
                 </table>
               </div>
             </div>
+            </StaggerItem>
 
             {/* Pending Join Requests Section */}
             {pendingRequests.length > 0 && (
-              <div className="bg-background rounded-lg shadow-sm p-6 border border-border">
-                <h2 className="text-lg font-display font-bold text-foreground mb-6">Pending Join Requests</h2>
+              <StaggerItem>
+              <div className="fdx-card p-6">
+                <h2 className="fdx-section-title mb-6">Pending Join Requests</h2>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Name</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Email</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Role</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Actions</th>
+                      <tr>
+                        <th className="fdx-table-header py-3 px-4">Name</th>
+                        <th className="fdx-table-header py-3 px-4">Email</th>
+                        <th className="fdx-table-header py-3 px-4">Role</th>
+                        <th className="fdx-table-header py-3 px-4">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {pendingRequests.map((request) => (
-                        <tr key={request.id} className="border-b border-border hover:bg-muted transition">
-                          <td className="py-3 px-4 text-sm text-foreground font-medium">{request.full_name}</td>
-                          <td className="py-3 px-4 text-sm text-muted-foreground">{request.email}</td>
+                        <tr key={request.id} className="fdx-table-row">
+                          <td className="py-3 px-4 text-sm text-stone-900 font-medium">{request.full_name}</td>
+                          <td className="py-3 px-4 text-sm text-stone-500">{request.email}</td>
                           <td className="py-3 px-4 text-sm">
                             <select
                               value={selectedRoles[request.id] || ''}
                               onChange={(e) => setSelectedRoles({ ...selectedRoles, [request.id]: e.target.value })}
-                              className="px-3 py-1 border border-border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                              className="px-3 py-1 fdx-input text-xs"
                             >
                               <option value="">Select role</option>
                               <option value="investor">Investor</option>
@@ -825,13 +820,13 @@ export default function AdminDashboard() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleApproveRequest(request.id, selectedRoles[request.id])}
-                                className="bg-primary text-white px-3 py-1 rounded text-xs hover:bg-primary/90 transition"
+                                className="fdx-btn-primary px-3 py-1 rounded text-xs"
                               >
                                 Approve
                               </button>
                               <button
                                 onClick={() => handleRejectRequest(request.id)}
-                                className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition"
+                                className="fdx-btn-danger px-3 py-1 rounded text-xs"
                               >
                                 Reject
                               </button>
@@ -843,42 +838,44 @@ export default function AdminDashboard() {
                   </table>
                 </div>
               </div>
+              </StaggerItem>
             )}
 
             {/* Two Column Layout - Recent Deals and Recent Activity */}
+            <StaggerItem>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Recent Deals */}
-              <div className="lg:col-span-2 bg-background rounded-lg shadow-sm border border-border overflow-hidden">
-                <div className="p-6 border-b border-border">
+              <div className="lg:col-span-2 fdx-card overflow-hidden">
+                <div className="p-6 border-b border-stone-50">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-display font-bold text-foreground">Recent Deals</h2>
-                    <button onClick={() => router.push('/admin/deals')} className="text-secondary hover:text-secondary text-sm font-semibold">
+                    <h2 className="fdx-section-title">Recent Deals</h2>
+                    <button onClick={() => router.push('/admin/deals')} className="text-fundex-forest hover:text-fundex-forest text-sm font-semibold">
                       View All
                     </button>
                   </div>
                 </div>
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-stone-50">
                   {recentDeals.map((deal) => (
-                    <div key={deal.id} className="p-6 hover:bg-muted transition">
+                    <div key={deal.id} className="p-6 hover:bg-stone-50/50 transition">
                       <div className="flex justify-between items-start mb-3">
                         <div>
-                          <h3 className="font-semibold text-foreground">{deal.name}</h3>
-                          <p className="text-xs text-muted-foreground mt-1">{deal.id}</p>
+                          <h3 className="font-semibold text-stone-900">{deal.name}</h3>
+                          <p className="text-xs text-stone-500 mt-1">{deal.id}</p>
                         </div>
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          deal.status === 'Funding' 
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-secondary/10 text-secondary'
+                          deal.status === 'Funding'
+                            ? 'fdx-badge fdx-badge-info'
+                            : 'fdx-badge fdx-badge-active'
                         }`}>
                           {deal.status}
                         </span>
                       </div>
                       <div className="mb-3">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs text-muted-foreground">Progress</span>
-                          <span className="text-xs font-semibold text-foreground">{deal.progress}%</span>
+                          <span className="text-xs text-stone-500">Progress</span>
+                          <span className="text-xs font-semibold text-stone-900">{deal.progress}%</span>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-2.5">
+                        <div className="w-full bg-stone-50 rounded-full h-2.5">
                           <div 
                             className={`h-2.5 rounded-full ${
                               deal.status === 'Active' ? 'bg-secondary' : 'bg-blue-500'
@@ -887,9 +884,9 @@ export default function AdminDashboard() {
                           />
                         </div>
                       </div>
-                      <div className="flex justify-between pt-2 border-t border-border">
-                        <span className="text-xs text-muted-foreground">{formatCurrency(deal.raised)} of {formatCurrency(deal.target)}</span>
-                        <span className="text-xs text-muted-foreground">{deal.investors} investors</span>
+                      <div className="flex justify-between pt-2 border-t border-stone-50">
+                        <span className="text-xs text-stone-500">{formatCurrency(deal.raised)} of {formatCurrency(deal.target)}</span>
+                        <span className="text-xs text-stone-500">{deal.investors} investors</span>
                       </div>
                     </div>
                   ))}
@@ -897,17 +894,17 @@ export default function AdminDashboard() {
               </div>
 
               {/* Recent Activity */}
-              <div className="bg-background rounded-lg shadow-sm border border-border overflow-hidden">
-                <div className="p-6 border-b border-border">
-                  <h2 className="text-lg font-display font-bold text-foreground">Recent Activity</h2>
+              <div className="fdx-card overflow-hidden">
+                <div className="p-6 border-b border-stone-50">
+                  <h2 className="fdx-section-title">Recent Activity</h2>
                 </div>
-                <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+                <div className="divide-y divide-stone-50 max-h-96 overflow-y-auto">
                   {recentActivities.map((activity) => (
-                    <div key={activity.id} className="p-4 hover:bg-muted transition flex gap-3">
+                    <div key={activity.id} className="p-4 hover:bg-stone-50/50 transition flex gap-3">
                       {activity.icon && activity.iconBgColorHex ? (
                         <ActivityIcon
                           icon={activity.icon}
-                          bgColor={activity.iconBgColor || 'bg-muted'}
+                          bgColor={activity.iconBgColor || 'bg-stone-50'}
                           iconBgColorHex={activity.iconBgColorHex}
                         />
                       ) : (
@@ -919,32 +916,33 @@ export default function AdminDashboard() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-foreground">
+                        <p className="text-xs text-stone-900">
                           <span className="font-semibold">{activity.investorName}</span>
-                          <span className="text-muted-foreground"> {activity.description} </span>
+                          <span className="text-stone-500"> {activity.description} </span>
                         </p>
-                        <p className="text-xs text-secondary font-medium mt-0.5">{activity.dealName}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{formatTimeAgo(activity.timestamp)}</p>
+                        <p className="text-xs text-fundex-forest font-medium mt-0.5">{activity.dealName}</p>
+                        <p className="text-xs text-stone-500 mt-1">{formatTimeAgo(activity.timestamp)}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-          </div>
+            </StaggerItem>
+        </StaggerContainer>
 
         {/* Edit Member Role Modal */}
         {editingMemberId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-background rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
+          <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="fdx-card shadow-xl p-6 max-w-sm w-full mx-4">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-display font-bold text-foreground">Edit Member Role</h3>
+                <h3 className="fdx-section-title">Edit Member Role</h3>
                 <button
                   onClick={() => {
                     setEditingMemberId(null);
                     setEditingRole('');
                   }}
-                  className="text-muted-foreground hover:text-muted-foreground"
+                  className="text-stone-500 hover:text-stone-500"
                 >
                   <X size={20} />
                 </button>
@@ -952,11 +950,11 @@ export default function AdminDashboard() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-2">Select New Role</label>
+                  <label className="block text-sm font-medium text-stone-500 mb-2">Select New Role</label>
                   <select
                     value={editingRole}
                     onChange={(e) => setEditingRole(e.target.value)}
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 fdx-input"
                   >
                     <option value="investor">Investor</option>
                     <option value="partner">Partner</option>
@@ -969,13 +967,13 @@ export default function AdminDashboard() {
                       setEditingMemberId(null);
                       setEditingRole('');
                     }}
-                    className="flex-1 px-4 py-2 border border-border rounded-lg text-muted-foreground hover:bg-muted transition"
+                    className="flex-1 px-4 py-2 fdx-btn-secondary rounded-lg"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => handleEditMemberRole(editingMemberId, editingRole)}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    className="flex-1 px-4 py-2 fdx-btn-primary rounded-lg"
                   >
                     Update
                   </button>

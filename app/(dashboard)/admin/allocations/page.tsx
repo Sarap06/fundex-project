@@ -5,14 +5,17 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { logOut } from '@/lib/auth';
 import { AddAllocationModal } from '@/components/add-allocation-modal';
-import { 
-  BarChart3, 
-  Search, 
-  Filter, 
-  CheckCircle2, 
-  Clock, 
-  AlertCircle, 
-  DollarSign, 
+import { PageHeader } from '@/components/page-header';
+import { Skeleton } from '@/components/ui/skeleton';
+import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
+import {
+  BarChart3,
+  Search,
+  Filter,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  DollarSign,
   Calendar,
   TrendingUp,
   ChevronDown,
@@ -100,7 +103,7 @@ export default function AllocationsPage() {
   const loadAllocationsData = async (companyId?: string) => {
     try {
       const company_id = companyId || userProfile?.company_id;
-      
+
       if (!company_id) {
         console.error('No company_id available');
         setAllocations([]);
@@ -274,28 +277,28 @@ export default function AllocationsPage() {
   const getPaymentProgressColor = (status: string) => {
     switch (status) {
       case 'on-schedule':
-        return 'bg-primary';
+        return 'bg-fundex-gold';
       case 'upcoming':
         return 'bg-amber-500';
       case 'late':
         return 'bg-red-600';
       case 'pending':
-        return 'bg-neutral-300';
+        return 'bg-stone-300';
       default:
-        return 'bg-neutral-300';
+        return 'bg-stone-300';
     }
   };
 
   const getStatusBadgeStyles = (status: string) => {
     switch (status) {
       case 'Funded':
-        return 'bg-fundex-cream/30 text-primary border border-primary/20';
+        return 'fdx-badge fdx-badge-active';
       case 'Pending':
-        return 'bg-amber-50 text-amber-700 border border-amber-200';
+        return 'fdx-badge fdx-badge-pending';
       case 'Review':
-        return 'bg-blue-50 text-blue-700 border border-blue-200';
+        return 'fdx-badge fdx-badge-info';
       default:
-        return 'bg-neutral-100 text-neutral-700';
+        return 'fdx-badge fdx-badge-info';
     }
   };
 
@@ -312,10 +315,30 @@ export default function AllocationsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
+      <div className="px-6 py-6 md:px-8 md:py-8 space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-72 mt-2" />
+          </div>
+          <Skeleton className="h-10 w-40" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="fdx-card p-5">
+              <Skeleton className="h-3 w-24 mb-3" />
+              <Skeleton className="h-7 w-20" />
+            </div>
+          ))}
+        </div>
+        <div className="fdx-card p-5">
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="fdx-card p-5 space-y-3">
+          <Skeleton className="h-10 w-full" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full" />
+          ))}
         </div>
       </div>
     );
@@ -382,168 +405,158 @@ export default function AllocationsPage() {
 
   return (
     <>
-      {/* Header */}
-      <header className="bg-primary sticky top-0 z-30 border-b border-primary/80">
-        <div className="px-8 py-5 flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-display font-bold text-white">Allocations</h1>
-            {userProfile && <p className="text-xs text-white/60">Track capital commitments and investments</p>}
-          </div>
-          <button
-            onClick={handleLogOut}
-            className="flex items-center gap-2 bg-background/20 text-white px-4 py-2 rounded-lg hover:bg-background/30 transition font-medium"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
-        </div>
-      </header>
-
-      <main className="px-8 py-8">
-        {/* Navigation */}
-
-        <div className="space-y-6 mt-8">
+      <main className="px-6 py-6 md:px-8 md:py-8">
+        <StaggerContainer className="space-y-6">
           {/* Page Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-3xl font-display font-bold text-foreground">Allocations</h2>
-              <p className="text-muted-foreground mt-1">Track capital commitments and investor allocations</p>
-            </div>
-            <button
-              onClick={() => setIsAddAllocationOpen(true)}
-              className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition font-medium"
-            >
-              <Plus size={18} />
-              Add Allocation
-            </button>
-          </div>
+          <StaggerItem>
+            <PageHeader
+              title="Allocations"
+              subtitle="Track capital allocation and funding status"
+              actions={
+                <button
+                  onClick={() => setIsAddAllocationOpen(true)}
+                  className="fdx-btn-primary flex items-center gap-2 px-4 py-2 rounded-lg font-medium"
+                >
+                  <Plus size={18} />
+                  Add Allocation
+                </button>
+              }
+            />
+          </StaggerItem>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-            {Object.entries(stats).map(([key, stat]) => (
-              <div key={key} className="bg-background rounded-lg shadow-sm p-4 border border-border">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">{stat.label}</p>
-                    <p className={`text-xl md:text-2xl font-display font-bold mt-2 ${stat.color || 'text-foreground'}`}>
-                      {stat.value}
-                    </p>
-                    {stat.subtext && <p className="text-xs text-muted-foreground mt-1">{stat.subtext}</p>}
+          <StaggerItem>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+              {Object.entries(stats).map(([key, stat]) => (
+                <div key={key} className="fdx-card p-5 relative overflow-hidden">
+                  <div className="fdx-card-glow" />
+                  <div className="flex items-start justify-between relative">
+                    <div>
+                      <p className="text-xs font-semibold text-stone-500 uppercase">{stat.label}</p>
+                      <p className={`text-xl md:text-2xl font-display font-semibold mt-2 ${stat.color || 'text-stone-900'}`}>
+                        {stat.value}
+                      </p>
+                      {stat.subtext && <p className="text-xs text-stone-500 mt-1">{stat.subtext}</p>}
+                    </div>
+                    <div className="p-2 bg-stone-50/50 rounded-lg">{stat.icon}</div>
                   </div>
-                  <div className="p-2 bg-muted rounded-lg">{stat.icon}</div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </StaggerItem>
 
           {/* Search and Filter */}
-          <div className="bg-background rounded-lg shadow-sm p-4 border border-border space-y-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
-                <input
-                  type="search"
-                  placeholder="Search by investor, deal, or allocation ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="relative">
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none pr-10 bg-background"
-                >
-                  <option value="all">All Status</option>
-                  <option value="Funded">Funded</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Review">Review</option>
-                </select>
-                <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+          <StaggerItem>
+            <div className="fdx-card p-5 space-y-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-stone-500" />
+                  <input
+                    type="search"
+                    placeholder="Search by investor, deal, or allocation ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="fdx-input w-full pl-10 pr-4 py-2"
+                  />
+                </div>
+                <div className="relative">
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="fdx-input px-4 py-2 appearance-none pr-10"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="Funded">Funded</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Review">Review</option>
+                  </select>
+                  <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 size-4 text-stone-500 pointer-events-none" />
+                </div>
               </div>
             </div>
-          </div>
+          </StaggerItem>
 
           {/* Allocations Table */}
-          <div className="bg-background rounded-lg shadow-sm border border-border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted border-b border-border">
-                  <tr>
-                    <th className="px-6 py-3 text-left font-semibold text-foreground">Allocation ID</th>
-                    <th className="px-6 py-3 text-left font-semibold text-foreground">Investor</th>
-                    <th className="px-6 py-3 text-left font-semibold text-foreground">Deal</th>
-                    <th className="px-6 py-3 text-left font-semibold text-foreground">Amount</th>
-                    <th className="px-6 py-3 text-left font-semibold text-foreground">% of Deal</th>
-                    <th className="px-6 py-3 text-left font-semibold text-foreground">Monthly Interest</th>
-                    <th className="px-6 py-3 text-left font-semibold text-foreground">Payment Progress</th>
-                    <th className="px-6 py-3 text-left font-semibold text-foreground">Status</th>
-                    <th className="px-6 py-3 text-left font-semibold text-foreground">Commit Date</th>
-                    <th className="px-6 py-3 text-left font-semibold text-foreground">Funded Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredAllocations.map((allocation) => (
-                    <tr key={allocation.id} className="hover:bg-muted transition">
-                      <td className="px-6 py-4">
-                        <span className="text-muted-foreground font-medium">{allocation.id}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="font-medium text-foreground">{allocation.investor_name}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-foreground">{allocation.deal_name}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="font-semibold text-foreground">${(allocation.amount / 1000000).toFixed(2)}M</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-muted-foreground">{allocation.percentage.toFixed(1)}%</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="font-semibold text-purple-600">${(allocation.monthly_interest / 1000).toFixed(1)}K</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1 min-w-[120px]">
-                          <div className="text-sm font-semibold text-foreground">
-                            {allocation.payments_completed} / {allocation.total_payments}
-                          </div>
-                          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className={`h-full transition-all ${getPaymentProgressColor(allocation.payment_status)}`}
-                              style={{ width: `${(allocation.payments_completed / allocation.total_payments) * 100}%` }}
-                            />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(allocation.status)}
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeStyles(allocation.status)}`}>
-                            {allocation.status.charAt(0).toUpperCase() + allocation.status.slice(1)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-muted-foreground">{allocation.commit_date}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-muted-foreground">{allocation.funded_date || '-'}</span>
-                      </td>
+          <StaggerItem>
+            <div className="fdx-card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="fdx-table-header">
+                    <tr>
+                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Allocation ID</th>
+                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Investor</th>
+                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Deal</th>
+                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Amount</th>
+                      <th className="px-6 py-3 text-left font-semibold text-stone-900">% of Deal</th>
+                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Monthly Interest</th>
+                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Payment Progress</th>
+                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Status</th>
+                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Commit Date</th>
+                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Funded Date</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {filteredAllocations.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No allocations found</p>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {filteredAllocations.map((allocation) => (
+                      <tr key={allocation.id} className="fdx-table-row">
+                        <td className="px-6 py-4">
+                          <span className="text-stone-500 font-medium">{allocation.id}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="font-medium text-stone-900">{allocation.investor_name}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-stone-900">{allocation.deal_name}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="font-semibold text-stone-900">${(allocation.amount / 1000000).toFixed(2)}M</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-stone-500">{allocation.percentage.toFixed(1)}%</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="font-semibold text-purple-600">${(allocation.monthly_interest / 1000).toFixed(1)}K</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="space-y-1 min-w-[120px]">
+                            <div className="text-sm font-semibold text-stone-900">
+                              {allocation.payments_completed} / {allocation.total_payments}
+                            </div>
+                            <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full transition-all ${getPaymentProgressColor(allocation.payment_status)}`}
+                                style={{ width: `${(allocation.payments_completed / allocation.total_payments) * 100}%` }}
+                              />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(allocation.status)}
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeStyles(allocation.status)}`}>
+                              {allocation.status.charAt(0).toUpperCase() + allocation.status.slice(1)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-stone-500">{allocation.commit_date}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-stone-500">{allocation.funded_date || '-'}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </div>
-        </div>
+
+              {filteredAllocations.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-stone-500">No allocations found</p>
+                </div>
+              )}
+            </div>
+          </StaggerItem>
+        </StaggerContainer>
       </main>
 
       <AddAllocationModal

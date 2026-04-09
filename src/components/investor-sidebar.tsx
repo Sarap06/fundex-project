@@ -32,22 +32,24 @@ export function InvestorSidebar() {
   };
 
   return (
-    <aside className="hidden h-screen w-72 shrink-0 flex-col justify-between bg-gradient-to-b from-[#0B1E36] to-[#0E2A4D] px-6 py-8 text-slate-100 md:fixed md:left-0 md:top-0 md:flex z-40">
-      <div className="space-y-10">
+    <aside className="hidden h-screen w-72 shrink-0 flex-col justify-between border-r border-stone-100 bg-white px-5 py-6 font-sans md:fixed md:left-0 md:top-0 md:flex z-40">
+      <div className="space-y-8">
+        {/* Logo */}
         <Link
           href="/investor"
-          className="flex items-center gap-3.5 rounded-xl outline-none ring-offset-2 ring-offset-[#0B1E36] focus-visible:ring-2 focus-visible:ring-emerald-400"
+          className="flex items-center gap-3 rounded-xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-fundex-gold"
         >
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-lg font-bold text-white shadow-sm shadow-emerald-500/25">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-fundex-gold font-display text-sm font-bold text-fundex-forest shadow-sm">
             F
           </div>
           <div className="min-w-0">
-            <p className="text-xl font-semibold tracking-tight">Fundex</p>
-            <p className="mt-0.5 text-sm text-slate-300/90">Investor Portal</p>
+            <p className="font-display text-lg font-semibold text-stone-900">Fundex</p>
+            <p className="mt-0.5 text-xs text-stone-400">Investor Portal</p>
           </div>
         </Link>
 
-        <nav className="space-y-2.5">
+        {/* Nav */}
+        <nav className="space-y-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -59,13 +61,13 @@ export function InvestorSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex w-full items-center gap-3 rounded-full px-4 py-3 text-left text-sm font-medium transition-colors duration-200 ${
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-normal transition-colors duration-200 ${
                   isActive
-                    ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/25"
-                    : "text-slate-300/90 hover:bg-white/5 hover:text-white"
+                    ? "bg-fundex-gold/10 text-fundex-forest border-l-2 border-fundex-gold -ml-px"
+                    : "text-stone-500 hover:bg-stone-50 hover:text-stone-700"
                 }`}
               >
-                <Icon className="h-4 w-4 shrink-0 opacity-90" />
+                <Icon className="h-4 w-4 shrink-0" />
                 <span className="min-w-0 truncate">{item.label}</span>
               </Link>
             );
@@ -73,21 +75,20 @@ export function InvestorSidebar() {
         </nav>
       </div>
 
-      <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/20 p-3.5 shadow-sm">
-        <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-600/80 text-sm font-semibold text-white">
-            JD
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-white">John Doe</p>
-            <p className="mt-0.5 text-xs text-slate-300">Investor</p>
-          </div>
+      {/* User card */}
+      <div className="flex items-center gap-3 rounded-xl border border-stone-100 bg-stone-50/50 p-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-fundex-gold/20 text-xs font-semibold text-fundex-forest">
+          JD
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-normal text-stone-900">John Doe</p>
+          <p className="mt-0.5 text-[11px] text-stone-400">Investor</p>
         </div>
         <button
           aria-label="Logout"
           type="button"
           onClick={handleLogout}
-          className="shrink-0 rounded-lg p-2 text-slate-300 transition hover:bg-white/10 hover:text-white"
+          className="shrink-0 rounded-lg p-1.5 text-stone-300 transition hover:bg-red-50 hover:text-red-500"
         >
           <LogOut className="h-4 w-4" />
         </button>

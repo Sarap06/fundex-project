@@ -12,9 +12,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { FileText, Download, Eye, Plus, X, Filter, Search, Trash2, Upload, LogOut } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { getCurrentUserCompanyId, logOut } from '@/lib/auth';
+import { PageHeader } from '@/components/page-header';
+import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,6 +62,7 @@ export default function DocumentsPage() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [activeFilterCount, setActiveFilterCount] = useState(0);
   const [dragActive, setDragActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const filterPanelRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,7 +90,8 @@ export default function DocumentsPage() {
     const loadData = async () => {
       const cId = await getCurrentUserCompanyId();
       setCompanyId(cId);
-      fetchDocuments(cId);
+      await fetchDocuments(cId);
+      setIsLoading(false);
     };
     loadData();
   }, []);
@@ -121,7 +126,7 @@ export default function DocumentsPage() {
       // Search filter
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
-        const matchesSearch = 
+        const matchesSearch =
           doc.name.toLowerCase().includes(term) ||
           doc.document_id.toLowerCase().includes(term) ||
           doc.type.toLowerCase().includes(term) ||
@@ -176,7 +181,7 @@ export default function DocumentsPage() {
     try {
       // Generate document ID
       const docId = `DOC-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-      
+
       // Upload file to Supabase Storage
       const fileExt = formData.file.name.split('.').pop();
       const fileName = `${docId}.${fileExt}`;
@@ -319,32 +324,32 @@ export default function DocumentsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Published':
-        return 'bg-primary/10 text-primary';
+        return 'fdx-badge fdx-badge-active';
       case 'Signed':
-        return 'bg-blue-100 text-blue-800';
+        return 'fdx-badge fdx-badge-info';
       case 'Draft':
-        return 'bg-muted text-foreground';
+        return 'fdx-badge fdx-badge-pending';
       case 'Archived':
-        return 'bg-orange-100 text-orange-800';
+        return 'fdx-badge border-stone-200 bg-stone-50 text-stone-500';
       case 'Pending Review':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'fdx-badge fdx-badge-pending';
       default:
-        return 'bg-muted text-foreground';
+        return 'fdx-badge border-stone-200 bg-stone-50 text-stone-500';
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'Deal Documents':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return 'fdx-badge fdx-badge-info';
       case 'Investor Documents':
-        return 'bg-fundex-cream/30 text-primary border-primary/20';
+        return 'fdx-badge fdx-badge-role';
       case 'Reports':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
+        return 'fdx-badge border-stone-200 bg-stone-50 text-stone-600';
       case 'Legal Documents':
-        return 'bg-red-50 text-red-700 border-red-200';
+        return 'fdx-badge fdx-badge-danger';
       default:
-        return 'bg-muted text-muted-foreground border-border';
+        return 'fdx-badge border-stone-200 bg-stone-50 text-stone-500';
     }
   };
 
@@ -358,106 +363,109 @@ export default function DocumentsPage() {
     router.push('/auth/login');
   };
 
-  return (
-    <>
-      {/* Header */}
-      <header className="bg-primary sticky top-0 z-30 border-b border-primary/80">
-        <div className="px-8 py-5 flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-display font-bold text-white">Documents</h1>
-            <p className="text-xs text-white/60">Manage your document library</p>
-          </div>
-          <button
-            onClick={handleLogOut}
-            className="flex items-center gap-2 bg-background/20 text-white px-4 py-2 rounded-lg hover:bg-background/30 transition font-medium"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
+  if (isLoading) {
+    return (
+      <main className="px-6 py-6 md:px-8 md:py-8">
+        <div className="mb-8">
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-4 w-72" />
         </div>
-      </header>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-2xl" />
+          ))}
+        </div>
+        <Skeleton className="h-11 w-full mb-6 rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
+      </main>
+    );
+  }
 
-      <main className="px-8 py-8">
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <Card className="border-border hover:shadow-md transition-shadow">
-              <CardContent className="p-5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Total Documents</p>
-                <p className="text-3xl font-display font-bold text-foreground mt-2">{totalDocuments}</p>
-              </CardContent>
-            </Card>
+  return (
+    <main className="px-6 py-6 md:px-8 md:py-8">
+      <StaggerContainer>
+        <StaggerItem>
+          <PageHeader title="Documents" subtitle="Manage document library and distribution" />
+        </StaggerItem>
 
-            <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-white hover:shadow-md transition-shadow">
-              <CardContent className="p-5">
-                <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Deal Documents</p>
-                <p className="text-3xl font-display font-bold text-blue-600 mt-2">{dealDocuments}</p>
-              </CardContent>
-            </Card>
+        {/* KPI Cards */}
+        <StaggerItem>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8 mb-6">
+            <div className="fdx-card p-5">
+              <div className="fdx-card-glow" />
+              <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">Total Documents</p>
+              <p className="text-3xl font-display font-bold text-stone-900 mt-2">{totalDocuments}</p>
+            </div>
 
-            <Card className="border-primary/20 bg-gradient-to-br from-fundex-cream to-white hover:shadow-md transition-shadow">
-              <CardContent className="p-5">
-                <p className="text-xs font-semibold text-primary uppercase tracking-wide">Investor Documents</p>
-                <p className="text-3xl font-display font-bold text-primary mt-2">{investorDocuments}</p>
-              </CardContent>
-            </Card>
+            <div className="fdx-card p-5">
+              <div className="fdx-card-glow" />
+              <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">Deal Documents</p>
+              <p className="text-3xl font-display font-bold text-stone-900 mt-2">{dealDocuments}</p>
+            </div>
 
-            <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-white hover:shadow-md transition-shadow">
-              <CardContent className="p-5">
-                <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Reports</p>
-                <p className="text-3xl font-display font-bold text-purple-600 mt-2">{reports}</p>
-              </CardContent>
-            </Card>
+            <div className="fdx-card p-5">
+              <div className="fdx-card-glow" />
+              <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">Investor Documents</p>
+              <p className="text-3xl font-display font-bold text-stone-900 mt-2">{investorDocuments}</p>
+            </div>
+
+            <div className="fdx-card p-5">
+              <div className="fdx-card-glow" />
+              <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">Reports</p>
+              <p className="text-3xl font-display font-bold text-stone-900 mt-2">{reports}</p>
+            </div>
           </div>
+        </StaggerItem>
 
-          {/* Search and Upload */}
+        {/* Search and Upload */}
+        <StaggerItem>
           <div className="mb-6">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
-                <Input
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-stone-500" />
+                <input
                   placeholder="Search documents by name, type, or category..."
-                  className="pl-10 h-11 bg-background border-border focus:border-primary focus:ring-primary"
+                  className="fdx-input pl-10 h-11"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="gap-2 border-border hover:bg-muted"
+                <button
+                  className="fdx-btn-secondary gap-2"
                   onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
                 >
                   <Filter className="size-4" />
                   Filter {activeFilterCount > 0 && `(${activeFilterCount})`}
-                </Button>
+                </button>
 
                 <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="gap-2 bg-primary hover:bg-primary/90">
+                    <button className="fdx-btn-primary gap-2">
                       <Plus className="size-4" />
                       Upload Document
-                    </Button>
+                    </button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto fdx-card border-stone-100">
                     <DialogHeader>
-                      <DialogTitle>Upload New Document</DialogTitle>
+                      <DialogTitle className="text-stone-900">Upload New Document</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleAddDocument} className="space-y-6">
                       {/* File Upload */}
                       <div className="space-y-4">
-                        <h3 className="font-semibold text-sm">File Upload</h3>
+                        <h3 className="fdx-section-title text-sm">File Upload</h3>
                         <div
                           onDragEnter={handleDragEnter}
                           onDragLeave={handleDragLeave}
                           onDragOver={handleDragOver}
                           onDrop={handleDrop}
                           className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                            dragActive ? 'border-primary bg-fundex-cream/30' : 'border-border'
+                            dragActive ? 'border-fundex-gold bg-fundex-gold/5' : 'border-stone-100'
                           }`}
                           onClick={() => fileInputRef.current?.click()}
                         >
-                          <Upload className="size-8 text-muted-foreground mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">
+                          <Upload className="size-8 text-stone-500 mx-auto mb-2" />
+                          <p className="text-sm text-stone-500">
                             {formData.file ? formData.file.name : 'Drag and drop your file or click to browse'}
                           </p>
                           <input
@@ -475,11 +483,12 @@ export default function DocumentsPage() {
 
                       {/* Document Information */}
                       <div className="space-y-4">
-                        <h3 className="font-semibold text-sm">Document Information</h3>
+                        <h3 className="fdx-section-title text-sm">Document Information</h3>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="col-span-2">
-                            <Label>Document Name *</Label>
-                            <Input
+                            <Label className="text-stone-900">Document Name *</Label>
+                            <input
+                              className="fdx-input mt-1"
                               placeholder="e.g., Offering Memorandum"
                               value={formData.name}
                               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -487,9 +496,9 @@ export default function DocumentsPage() {
                             />
                           </div>
                           <div>
-                            <Label>Document Type *</Label>
+                            <Label className="text-stone-900">Document Type *</Label>
                             <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                              <SelectTrigger>
+                              <SelectTrigger className="mt-1">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -502,9 +511,9 @@ export default function DocumentsPage() {
                             </Select>
                           </div>
                           <div>
-                            <Label>Category *</Label>
+                            <Label className="text-stone-900">Category *</Label>
                             <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                              <SelectTrigger>
+                              <SelectTrigger className="mt-1">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -520,12 +529,12 @@ export default function DocumentsPage() {
 
                       {/* Status and Details */}
                       <div className="space-y-4">
-                        <h3 className="font-semibold text-sm">Status & Details</h3>
+                        <h3 className="fdx-section-title text-sm">Status & Details</h3>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <Label>Status</Label>
+                            <Label className="text-stone-900">Status</Label>
                             <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                              <SelectTrigger>
+                              <SelectTrigger className="mt-1">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -537,8 +546,9 @@ export default function DocumentsPage() {
                             </Select>
                           </div>
                           <div>
-                            <Label>Uploaded By</Label>
-                            <Input
+                            <Label className="text-stone-900">Uploaded By</Label>
+                            <input
+                              className="fdx-input mt-1"
                               placeholder="Your name"
                               value={formData.uploadedBy}
                               onChange={(e) => setFormData({ ...formData, uploadedBy: e.target.value })}
@@ -549,10 +559,11 @@ export default function DocumentsPage() {
 
                       {/* Additional Info */}
                       <div className="space-y-4">
-                        <h3 className="font-semibold text-sm">Additional Information</h3>
+                        <h3 className="fdx-section-title text-sm">Additional Information</h3>
                         <div>
-                          <Label>Notes</Label>
+                          <Label className="text-stone-900">Notes</Label>
                           <Textarea
+                            className="mt-1 border-stone-200 focus:border-fundex-gold focus:ring-fundex-gold/30"
                             placeholder="Add any notes or details about this document..."
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -565,22 +576,22 @@ export default function DocumentsPage() {
                             checked={formData.notifyInvestor}
                             onCheckedChange={(checked) => setFormData({ ...formData, notifyInvestor: checked as boolean })}
                           />
-                          <Label htmlFor="notify-investor" className="cursor-pointer">Notify investor when published</Label>
+                          <Label htmlFor="notify-investor" className="cursor-pointer text-stone-900">Notify investor when published</Label>
                         </div>
                       </div>
 
                       {/* Form Actions */}
                       <div className="flex gap-2 justify-end">
-                        <Button
+                        <button
                           type="button"
-                          variant="outline"
+                          className="fdx-btn-secondary"
                           onClick={() => setIsUploadDialogOpen(false)}
                         >
                           Cancel
-                        </Button>
-                        <Button type="submit" className="bg-primary hover:bg-primary/90">
+                        </button>
+                        <button type="submit" className="fdx-btn-primary">
                           Upload Document
-                        </Button>
+                        </button>
                       </div>
                     </form>
                   </DialogContent>
@@ -588,15 +599,17 @@ export default function DocumentsPage() {
               </div>
             </div>
           </div>
+        </StaggerItem>
 
-          {/* Filter Panel */}
-          {isFilterPanelOpen && (
-            <div ref={filterPanelRef} className="mb-6 p-5 bg-background border border-border rounded-lg shadow-lg">
+        {/* Filter Panel */}
+        {isFilterPanelOpen && (
+          <StaggerItem>
+            <div ref={filterPanelRef} className="fdx-card mb-6 p-5">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-sm font-semibold text-foreground">Filter Documents</h3>
+                <h3 className="fdx-section-title">Filter Documents</h3>
                 <button
                   onClick={() => setIsFilterPanelOpen(false)}
-                  className="text-muted-foreground hover:text-muted-foreground"
+                  className="text-stone-500 hover:text-stone-700"
                 >
                   <X className="size-4" />
                 </button>
@@ -605,7 +618,7 @@ export default function DocumentsPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-5">
                 {/* Category */}
                 <div>
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Category</h4>
+                  <h4 className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-3">Category</h4>
                   <div className="space-y-2">
                     {['Deal Documents', 'Investor Documents', 'Reports', 'Legal Documents'].map((cat) => (
                       <div key={cat} className="flex items-center gap-2">
@@ -614,7 +627,7 @@ export default function DocumentsPage() {
                           checked={filters.category.includes(cat)}
                           onCheckedChange={() => toggleCheckboxFilter('category', cat)}
                         />
-                        <label htmlFor={`cat-${cat}`} className="text-sm text-muted-foreground cursor-pointer">
+                        <label htmlFor={`cat-${cat}`} className="text-sm text-stone-500 cursor-pointer">
                           {cat}
                         </label>
                       </div>
@@ -624,7 +637,7 @@ export default function DocumentsPage() {
 
                 {/* Status */}
                 <div>
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Status</h4>
+                  <h4 className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-3">Status</h4>
                   <div className="space-y-2">
                     {['Draft', 'Published', 'Signed', 'Archived'].map((status) => (
                       <div key={status} className="flex items-center gap-2">
@@ -633,7 +646,7 @@ export default function DocumentsPage() {
                           checked={filters.status.includes(status)}
                           onCheckedChange={() => toggleCheckboxFilter('status', status)}
                         />
-                        <label htmlFor={`status-${status}`} className="text-sm text-muted-foreground cursor-pointer">
+                        <label htmlFor={`status-${status}`} className="text-sm text-stone-500 cursor-pointer">
                           {status}
                         </label>
                       </div>
@@ -643,7 +656,7 @@ export default function DocumentsPage() {
 
                 {/* Type */}
                 <div>
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Type</h4>
+                  <h4 className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-3">Type</h4>
                   <div className="space-y-2">
                     {['Offering', 'Agreement', 'Appraisal', 'Report'].map((type) => (
                       <div key={type} className="flex items-center gap-2">
@@ -652,7 +665,7 @@ export default function DocumentsPage() {
                           checked={filters.type.includes(type)}
                           onCheckedChange={() => toggleCheckboxFilter('type', type)}
                         />
-                        <label htmlFor={`type-${type}`} className="text-sm text-muted-foreground cursor-pointer">
+                        <label htmlFor={`type-${type}`} className="text-sm text-stone-500 cursor-pointer">
                           {type}
                         </label>
                       </div>
@@ -661,59 +674,61 @@ export default function DocumentsPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 justify-end pt-5 border-t border-border">
-                <Button variant="outline" onClick={handleClearFilters}>
+              <div className="flex gap-3 justify-end pt-5 border-t border-stone-100">
+                <button className="fdx-btn-secondary" onClick={handleClearFilters}>
                   Clear Filters
-                </Button>
-                <Button onClick={handleApplyFilters} className="bg-primary hover:bg-primary/90">
+                </button>
+                <button onClick={handleApplyFilters} className="fdx-btn-primary">
                   Apply Filters
-                </Button>
+                </button>
               </div>
             </div>
-          )}
+          </StaggerItem>
+        )}
 
-          {/* Documents Table */}
-          <div className="bg-background rounded-lg shadow">
+        {/* Documents Table */}
+        <StaggerItem>
+          <div className="fdx-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-border bg-muted">
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Document ID</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Name</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Category</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Type</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Size</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Uploaded By</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase">Upload Date</th>
-                    <th className="px-6 py-4 text-center text-xs font-semibold text-muted-foreground uppercase">Actions</th>
+                  <tr>
+                    <th className="fdx-table-header">Document ID</th>
+                    <th className="fdx-table-header">Name</th>
+                    <th className="fdx-table-header">Category</th>
+                    <th className="fdx-table-header">Type</th>
+                    <th className="fdx-table-header">Status</th>
+                    <th className="fdx-table-header">Size</th>
+                    <th className="fdx-table-header">Uploaded By</th>
+                    <th className="fdx-table-header">Upload Date</th>
+                    <th className="fdx-table-header text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredDocuments.map((doc) => (
-                    <tr key={doc.id} className="border-b border-border hover:bg-muted">
-                      <td className="px-6 py-4 text-sm font-medium text-foreground">{doc.document_id}</td>
-                      <td className="px-6 py-4 text-sm text-foreground max-w-xs truncate" title={doc.name}>
+                    <tr key={doc.id} className="fdx-table-row">
+                      <td className="px-4 py-3 text-sm font-medium text-stone-900">{doc.document_id}</td>
+                      <td className="px-4 py-3 text-sm text-stone-900 max-w-xs truncate" title={doc.name}>
                         <div className="flex items-center gap-2">
-                          <FileText className="size-4 text-muted-foreground" />
+                          <FileText className="size-4 text-stone-500" />
                           {doc.name}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <Badge variant="outline" className={getCategoryColor(doc.category)}>
+                      <td className="px-4 py-3">
+                        <span className={getCategoryColor(doc.category)}>
                           {doc.category}
-                        </Badge>
+                        </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground">{doc.type}</td>
-                      <td className="px-6 py-4">
-                        <Badge className={getStatusColor(doc.status)}>{doc.status}</Badge>
+                      <td className="px-4 py-3 text-sm text-stone-500">{doc.type}</td>
+                      <td className="px-4 py-3">
+                        <span className={getStatusColor(doc.status)}>{doc.status}</span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground">{doc.file_size}</td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground">{doc.uploaded_by}</td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground">
+                      <td className="px-4 py-3 text-sm text-stone-500">{doc.file_size}</td>
+                      <td className="px-4 py-3 text-sm text-stone-500">{doc.uploaded_by}</td>
+                      <td className="px-4 py-3 text-sm text-stone-500">
                         {new Date(doc.upload_date).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-2">
                           {doc.file_url && (
                             <>
@@ -729,7 +744,7 @@ export default function DocumentsPage() {
                               <a
                                 href={doc.file_url}
                                 download={doc.name}
-                                className="text-primary hover:text-primary"
+                                className="text-stone-500 hover:text-stone-700"
                                 title="Download document"
                               >
                                 <Download className="size-4" />
@@ -753,13 +768,14 @@ export default function DocumentsPage() {
 
             {filteredDocuments.length === 0 && (
               <div className="text-center py-12">
-                <FileText className="size-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-2">No documents found</p>
-                <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
+                <FileText className="size-12 text-stone-500 mx-auto mb-4" />
+                <p className="text-stone-500 mb-2">No documents found</p>
+                <p className="text-sm text-stone-500">Try adjusting your search or filters</p>
               </div>
             )}
           </div>
-      </main>
-    </>
+        </StaggerItem>
+      </StaggerContainer>
+    </main>
   );
 }

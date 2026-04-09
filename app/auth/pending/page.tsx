@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { logOut } from '@/lib/auth';
 import { Clock, AlertCircle } from 'lucide-react';
+import { FadeIn } from '@/components/motion-wrapper';
 
 export default function Pending() {
   const router = useRouter();
@@ -23,35 +24,37 @@ export default function Pending() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-fundex-cream to-fundex-cream p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-background rounded-lg shadow-2xl p-8">
+    <div className="relative min-h-screen bg-white font-sans flex items-center justify-center p-4">
+      <div className="pointer-events-none fixed right-0 top-0 z-0 h-[700px] w-[800px]" style={{ background: 'radial-gradient(ellipse at 85% 15%, rgba(192,184,122,0.13) 0%, rgba(242,227,187,0.08) 40%, transparent 70%)' }} />
+      <div className="pointer-events-none fixed bottom-0 left-0 z-0 h-[500px] w-[600px]" style={{ background: 'radial-gradient(ellipse at 15% 80%, rgba(192,184,122,0.06) 0%, transparent 60%)' }} />
+      <div className="relative z-10 w-full max-w-md">
+        <FadeIn className="rounded-2xl border border-stone-100 bg-white shadow-sm p-8">
           {/* Icon */}
           <div className="flex justify-center mb-6">
-            <div className="p-4 bg-blue-100 rounded-full">
-              <Clock className="w-8 h-8 text-blue-600" />
+            <div className="p-4 bg-fundex-gold/10 rounded-full">
+              <Clock className="w-8 h-8 text-fundex-forest" />
             </div>
           </div>
 
           {/* Title */}
-          <h1 className="text-2xl font-display font-bold text-center text-foreground mb-2">
+          <h1 className="text-2xl font-display font-semibold text-center text-stone-900 mb-2">
             Pending Approval
           </h1>
 
           {/* Description */}
-          <p className="text-center text-muted-foreground mb-6">
+          <p className="text-center text-stone-500 mb-6">
             Your account is currently pending approval by an administrator. You'll receive an email once your account has been reviewed and approved.
           </p>
 
           {/* Info Box */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="bg-stone-50 border border-stone-200 rounded-lg p-4 mb-6">
             <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-stone-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-blue-900">
+                <p className="text-sm font-medium text-stone-900">
                   What happens next?
                 </p>
-                <p className="text-sm text-blue-700 mt-1">
+                <p className="text-sm text-stone-600 mt-1">
                   An administrator will review your information and send you an email notification once your account is approved.
                 </p>
               </div>
@@ -69,21 +72,21 @@ export default function Pending() {
           <button
             onClick={handleLogout}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200"
+            className="w-full bg-gradient-to-r from-fundex-forest to-fundex-green hover:from-fundex-green hover:to-fundex-forest disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200"
           >
             {loading ? 'Logging out...' : 'Logout'}
           </button>
 
           {/* Return to Landing Link */}
-          <p className="text-center text-muted-foreground text-sm mt-4">
+          <p className="text-center text-stone-500 text-sm mt-4">
             <button
               onClick={() => router.push('/')}
-              className="text-blue-600 hover:text-blue-700 underline"
+              className="text-fundex-forest hover:text-fundex-green underline"
             >
               Return to homepage
             </button>
           </p>
-        </div>
+        </FadeIn>
       </div>
     </div>
   );

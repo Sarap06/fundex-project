@@ -21,17 +21,17 @@ type StatCardProps = {
 
 function StatCard({ icon, title, value, subtext, valueClassName }: StatCardProps) {
   return (
-    <div className="flex min-w-0 flex-col rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm md:p-6">
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+    <div className="flex min-w-0 flex-col rounded-xl border border-stone-100 bg-white p-5 shadow-sm md:p-6">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest">
         {icon}
       </div>
-      <p className="text-sm font-medium text-slate-500">{title}</p>
+      <p className="text-sm font-medium text-stone-500">{title}</p>
       <p
-        className={`mt-2 truncate text-xl font-bold tabular-nums tracking-tight sm:text-2xl ${valueClassName ?? "text-slate-900"}`}
+        className={`mt-2 truncate text-xl font-semibold tabular-nums tracking-tight sm:text-2xl ${valueClassName ?? "text-stone-900"}`}
       >
         {value}
       </p>
-      <p className="mt-1 text-sm text-slate-500">{subtext}</p>
+      <p className="mt-1 text-sm text-stone-500">{subtext}</p>
     </div>
   );
 }
@@ -47,12 +47,12 @@ type SectionCardProps = {
 function SectionCard({ title, subtitle, topRight, className, children }: SectionCardProps) {
   return (
     <section
-      className={`rounded-xl border border-slate-200/90 bg-white p-6 shadow-sm md:rounded-2xl md:p-7 ${className ?? ""}`}
+      className={`rounded-xl border border-stone-100 bg-white p-6 shadow-sm md:rounded-2xl md:p-7 ${className ?? ""}`}
     >
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 md:text-xl">{title}</h2>
-          <p className="mt-1 text-sm text-slate-500 md:text-base">{subtitle}</p>
+          <h2 className="text-lg font-semibold text-stone-900 md:text-xl">{title}</h2>
+          <p className="mt-1 text-sm text-stone-500 md:text-base">{subtitle}</p>
         </div>
         {topRight}
       </div>
@@ -70,8 +70,8 @@ type InsightMetricProps = {
 function InsightMetric({ label, value, valueClassName }: InsightMetricProps) {
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center px-4 py-2 text-center">
-      <p className="text-sm font-medium text-slate-500">{label}</p>
-      <p className={`mt-2 text-lg font-bold tabular-nums sm:text-xl ${valueClassName ?? "text-slate-900"}`}>{value}</p>
+      <p className="text-sm font-medium text-stone-500">{label}</p>
+      <p className={`mt-2 text-lg font-semibold tabular-nums sm:text-xl ${valueClassName ?? "text-stone-900"}`}>{value}</p>
     </div>
   );
 }
@@ -110,30 +110,30 @@ function PortfolioGrowthChart() {
             t === 0 ? "$0" : t === 1 ? "$180k" : t === 0.22 ? "$40k" : t === 0.44 ? "$80k" : t === 0.61 ? "$110k" : "$140k";
           return (
             <g key={t}>
-              <line x1={padL} y1={gy} x2={w - padR} y2={gy} className="stroke-slate-200" strokeWidth={1} />
-              <text x={8} y={gy + 4} className="fill-slate-400 text-[10px] font-medium">
+              <line x1={padL} y1={gy} x2={w - padR} y2={gy} stroke="#e7e5e4" strokeWidth={1} />
+              <text x={8} y={gy + 4} fill="#a8a29e" className="text-[10px] font-medium">
                 {label}
               </text>
             </g>
           );
         })}
 
-        <path d={areaD} className="fill-emerald-500/10" />
-        <path d={lineD} fill="none" className="stroke-emerald-500" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+        <path d={areaD} fill="#C0B87A" opacity={0.1} />
+        <path d={lineD} fill="none" stroke="#C0B87A" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
 
-        <circle cx={cx} cy={cy} r={6} className="fill-white stroke-emerald-500" strokeWidth={3} />
+        <circle cx={cx} cy={cy} r={6} fill="#C0B87A" stroke="#C0B87A" strokeWidth={3} />
 
         {months.map((m, i) => (
-          <text key={m} x={x(i)} y={h - 10} textAnchor="middle" className="fill-slate-500 text-[11px] font-medium">
+          <text key={m} x={x(i)} y={h - 10} textAnchor="middle" fill="#a8a29e" className="text-[11px] font-medium">
             {m}
           </text>
         ))}
       </svg>
 
-      <div className="pointer-events-none absolute left-[31%] top-[36%] z-10 w-max max-w-[200px] -translate-x-1/2 -translate-y-full rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-md sm:left-[33%] sm:top-[34%]">
-        <p className="text-xs font-semibold text-slate-900">Apr</p>
-        <p className="mt-1 text-xs text-slate-500">Total Earned</p>
-        <p className="text-sm font-bold tabular-nums text-emerald-600">$53,480</p>
+      <div className="pointer-events-none absolute left-[31%] top-[36%] z-10 w-max max-w-[200px] -translate-x-1/2 -translate-y-full rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-md sm:left-[33%] sm:top-[34%]">
+        <p className="text-xs font-semibold text-stone-900">Apr</p>
+        <p className="mt-1 text-xs text-stone-500">Total Earned</p>
+        <p className="text-sm font-semibold tabular-nums text-fundex-forest">$53,480</p>
       </div>
     </div>
   );
@@ -171,15 +171,15 @@ function MonthlyEarningsChart({ view }: { view: "monthly" | "quarters" }) {
       <div className="flex min-w-[480px] gap-2">
         <div className="flex w-10 shrink-0 flex-col justify-between pb-8 pt-1 text-right">
           {yLabels.map((lab) => (
-            <span key={lab} className="text-[11px] font-medium tabular-nums text-slate-400">
+            <span key={lab} className="text-[11px] font-medium tabular-nums text-stone-400">
               {lab}
             </span>
           ))}
         </div>
-        <div className="relative min-h-[220px] flex-1 border-b border-l border-slate-200">
+        <div className="relative min-h-[220px] flex-1 border-b border-l border-stone-200">
           <div className="absolute inset-0 flex flex-col justify-between pb-8 pl-0 pt-1">
             {[0, 1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-px w-full bg-slate-100" />
+              <div key={i} className="h-px w-full bg-stone-100" />
             ))}
           </div>
           <div className="relative flex h-[200px] items-end justify-between gap-2 px-2 pb-8 pt-4">
@@ -188,10 +188,10 @@ function MonthlyEarningsChart({ view }: { view: "monthly" | "quarters" }) {
               return (
                 <div key={row.label} className="flex flex-1 flex-col items-center justify-end gap-2">
                   <div
-                    className="w-full max-w-[44px] rounded-t-lg bg-gradient-to-t from-emerald-600 to-emerald-500 shadow-sm"
-                    style={{ height: `${pct}%`, minHeight: "8%" }}
+                    className="w-full max-w-[44px] rounded-t-lg shadow-sm"
+                    style={{ backgroundColor: "#C0B87A", height: `${pct}%`, minHeight: "8%" }}
                   />
-                  <span className="text-xs font-medium text-slate-500">{row.label}</span>
+                  <span className="text-xs font-medium text-stone-500">{row.label}</span>
                 </div>
               );
             })}
@@ -210,12 +210,12 @@ function EarningsToggle({
   onChange: (m: "monthly" | "quarters") => void;
 }) {
   return (
-    <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm">
+    <div className="inline-flex rounded-lg border border-stone-200 bg-stone-50/80 p-1 shadow-sm">
       <button
         type="button"
         onClick={() => onChange("monthly")}
         className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
-          mode === "monthly" ? "bg-emerald-500 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
+          mode === "monthly" ? "bg-fundex-gold text-fundex-forest shadow-sm" : "text-stone-500 hover:text-stone-700"
         }`}
       >
         Monthly
@@ -224,7 +224,7 @@ function EarningsToggle({
         type="button"
         onClick={() => onChange("quarters")}
         className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
-          mode === "quarters" ? "bg-emerald-500 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
+          mode === "quarters" ? "bg-fundex-gold text-fundex-forest shadow-sm" : "text-stone-500 hover:text-stone-700"
         }`}
       >
         Quarters
@@ -238,9 +238,9 @@ export default function PerformancePage() {
 
   return (
     <div className="mx-auto w-full max-w-screen-2xl space-y-8 pb-12 md:space-y-10">
-          <header className="rounded-xl border border-emerald-100/80 bg-gradient-to-br from-emerald-600 via-emerald-500 to-green-500 px-7 py-8 text-white shadow-sm shadow-emerald-600/15 md:rounded-2xl md:px-9 md:py-10">
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Performance</h1>
-            <p className="mt-2 max-w-2xl text-base font-medium text-emerald-50/95">Earnings and growth overview</p>
+          <header className="rounded-xl border border-stone-100 bg-gradient-to-br from-fundex-forest via-fundex-green to-fundex-forest px-7 py-8 text-white shadow-sm shadow-fundex-forest/15 md:rounded-2xl md:px-9 md:py-10">
+            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Performance</h1>
+            <p className="mt-2 max-w-2xl text-base font-medium text-white/90">Earnings and growth overview</p>
           </header>
 
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
@@ -249,14 +249,14 @@ export default function PerformancePage() {
               title="Total Earned"
               value="$163,966"
               subtext="Total interest earned"
-              valueClassName="text-emerald-600"
+              valueClassName="text-fundex-forest"
             />
             <StatCard
               icon={<Wallet className="h-5 w-5" />}
               title="This Month Earnings"
               value="$13,980"
               subtext="Current monthly income"
-              valueClassName="text-emerald-600"
+              valueClassName="text-fundex-forest"
             />
             <StatCard
               icon={<PiggyBank className="h-5 w-5" />}
@@ -269,7 +269,7 @@ export default function PerformancePage() {
               title="Avg Deal Return"
               value="18.2%"
               subtext="Across all deals"
-              valueClassName="text-emerald-600"
+              valueClassName="text-fundex-forest"
             />
           </section>
 
@@ -277,9 +277,9 @@ export default function PerformancePage() {
             title="Portfolio Growth"
             subtitle="How your earnings have grown over time"
             topRight={
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50/90 px-4 py-3 text-right shadow-sm">
-                <p className="text-xs font-medium text-slate-600">Total Growth</p>
-                <p className="mt-1 text-lg font-bold tabular-nums text-emerald-700">$163,966</p>
+              <div className="rounded-xl border border-stone-100 bg-fundex-gold/5 px-4 py-3 text-right shadow-sm">
+                <p className="text-xs font-medium text-stone-600">Total Growth</p>
+                <p className="mt-1 text-lg font-semibold tabular-nums text-fundex-forest">$163,966</p>
               </div>
             }
           >
@@ -294,47 +294,47 @@ export default function PerformancePage() {
             <MonthlyEarningsChart view={earningsMode} />
           </SectionCard>
 
-          <section className="rounded-xl border border-emerald-100/90 bg-emerald-50/50 p-6 shadow-sm md:rounded-2xl md:p-8">
-            <h2 className="text-lg font-bold text-slate-900 md:text-xl">Expected Earnings</h2>
-            <p className="mt-1 text-sm text-slate-600 md:text-base">Income expected from active investments</p>
+          <section className="rounded-xl border border-stone-100 bg-fundex-gold/5 p-6 shadow-sm md:rounded-2xl md:p-8">
+            <h2 className="text-lg font-semibold text-stone-900 md:text-xl">Expected Earnings</h2>
+            <p className="mt-1 text-sm text-stone-600 md:text-base">Income expected from active investments</p>
 
             <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
-              <div className="flex gap-4 rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+              <div className="flex gap-4 rounded-xl border border-stone-100 bg-white p-5 shadow-sm">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest">
                   <CalendarClock className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-500">Next 30 Days</p>
-                  <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">$5,000</p>
+                  <p className="text-sm font-medium text-stone-500">Next 30 Days</p>
+                  <p className="mt-1 text-xl font-semibold tabular-nums text-stone-900">$5,000</p>
                 </div>
               </div>
-              <div className="flex gap-4 rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+              <div className="flex gap-4 rounded-xl border border-stone-100 bg-white p-5 shadow-sm">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest">
                   <Clock className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-500">Next 90 Days</p>
-                  <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">$15,000</p>
+                  <p className="text-sm font-medium text-stone-500">Next 90 Days</p>
+                  <p className="mt-1 text-xl font-semibold tabular-nums text-stone-900">$15,000</p>
                 </div>
               </div>
-              <div className="flex gap-4 rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+              <div className="flex gap-4 rounded-xl border border-stone-100 bg-white p-5 shadow-sm">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest">
                   <TrendingUp className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-500">Remaining Expected</p>
-                  <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">$50,000</p>
+                  <p className="text-sm font-medium text-stone-500">Remaining Expected</p>
+                  <p className="mt-1 text-xl font-semibold tabular-nums text-stone-900">$50,000</p>
                 </div>
               </div>
             </div>
           </section>
 
           <SectionCard title="Portfolio Insights" subtitle="Key metrics about your investment activity">
-            <div className="flex flex-col divide-y divide-slate-100 md:flex-row md:divide-x md:divide-y-0">
+            <div className="flex flex-col divide-y divide-stone-100 md:flex-row md:divide-x md:divide-y-0">
               <InsightMetric label="Deals Completed" value="3" />
               <InsightMetric label="Avg Deal Duration" value="8 mo" />
-              <InsightMetric label="Reinvestment Rate" value="75%" valueClassName="text-emerald-600" />
-              <InsightMetric label="Capital Reinvested" value="$550,000" valueClassName="text-emerald-600" />
+              <InsightMetric label="Reinvestment Rate" value="75%" valueClassName="text-fundex-forest" />
+              <InsightMetric label="Capital Reinvested" value="$550,000" valueClassName="text-fundex-forest" />
               <InsightMetric label="Capital Withdrawn" value="$200,000" />
             </div>
           </SectionCard>

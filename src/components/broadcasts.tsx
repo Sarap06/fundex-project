@@ -206,7 +206,7 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
   if (loading) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">Loading broadcasts...</p>
+        <p className="text-stone-500">Loading broadcasts...</p>
       </div>
     );
   }
@@ -216,13 +216,13 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
       <div className="space-y-6 pt-6">
         {/* Tabs and Search */}
         <div className="flex flex-col gap-4">
-          <div className="flex gap-4 border-b border-border">
+          <div className="flex gap-4 border-b border-stone-100">
             <button
               onClick={() => setActiveTab('all')}
               className={`pb-3 px-2 font-medium transition ${
                 activeTab === 'all'
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'text-stone-900 border-b-2 border-fundex-gold'
+                  : 'text-stone-400 hover:text-stone-900'
               }`}
             >
               All Announcements
@@ -232,8 +232,8 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
                 onClick={() => setActiveTab('unread')}
                 className={`pb-3 px-2 font-medium transition ${
                   activeTab === 'unread'
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'text-stone-900 border-b-2 border-fundex-gold'
+                    : 'text-stone-400 hover:text-stone-900'
                 }`}
               >
                 Unread
@@ -249,10 +249,10 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
                 placeholder="Search announcements or updates..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 pl-10 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-4 py-3 pl-10 border border-stone-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-fundex-gold/30 focus:border-transparent"
               />
               <svg
-                className="absolute left-3 top-3.5 w-5 h-5 text-muted-foreground"
+                className="absolute left-3 top-3.5 w-5 h-5 text-stone-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -270,7 +270,7 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
             {isAdmin && (
               <button 
                 onClick={() => setShowSendForm(!showSendForm)}
-                className="bg-primary text-white px-4 py-3 rounded-lg font-semibold hover:bg-primary/90 transition whitespace-nowrap"
+                className="bg-fundex-forest text-white px-4 py-3 rounded-lg font-semibold hover:bg-fundex-forest/90 transition whitespace-nowrap"
               >
                 {showSendForm ? 'Close' : 'Create Update'}
               </button>
@@ -280,14 +280,14 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
 
         {/* Send Broadcast Modal - Only for Admins and when Show Form is True */}
         {isAdmin && showSendForm && (
-          <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300 pointer-events-none">
-            <div className="bg-background rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300 pointer-events-auto">
+          <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300 pointer-events-none">
+            <div className="rounded-2xl border border-stone-100 bg-white shadow-sm w-full max-w-md max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300 pointer-events-auto">
               {/* Modal Header */}
-              <div className="sticky top-0 bg-background border-b border-border px-6 py-4 flex items-center justify-between">
-                <h2 className="text-xl font-display font-bold text-foreground">Create Announcement</h2>
+              <div className="sticky top-0 bg-white border-b border-stone-100 px-6 py-4 flex items-center justify-between">
+                <h2 className="text-xl font-display font-semibold text-stone-900">Create Announcement</h2>
                 <button
                   onClick={() => setShowSendForm(false)}
-                  className="text-muted-foreground hover:text-muted-foreground transition"
+                  className="text-stone-500 hover:text-stone-500 transition"
                 >
                   <X size={24} />
                 </button>
@@ -303,7 +303,7 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
                 )}
 
                 {successMessage && (
-                  <div className="p-4 bg-fundex-cream/30 border border-primary/20 rounded-lg text-primary flex items-center gap-2">
+                  <div className="p-4 bg-fundex-gold/10 border border-fundex-gold/20 rounded-lg text-fundex-forest flex items-center gap-2">
                     <CheckCircle size={18} />
                     {successMessage}
                   </div>
@@ -311,7 +311,7 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
 
                 <form onSubmit={handleSendBroadcast} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
+                    <label className="block text-sm font-medium text-stone-900 mb-2">
                       Title
                     </label>
                     <input
@@ -319,12 +319,12 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="Announcement title"
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-4 py-2 border border-stone-100 rounded-lg focus:ring-2 focus:ring-fundex-gold/30 focus:border-transparent"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
+                    <label className="block text-sm font-medium text-stone-900 mb-2">
                       Message
                     </label>
                     <textarea
@@ -332,16 +332,16 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder="Write your announcement description here..."
                       rows={5}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-4 py-2 border border-stone-100 rounded-lg focus:ring-2 focus:ring-fundex-gold/30 focus:border-transparent"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
+                    <label className="block text-sm font-medium text-stone-900 mb-2">
                       Upload Document (Optional)
                     </label>
                     {!file ? (
-                      <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-gray-400 transition">
+                      <div className="border-2 border-dashed border-stone-100 rounded-lg p-6 text-center hover:border-gray-400 transition">
                         <input
                           type="file"
                           onChange={handleFileChange}
@@ -350,18 +350,18 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
                           id="file-input"
                         />
                         <label htmlFor="file-input" className="cursor-pointer">
-                          <FileIcon className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
-                          <p className="text-sm font-medium text-foreground">Click to upload or drag and drop</p>
-                          <p className="text-xs text-muted-foreground">PDF, DOC, DOCX, XLSX, PPT, TXT, JPG, PNG, ZIP (max 10MB)</p>
+                          <FileIcon className="mx-auto h-10 w-10 text-stone-500 mb-2" />
+                          <p className="text-sm font-medium text-stone-900">Click to upload or drag and drop</p>
+                          <p className="text-xs text-stone-500">PDF, DOC, DOCX, XLSX, PPT, TXT, JPG, PNG, ZIP (max 10MB)</p>
                         </label>
                       </div>
                     ) : (
-                      <div className="bg-fundex-cream/30 border border-primary/20 rounded-lg p-4 flex items-center justify-between">
+                      <div className="bg-fundex-gold/10 border border-fundex-gold/20 rounded-lg p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <FileIcon className="h-6 w-6 text-primary" />
+                          <FileIcon className="h-6 w-6 text-fundex-forest" />
                           <div>
-                            <p className="text-sm font-medium text-foreground">{file.name}</p>
-                            <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(2)} KB</p>
+                            <p className="text-sm font-medium text-stone-900">{file.name}</p>
+                            <p className="text-xs text-stone-500">{(file.size / 1024).toFixed(2)} KB</p>
                           </div>
                         </div>
                         <button
@@ -378,7 +378,7 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
                   <button
                     type="submit"
                     disabled={sending}
-                    className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-primary/90 disabled:bg-muted-foreground transition"
+                    className="w-full bg-fundex-forest text-white py-3 rounded-lg font-semibold hover:bg-fundex-forest/90 disabled:bg-stone-500 transition"
                   >
                     {sending ? 'Sending...' : 'Send Announcement'}
                   </button>
@@ -391,12 +391,12 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
         {/* Broadcasts List */}
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading announcements...</p>
+            <p className="text-stone-500">Loading announcements...</p>
           </div>
         ) : filteredBroadcasts.length === 0 ? (
-          <div className="bg-background rounded-lg p-12 text-center border border-border">
-            <Megaphone className="mx-auto mb-4 text-muted-foreground" size={48} />
-            <p className="text-muted-foreground text-lg">No announcements yet</p>
+          <div className="rounded-2xl border border-stone-100 bg-white p-12 text-center">
+            <Megaphone className="mx-auto mb-4 text-stone-500" size={48} />
+            <p className="text-stone-500 text-lg">No announcements yet</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -411,11 +411,11 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
                 <div
                   key={broadcast.id}
                   onClick={() => setExpandedBroadcast(broadcast)}
-                  className="bg-background rounded-lg border border-border p-4 hover:shadow-md hover:border-primary/20 transition cursor-pointer"
+                  className="rounded-2xl border border-stone-100 bg-white p-4 hover:shadow-md hover:border-fundex-gold/20 transition cursor-pointer"
                 >
                   <div className="flex gap-4 items-start">
                     {/* Avatar */}
-                    <div className="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg bg-gradient-to-br from-fundex-cream0 to-green-600">
+                    <div className="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center text-white font-semibold text-lg bg-gradient-to-br from-fundex-gold/30 to-fundex-cream/40">
                       {initials}
                     </div>
 
@@ -423,19 +423,19 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-4 mb-1">
                         <div>
-                          <h3 className="font-bold text-foreground text-base">{broadcast.title}</h3>
-                          <p className="text-sm text-muted-foreground mt-0.5">
+                          <h3 className="font-semibold text-stone-900 text-base">{broadcast.title}</h3>
+                          <p className="text-sm text-stone-500 mt-0.5">
                             {broadcast.admin_name || 'Unknown Admin'}
                           </p>
                         </div>
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                        <span className="text-sm text-stone-500 whitespace-nowrap">
                           {getTimeDisplay(broadcast.created_at)}
                         </span>
                       </div>
 
                       {/* Status/Type */}
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-fundex-gold/10 text-fundex-forest">
                           Announcement
                         </span>
                         {broadcast.file_url && (
@@ -446,7 +446,7 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
                       </div>
 
                       {/* Message Preview */}
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                      <p className="text-sm text-stone-500 line-clamp-2">
                         {broadcast.message}
                       </p>
                     </div>
@@ -457,7 +457,7 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
 
                   {/* Delete Button for Admin */}
                   {isAdmin && broadcast.admin_id === userId && (
-                    <div className="mt-2 pt-2 border-t border-border flex justify-end">
+                    <div className="mt-2 pt-2 border-t border-stone-100 flex justify-end">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -478,13 +478,13 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
 
       {/* Expanded Full-Screen View */}
       {expandedBroadcast && (
-        <div className="fixed inset-0 bg-background z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
           {/* Header */}
-          <div className="sticky top-0 bg-background border-b border-border shadow-sm z-40">
+          <div className="sticky top-0 bg-white border-b border-stone-100 shadow-sm z-40">
             <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
               <button
                 onClick={() => setExpandedBroadcast(null)}
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition"
+                className="flex items-center gap-2 text-stone-500 hover:text-stone-900 transition"
               >
                 <ArrowLeft size={24} />
                 <span className="text-lg font-medium">Back</span>
@@ -509,7 +509,7 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
             {/* Title Section */}
             <div className="mb-8">
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-fundex-cream0 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                <div className="w-16 h-16 bg-gradient-to-br from-fundex-gold/30 to-fundex-cream/40 rounded-full flex items-center justify-center text-white font-semibold text-xl">
                   {(expandedBroadcast.admin_name || 'A')
                     .split(' ')
                     .map((n) => n.charAt(0))
@@ -517,21 +517,21 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
                     .toUpperCase()}
                 </div>
                 <div>
-                  <h1 className="text-3xl font-display font-bold text-foreground">{expandedBroadcast.title}</h1>
-                  <p className="text-muted-foreground mt-1">
+                  <h1 className="text-3xl font-display font-semibold text-stone-900">{expandedBroadcast.title}</h1>
+                  <p className="text-stone-500 mt-1">
                     Sent by <span className="font-semibold">{expandedBroadcast.admin_name || 'Admin'}</span>
                   </p>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-stone-500">
                 {new Date(expandedBroadcast.created_at).toLocaleString()}
               </p>
             </div>
 
             {/* Message Content */}
-            <div className="bg-muted rounded-lg p-8 mb-8 border border-border">
+            <div className="bg-stone-50 rounded-2xl p-8 mb-8 border border-stone-100">
               <div className="prose prose-sm max-w-none">
-                <p className="text-lg leading-relaxed text-foreground whitespace-pre-wrap">
+                <p className="text-lg leading-relaxed text-stone-900 whitespace-pre-wrap">
                   {expandedBroadcast.message}
                 </p>
               </div>
@@ -540,15 +540,15 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
             {/* File Section */}
             {expandedBroadcast.file_url && expandedBroadcast.file_name && (
               <div className="mb-8">
-                <h2 className="text-xl font-display font-bold text-foreground mb-4">Attached Document</h2>
-                <div className="bg-background border-2 border-primary/20 rounded-lg p-6 flex items-center justify-between hover:shadow-md transition">
+                <h2 className="text-xl font-display font-semibold text-stone-900 mb-4">Attached Document</h2>
+                <div className="bg-white border-2 border-fundex-gold/20 rounded-2xl p-6 flex items-center justify-between hover:shadow-md transition">
                   <div className="flex items-center gap-4">
-                    <div className="bg-primary/10 p-4 rounded-lg">
-                      <FileIcon className="text-primary" size={32} />
+                    <div className="bg-fundex-gold/10 p-4 rounded-lg">
+                      <FileIcon className="text-fundex-forest" size={32} />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{expandedBroadcast.file_name}</p>
-                      <p className="text-sm text-muted-foreground">Click download to view</p>
+                      <p className="font-semibold text-stone-900">{expandedBroadcast.file_name}</p>
+                      <p className="text-sm text-stone-500">Click download to view</p>
                     </div>
                   </div>
                   <button
@@ -561,7 +561,7 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
                       link.click();
                       document.body.removeChild(link);
                     }}
-                    className="flex items-center gap-2 px-6 py-3 bg-primary text-white hover:bg-primary/90 rounded-lg transition font-medium whitespace-nowrap"
+                    className="flex items-center gap-2 px-6 py-3 bg-fundex-forest text-white hover:bg-fundex-forest/90 rounded-lg transition font-medium whitespace-nowrap"
                   >
                     <Download size={20} />
                     Download
@@ -571,13 +571,13 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-4 py-8 border-t border-border">
+            <div className="flex gap-4 py-8 border-t border-stone-100">
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(expandedBroadcast.message);
                   alert('Message copied to clipboard!');
                 }}
-                className="flex items-center gap-2 px-6 py-3 text-muted-foreground bg-muted hover:bg-muted rounded-lg transition font-medium"
+                className="flex items-center gap-2 px-6 py-3 text-stone-500 bg-stone-50 hover:bg-stone-50 rounded-lg transition font-medium"
               >
                 <Copy size={20} />
                 Copy Message

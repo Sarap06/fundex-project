@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { BroadcastChannels } from '@/components/deal-broadcast-channels';
-import { Clock } from 'lucide-react';
+import { PageHeader } from '@/components/page-header';
+import { Skeleton } from '@/components/ui/skeleton';
+import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
 import type { User } from '@supabase/supabase-js';
 
 interface UserProfile {
@@ -75,40 +77,34 @@ export default function BroadcastPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-3">
-            <Clock className="animate-spin text-muted-foreground" size={32} />
-            <p className="text-lg text-foreground">Loading broadcast...</p>
+      <main className="px-6 py-6 md:px-8 md:py-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <Skeleton className="h-8 w-40" />
+            <Skeleton className="mt-2 h-4 w-64" />
           </div>
         </div>
-      </div>
+        <Skeleton className="mt-6 h-64 w-full rounded-lg" />
+      </main>
     );
   }
 
   return (
-    <>
-      {/* Header */}
-      <header className="bg-primary sticky top-0 z-30 border-b border-primary/80">
-        <div className="px-8 py-5 flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-display font-bold text-white">Broadcast</h1>
-            {profile && <p className="text-xs text-white/60">Welcome back, {profile.full_name?.split(' ')[0]}</p>}
-          </div>
-        </div>
-      </header>
+    <main className="px-6 py-6 md:px-8 md:py-8">
+      <StaggerContainer className="space-y-6">
+        <StaggerItem>
+          <PageHeader title="Broadcast" subtitle="Manage announcements and communications" />
+        </StaggerItem>
 
-      <main className="px-8 py-8">
-        {/* Sidebar Navigation */}
-
-        {/* Broadcast Content */}
-        <BroadcastChannels 
-          companyId={company?.id || ''}
-          userRole={profile?.role}
-          userName={profile?.full_name}
-          userId={user?.id}
-        />
-      </main>
-    </>
+        <StaggerItem>
+          <BroadcastChannels
+            companyId={company?.id || ''}
+            userRole={profile?.role}
+            userName={profile?.full_name}
+            userId={user?.id}
+          />
+        </StaggerItem>
+      </StaggerContainer>
+    </main>
   );
 }

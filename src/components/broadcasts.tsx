@@ -1,8 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { CheckCircle, AlertCircle, Megaphone, Download, FileIcon, X, Copy, Share2, ChevronRight, ArrowLeft } from 'lucide-react';
+import {
+  CheckCircle,
+  AlertCircle,
+  Megaphone,
+  Download,
+  FileIcon,
+  X,
+  Copy,
+  ChevronRight,
+  ArrowLeft,
+  Search,
+  ChevronDown,
+} from 'lucide-react';
+import { StaggerContainer } from '@/components/motion-wrapper';
+import { CompanyStatCard } from '@/components/company/stat-card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 interface Broadcast {
   id: string;
@@ -20,9 +44,74 @@ interface BroadcastsProps {
   userRole?: string;
   userName?: string;
   userId?: string;
+  firstName?: string;
 }
 
-export function Broadcasts({ companyId, userRole, userName, userId }: BroadcastsProps) {
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 17) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
+function getOrdinalSuffix(day: number): string {
+  if (day >= 11 && day <= 13) return 'th';
+  switch (day % 10) {
+    case 1:
+      return 'st';
+    case 2:
+      return 'nd';
+    case 3:
+      return 'rd';
+    default:
+      return 'th';
+  }
+}
+
+function getTodayString(): string {
+  const now = new Date();
+  const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
+  const month = now.toLocaleDateString('en-US', { month: 'long' });
+  const day = now.getDate();
+  const year = now.getFullYear();
+  return `${weekday}, ${month} ${day}${getOrdinalSuffix(day)}, ${year}`;
+}
+
+function computeStats(broadcasts: Broadcast[]) {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const startPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  const total = broadcasts.length;
+  const thisMonth = broadcasts.filter((b) => new Date(b.created_at) >= startOfMonth).length;
+  const withAttachments = broadcasts.filter((b) => b.file_url).length;
+  const last7 = broadcasts.filter((b) => new Date(b.created_at) >= weekAgo).length;
+
+  const lastMonthCount = broadcasts.filter((b) => {
+    const d = new Date(b.created_at);
+    return d >= startPrevMonth && d < startOfMonth;
+  }).length;
+
+  const momLabel = 'from last month';
+  let momChange: string | null = '0%';
+  if (lastMonthCount === 0) {
+    momChange = thisMonth > 0 ? '+100%' : '0%';
+  } else {
+    const pct = ((thisMonth - lastMonthCount) / lastMonthCount) * 100;
+    momChange = `${pct >= 0 ? '+' : ''}${pct.toFixed(0)}%`;
+  }
+
+  return { total, thisMonth, withAttachments, last7, momChange, momLabel };
+}
+
+export function Broadcasts({
+  companyId,
+  userRole,
+  userName: _userName,
+  userId,
+  firstName = '',
+}: BroadcastsProps) {
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
@@ -38,17 +127,22 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
 
   const isAdmin = userRole === 'admin';
 
-  // Filter broadcasts based on search query
-  const filteredBroadcasts = broadcasts.filter(b => 
-    b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    b.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (b.admin_name || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredBroadcasts = useMemo(() => {
+    const searched = broadcasts.filter(
+      (b) =>
+        b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (b.admin_name || '').toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+    // Unread state is not tracked in the API yet; keep parity with previous behavior (same as all).
+    return searched;
+  }, [broadcasts, searchQuery]);
+
+  const stats = useMemo(() => computeStats(broadcasts), [broadcasts]);
 
   useEffect(() => {
     loadBroadcasts();
-    
-    // Subscribe to real-time updates
+
     const subscription = supabase
       .channel(`broadcasts:${companyId}`)
       .on(
@@ -63,9 +157,11 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
           if (payload.eventType === 'INSERT') {
             setBroadcasts((prev) => [payload.new as Broadcast, ...prev]);
           } else if (payload.eventType === 'DELETE') {
-            setBroadcasts((prev) => prev.filter((b) => b.id !== (payload.old as Record<string, unknown>).id));
+            setBroadcasts((prev) =>
+              prev.filter((b) => b.id !== (payload.old as Record<string, unknown>).id),
+            );
           }
-        }
+        },
       )
       .subscribe();
 
@@ -93,13 +189,12 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
-      
-      // Validate file size (max 10MB)
+
       if (selectedFile.size > 10 * 1024 * 1024) {
         setError('File size must be less than 10MB');
         return;
       }
-      
+
       setFile(selectedFile);
       setError('');
     }
@@ -116,11 +211,6 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
       setError('Please fill in title and message');
       return;
     }
-
-    console.log('=== SENDING BROADCAST ===');
-    console.log('Company ID:', companyId);
-    console.log('User Role:', userRole);
-    console.log('User ID:', userId);
 
     setSending(true);
     setError('');
@@ -145,7 +235,7 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
       const response = await fetch('/api/broadcasts', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: formData,
       });
@@ -156,6 +246,7 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
         setFile(null);
         setSuccessMessage('Broadcast sent successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
+        setShowSendForm(false);
         loadBroadcasts();
       } else {
         const data = await response.json();
@@ -185,7 +276,7 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
       const response = await fetch(`/api/broadcasts/${broadcastId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
@@ -205,383 +296,462 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
 
   if (loading) {
     return (
-      <div className="text-center py-8">
-        <p className="text-stone-500">Loading broadcasts...</p>
+      <div className="space-y-7 pb-12">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <Skeleton className="h-10 w-72" />
+            <Skeleton className="mt-2 h-4 w-64" />
+          </div>
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-28" />
+            <Skeleton className="h-10 w-24" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 items-end gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="py-2">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="mt-3 h-12 w-16" />
+            <Skeleton className="mt-2 h-4 w-40" />
+          </div>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="relative overflow-hidden border border-stone-100 bg-white p-5 shadow-sm"
+            >
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="mt-3 h-8 w-12" />
+              <Skeleton className="mt-3 h-4 w-full" />
+            </div>
+          ))}
+        </div>
+        <div className="border border-stone-100 bg-white shadow-sm">
+          <div className="border-b border-stone-100 px-6 py-5">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="mt-4 h-9 w-full max-w-md" />
+          </div>
+          <div className="divide-y divide-stone-50 px-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex gap-4 py-5">
+                <Skeleton className="h-14 w-14 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="space-y-6 pt-6">
-        {/* Tabs and Search */}
-        <div className="flex flex-col gap-4">
-          <div className="flex gap-4 border-b border-stone-100">
-            <button
-              onClick={() => setActiveTab('all')}
-              className={`pb-3 px-2 font-medium transition ${
-                activeTab === 'all'
-                  ? 'text-stone-900 border-b-2 border-fundex-gold'
-                  : 'text-stone-400 hover:text-stone-900'
-              }`}
-            >
-              All Announcements
-            </button>
-            {!isAdmin && (
-              <button
-                onClick={() => setActiveTab('unread')}
-                className={`pb-3 px-2 font-medium transition ${
-                  activeTab === 'unread'
-                    ? 'text-stone-900 border-b-2 border-fundex-gold'
-                    : 'text-stone-400 hover:text-stone-900'
-                }`}
-              >
-                Unread
-              </button>
-            )}
+      <StaggerContainer className="space-y-7 pb-12">
+        {/* Row 1 — greeting + actions (matches /company dashboard) */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-[1.75rem] font-normal tracking-tight text-stone-900 md:text-[2rem]">
+              {getGreeting()}, {firstName || 'there'}!
+            </h1>
+            <p className="mt-1 text-sm text-stone-400">Today is {getTodayString()}</p>
           </div>
-
-          {/* Search Bar and Button */}
-          <div className="flex gap-3 items-center">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="Search announcements or updates..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 pl-10 border border-stone-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-fundex-gold/30 focus:border-transparent"
-              />
-              <svg
-                className="absolute left-3 top-3.5 w-5 h-5 text-stone-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-
-            {/* Create Update Button */}
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              className="flex items-center gap-1.5 border border-stone-200 bg-white px-4 py-2 text-sm font-normal text-stone-600 transition-colors hover:bg-stone-50"
+            >
+              Last Month
+              <ChevronDown className="h-3.5 w-3.5 text-stone-400" />
+            </button>
             {isAdmin && (
-              <button 
-                onClick={() => setShowSendForm(!showSendForm)}
-                className="bg-fundex-forest text-white px-4 py-3 rounded-lg font-semibold hover:bg-fundex-forest/90 transition whitespace-nowrap"
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSendForm(true);
+                  setError('');
+                  setSuccessMessage('');
+                }}
+                className="flex items-center gap-1.5 bg-fundex-gold px-5 py-2 text-sm font-medium text-fundex-forest shadow-sm transition-colors hover:bg-fundex-gold/85"
               >
-                {showSendForm ? 'Close' : 'Create Update'}
+                Create Update
               </button>
             )}
           </div>
         </div>
 
-        {/* Send Broadcast Modal - Only for Admins and when Show Form is True */}
-        {isAdmin && showSendForm && (
-          <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300 pointer-events-none">
-            <div className="rounded-2xl border border-stone-100 bg-white shadow-sm w-full max-w-md max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300 pointer-events-auto">
-              {/* Modal Header */}
-              <div className="sticky top-0 bg-white border-b border-stone-100 px-6 py-4 flex items-center justify-between">
-                <h2 className="text-xl font-display font-semibold text-stone-900">Create Announcement</h2>
-                <button
-                  onClick={() => setShowSendForm(false)}
-                  className="text-stone-500 hover:text-stone-500 transition"
-                >
-                  <X size={24} />
-                </button>
-              </div>
+        {/* Row 2 — KPI strip */}
+        <div>
+          <div className="grid grid-cols-1 items-end gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <CompanyStatCard
+              label="Total Announcements"
+              value={String(stats.total)}
+              change={stats.momChange}
+              changeLabel={stats.momLabel}
+              featured
+            />
+            <CompanyStatCard
+              label="This Month"
+              value={String(stats.thisMonth)}
+              sublabel="New posts"
+              change={
+                stats.thisMonth > 0
+                  ? `+${Math.min(100, Math.round((stats.thisMonth / Math.max(stats.total, 1)) * 100))}%`
+                  : '+0%'
+              }
+            />
+            <CompanyStatCard
+              label="With Attachments"
+              value={String(stats.withAttachments)}
+              sublabel="Include a file"
+              change={
+                stats.withAttachments > 0
+                  ? `+${((stats.withAttachments / Math.max(stats.total, 1)) * 100).toFixed(0)}%`
+                  : '+0%'
+              }
+            />
+            <CompanyStatCard
+              label="Last 7 Days"
+              value={String(stats.last7)}
+              sublabel="Recent activity"
+              change={`+${stats.last7}`}
+            />
+          </div>
+        </div>
 
-              {/* Modal Content */}
-              <div className="p-6 space-y-4">
-                {error && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-center gap-2">
-                    <AlertCircle size={18} />
-                    {error}
-                  </div>
-                )}
-
-                {successMessage && (
-                  <div className="p-4 bg-fundex-gold/10 border border-fundex-gold/20 rounded-lg text-fundex-forest flex items-center gap-2">
-                    <CheckCircle size={18} />
-                    {successMessage}
-                  </div>
-                )}
-
-                <form onSubmit={handleSendBroadcast} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-stone-900 mb-2">
-                      Title
-                    </label>
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Announcement title"
-                      className="w-full px-4 py-2 border border-stone-100 rounded-lg focus:ring-2 focus:ring-fundex-gold/30 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-stone-900 mb-2">
-                      Message
-                    </label>
-                    <textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Write your announcement description here..."
-                      rows={5}
-                      className="w-full px-4 py-2 border border-stone-100 rounded-lg focus:ring-2 focus:ring-fundex-gold/30 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-stone-900 mb-2">
-                      Upload Document (Optional)
-                    </label>
-                    {!file ? (
-                      <div className="border-2 border-dashed border-stone-100 rounded-lg p-6 text-center hover:border-gray-400 transition">
-                        <input
-                          type="file"
-                          onChange={handleFileChange}
-                          accept=".pdf,.doc,.docx,.xlsx,.xls,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.zip"
-                          className="hidden"
-                          id="file-input"
-                        />
-                        <label htmlFor="file-input" className="cursor-pointer">
-                          <FileIcon className="mx-auto h-10 w-10 text-stone-500 mb-2" />
-                          <p className="text-sm font-medium text-stone-900">Click to upload or drag and drop</p>
-                          <p className="text-xs text-stone-500">PDF, DOC, DOCX, XLSX, PPT, TXT, JPG, PNG, ZIP (max 10MB)</p>
-                        </label>
-                      </div>
-                    ) : (
-                      <div className="bg-fundex-gold/10 border border-fundex-gold/20 rounded-lg p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <FileIcon className="h-6 w-6 text-fundex-forest" />
-                          <div>
-                            <p className="text-sm font-medium text-stone-900">{file.name}</p>
-                            <p className="text-xs text-stone-500">{(file.size / 1024).toFixed(2)} KB</p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleRemoveFile}
-                          className="text-red-600 hover:text-red-800 transition"
-                        >
-                          <X size={20} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={sending}
-                    className="w-full bg-fundex-forest text-white py-3 rounded-lg font-semibold hover:bg-fundex-forest/90 disabled:bg-stone-500 transition"
-                  >
-                    {sending ? 'Sending...' : 'Send Announcement'}
-                  </button>
-                </form>
+        {/* Row 3 — list shell (ActivityTable pattern) */}
+        <div className="border border-stone-100 bg-white font-sans shadow-sm">
+          <div className="flex flex-col gap-4 border-b border-stone-100 px-6 py-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-base font-medium text-stone-900">All Announcements</h3>
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+                <div className="relative flex-1 sm:min-w-[240px]">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                  <Input
+                    type="search"
+                    placeholder="Search announcements or updates..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-10 border-stone-200 bg-white pl-9 text-sm text-stone-700 placeholder:text-stone-400 focus-visible:border-fundex-gold focus-visible:ring-fundex-gold/30"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Broadcasts List */}
-        {loading ? (
-          <div className="text-center py-12">
-            <p className="text-stone-500">Loading announcements...</p>
-          </div>
-        ) : filteredBroadcasts.length === 0 ? (
-          <div className="rounded-2xl border border-stone-100 bg-white p-12 text-center">
-            <Megaphone className="mx-auto mb-4 text-stone-500" size={48} />
-            <p className="text-stone-500 text-lg">No announcements yet</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredBroadcasts.map((broadcast) => {
-              const initials = (broadcast.admin_name || 'A')
-                .split(' ')
-                .map((n) => n.charAt(0))
-                .join('')
-                .toUpperCase();
-
-              return (
-                <div
-                  key={broadcast.id}
-                  onClick={() => setExpandedBroadcast(broadcast)}
-                  className="rounded-2xl border border-stone-100 bg-white p-4 hover:shadow-md hover:border-fundex-gold/20 transition cursor-pointer"
-                >
-                  <div className="flex gap-4 items-start">
-                    {/* Avatar */}
-                    <div className="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center text-white font-semibold text-lg bg-gradient-to-br from-fundex-gold/30 to-fundex-cream/40">
-                      {initials}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4 mb-1">
-                        <div>
-                          <h3 className="font-semibold text-stone-900 text-base">{broadcast.title}</h3>
-                          <p className="text-sm text-stone-500 mt-0.5">
-                            {broadcast.admin_name || 'Unknown Admin'}
-                          </p>
-                        </div>
-                        <span className="text-sm text-stone-500 whitespace-nowrap">
-                          {getTimeDisplay(broadcast.created_at)}
-                        </span>
-                      </div>
-
-                      {/* Status/Type */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-fundex-gold/10 text-fundex-forest">
-                          Announcement
-                        </span>
-                        {broadcast.file_url && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            📎 Document
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Message Preview */}
-                      <p className="text-sm text-stone-500 line-clamp-2">
-                        {broadcast.message}
-                      </p>
-                    </div>
-
-                    {/* Chevron */}
-                    <ChevronRight className="flex-shrink-0 text-gray-300 mt-1" size={20} />
-                  </div>
-
-                  {/* Delete Button for Admin */}
-                  {isAdmin && broadcast.admin_id === userId && (
-                    <div className="mt-2 pt-2 border-t border-stone-100 flex justify-end">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteBroadcast(broadcast.id);
-                        }}
-                        className="text-xs text-red-600 hover:text-red-800 font-medium transition"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Expanded Full-Screen View */}
-      {expandedBroadcast && (
-        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
-          {/* Header */}
-          <div className="sticky top-0 bg-white border-b border-stone-100 shadow-sm z-40">
-            <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="flex gap-6 border-b border-stone-100">
               <button
-                onClick={() => setExpandedBroadcast(null)}
-                className="flex items-center gap-2 text-stone-500 hover:text-stone-900 transition"
+                type="button"
+                onClick={() => setActiveTab('all')}
+                className={cn(
+                  'pb-3 text-sm font-normal transition-colors',
+                  activeTab === 'all'
+                    ? 'border-b-2 border-fundex-gold text-stone-900'
+                    : 'border-b-2 border-transparent text-stone-400 hover:text-stone-600',
+                )}
               >
-                <ArrowLeft size={24} />
-                <span className="text-lg font-medium">Back</span>
+                All
               </button>
-              {isAdmin && expandedBroadcast.admin_id === userId && (
+              {!isAdmin && (
                 <button
-                  onClick={() => {
-                    handleDeleteBroadcast(expandedBroadcast.id);
-                    setExpandedBroadcast(null);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition font-medium"
+                  type="button"
+                  onClick={() => setActiveTab('unread')}
+                  className={cn(
+                    'pb-3 text-sm font-normal transition-colors',
+                    activeTab === 'unread'
+                      ? 'border-b-2 border-fundex-gold text-stone-900'
+                      : 'border-b-2 border-transparent text-stone-400 hover:text-stone-600',
+                  )}
                 >
-                  <X size={18} />
-                  Delete
+                  Unread
                 </button>
               )}
             </div>
           </div>
 
-          {/* Content */}
-          <div className="max-w-4xl mx-auto px-6 py-8">
-            {/* Title Section */}
-            <div className="mb-8">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-fundex-gold/30 to-fundex-cream/40 rounded-full flex items-center justify-center text-white font-semibold text-xl">
+          {filteredBroadcasts.length === 0 ? (
+            <div className="flex flex-col items-center px-6 py-16 text-center">
+              <div className="flex h-14 w-14 items-center justify-center bg-stone-50">
+                <Megaphone className="h-7 w-7 text-stone-400" />
+              </div>
+              <p className="mt-4 text-base font-normal text-stone-700">No announcements yet</p>
+              <p className="mt-1 max-w-sm text-sm text-stone-400">
+                When your team posts an update, it will appear here.
+              </p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-stone-50">
+              {filteredBroadcasts.map((broadcast) => {
+                const initials = (broadcast.admin_name || 'A')
+                  .split(' ')
+                  .map((n) => n.charAt(0))
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2);
+
+                return (
+                  <li key={broadcast.id}>
+                    <div className="flex gap-4 px-6 py-5 transition-colors hover:bg-stone-50/80">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedBroadcast(broadcast)}
+                        className="flex min-w-0 flex-1 gap-4 text-left"
+                      >
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center bg-fundex-gold font-display text-sm font-bold text-fundex-forest">
+                          {initials}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <h3 className="text-base font-medium text-stone-900">{broadcast.title}</h3>
+                              <p className="mt-0.5 text-sm text-stone-500">
+                                {broadcast.admin_name || 'Unknown Admin'}
+                              </p>
+                            </div>
+                            <span className="shrink-0 text-sm text-stone-400">
+                              {getTimeDisplay(broadcast.created_at)}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center bg-fundex-gold/10 px-2.5 py-0.5 text-xs font-medium text-fundex-forest">
+                              Announcement
+                            </span>
+                            {broadcast.file_url && (
+                              <span className="inline-flex items-center bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-700">
+                                Document
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="mt-2 line-clamp-2 text-sm text-stone-500">{broadcast.message}</p>
+                        </div>
+
+                        <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-stone-300" />
+                      </button>
+
+                      {isAdmin && broadcast.admin_id === userId && (
+                        <div className="flex shrink-0 flex-col items-end justify-between pt-0.5">
+                          <span className="sr-only">Actions</span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBroadcast(broadcast.id)}
+                            className="text-xs font-medium text-red-600 transition-colors hover:text-red-700"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </StaggerContainer>
+
+      <Dialog open={showSendForm} onOpenChange={setShowSendForm}>
+        <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto border-stone-100 bg-white p-0 sm:max-w-md">
+          <DialogHeader className="border-b border-stone-100 px-6 py-4 text-left">
+            <DialogTitle className="text-xl font-normal text-stone-900">Create Announcement</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 p-6">
+            {error && (
+              <div className="flex items-center gap-2 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {error}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="flex items-center gap-2 border border-fundex-gold/20 bg-fundex-gold/10 px-4 py-3 text-sm text-fundex-forest">
+                <CheckCircle className="h-4 w-4 shrink-0" />
+                {successMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleSendBroadcast} className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-normal text-stone-700">Title</label>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Announcement title"
+                  className="h-10 border-stone-200 focus-visible:border-fundex-gold focus-visible:ring-fundex-gold/30"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-normal text-stone-700">Message</label>
+                <Textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Write your announcement description here..."
+                  rows={5}
+                  className="border-stone-200 focus-visible:border-fundex-gold focus-visible:ring-fundex-gold/30"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-normal text-stone-700">
+                  Upload Document (Optional)
+                </label>
+                {!file ? (
+                  <div className="border-2 border-dashed border-stone-200 bg-stone-50/50 p-6 text-center transition-colors hover:border-stone-300">
+                    <input
+                      type="file"
+                      onChange={handleFileChange}
+                      accept=".pdf,.doc,.docx,.xlsx,.xls,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.zip"
+                      className="hidden"
+                      id="broadcast-file-input"
+                    />
+                    <label htmlFor="broadcast-file-input" className="cursor-pointer">
+                      <FileIcon className="mx-auto mb-2 h-10 w-10 text-stone-400" />
+                      <p className="text-sm font-medium text-stone-800">Click to upload or drag and drop</p>
+                      <p className="mt-1 text-xs text-stone-500">
+                        PDF, DOC, DOCX, XLSX, PPT, TXT, JPG, PNG, ZIP (max 10MB)
+                      </p>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between border border-fundex-gold/20 bg-fundex-gold/10 p-4">
+                    <div className="flex items-center gap-3">
+                      <FileIcon className="h-6 w-6 text-fundex-forest" />
+                      <div>
+                        <p className="text-sm font-medium text-stone-900">{file.name}</p>
+                        <p className="text-xs text-stone-500">{(file.size / 1024).toFixed(2)} KB</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveFile}
+                      className="text-stone-400 transition-colors hover:text-red-600"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={sending}
+                className="w-full bg-fundex-gold py-3 text-sm font-medium text-fundex-forest shadow-sm transition-colors hover:bg-fundex-gold/85 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {sending ? 'Sending...' : 'Send Announcement'}
+              </button>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {expandedBroadcast && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-white">
+          <header className="sticky top-0 z-40 border-b border-stone-100 bg-white/95 backdrop-blur-lg">
+            <div className="mx-auto flex max-w-screen-2xl items-center justify-between px-5 py-4 md:px-8">
+              <button
+                type="button"
+                onClick={() => setExpandedBroadcast(null)}
+                className="flex items-center gap-2 text-sm font-normal text-stone-600 transition-colors hover:text-stone-900"
+              >
+                <ArrowLeft className="h-5 w-5" />
+                Back
+              </button>
+              {isAdmin && expandedBroadcast.admin_id === userId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleDeleteBroadcast(expandedBroadcast.id);
+                    setExpandedBroadcast(null);
+                  }}
+                  className="border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          </header>
+
+          <div className="mx-auto max-w-screen-2xl px-5 py-8 md:px-8">
+            <div className="mx-auto max-w-3xl">
+              <div className="mb-8 flex items-start gap-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center bg-fundex-gold font-display text-lg font-bold text-fundex-forest">
                   {(expandedBroadcast.admin_name || 'A')
                     .split(' ')
                     .map((n) => n.charAt(0))
                     .join('')
-                    .toUpperCase()}
+                    .toUpperCase()
+                    .slice(0, 2)}
                 </div>
                 <div>
-                  <h1 className="text-3xl font-display font-semibold text-stone-900">{expandedBroadcast.title}</h1>
-                  <p className="text-stone-500 mt-1">
-                    Sent by <span className="font-semibold">{expandedBroadcast.admin_name || 'Admin'}</span>
+                  <h1 className="text-2xl font-normal tracking-tight text-stone-900 md:text-3xl">
+                    {expandedBroadcast.title}
+                  </h1>
+                  <p className="mt-1 text-sm text-stone-500">
+                    Sent by{' '}
+                    <span className="font-medium text-stone-700">
+                      {expandedBroadcast.admin_name || 'Admin'}
+                    </span>
+                  </p>
+                  <p className="mt-2 text-sm text-stone-400">
+                    {new Date(expandedBroadcast.created_at).toLocaleString()}
                   </p>
                 </div>
               </div>
-              <p className="text-sm text-stone-500">
-                {new Date(expandedBroadcast.created_at).toLocaleString()}
-              </p>
-            </div>
 
-            {/* Message Content */}
-            <div className="bg-stone-50 rounded-2xl p-8 mb-8 border border-stone-100">
-              <div className="prose prose-sm max-w-none">
-                <p className="text-lg leading-relaxed text-stone-900 whitespace-pre-wrap">
+              <div className="border border-stone-100 bg-stone-50/80 p-6 md:p-8">
+                <p className="whitespace-pre-wrap text-base leading-relaxed text-stone-800">
                   {expandedBroadcast.message}
                 </p>
               </div>
-            </div>
 
-            {/* File Section */}
-            {expandedBroadcast.file_url && expandedBroadcast.file_name && (
-              <div className="mb-8">
-                <h2 className="text-xl font-display font-semibold text-stone-900 mb-4">Attached Document</h2>
-                <div className="bg-white border-2 border-fundex-gold/20 rounded-2xl p-6 flex items-center justify-between hover:shadow-md transition">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-fundex-gold/10 p-4 rounded-lg">
-                      <FileIcon className="text-fundex-forest" size={32} />
+              {expandedBroadcast.file_url && expandedBroadcast.file_name && (
+                <div className="mt-8">
+                  <h2 className="mb-4 text-base font-medium text-stone-900">Attached Document</h2>
+                  <div className="flex flex-col gap-4 border border-stone-100 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-fundex-gold/10 p-3">
+                        <FileIcon className="h-8 w-8 text-fundex-forest" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-stone-900">{expandedBroadcast.file_name}</p>
+                        <p className="text-sm text-stone-500">Download to view</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-stone-900">{expandedBroadcast.file_name}</p>
-                      <p className="text-sm text-stone-500">Click download to view</p>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = expandedBroadcast.file_url!;
+                        link.download = expandedBroadcast.file_name!;
+                        link.target = '_blank';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                      className="inline-flex items-center justify-center gap-2 bg-fundex-gold px-6 py-3 text-sm font-medium text-fundex-forest shadow-sm transition-colors hover:bg-fundex-gold/85"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download
+                    </button>
                   </div>
-                  <button
-                    onClick={() => {
-                      const link = document.createElement('a');
-                      link.href = expandedBroadcast.file_url!;
-                      link.download = expandedBroadcast.file_name!;
-                      link.target = '_blank';
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                    }}
-                    className="flex items-center gap-2 px-6 py-3 bg-fundex-forest text-white hover:bg-fundex-forest/90 rounded-lg transition font-medium whitespace-nowrap"
-                  >
-                    <Download size={20} />
-                    Download
-                  </button>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-4 py-8 border-t border-stone-100">
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(expandedBroadcast.message);
-                  alert('Message copied to clipboard!');
-                }}
-                className="flex items-center gap-2 px-6 py-3 text-stone-500 bg-stone-50 hover:bg-stone-50 rounded-lg transition font-medium"
-              >
-                <Copy size={20} />
-                Copy Message
-              </button>
+              <div className="mt-10 border-t border-stone-100 pt-8">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(expandedBroadcast.message);
+                  }}
+                  className="inline-flex items-center gap-2 border border-stone-200 bg-white px-5 py-2.5 text-sm font-normal text-stone-600 transition-colors hover:bg-stone-50"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy Message
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -590,7 +760,6 @@ export function Broadcasts({ companyId, userRole, userName, userId }: Broadcasts
   );
 }
 
-// Helper function to format time display
 function getTimeDisplay(createdAt: string): string {
   const date = new Date(createdAt);
   const now = new Date();

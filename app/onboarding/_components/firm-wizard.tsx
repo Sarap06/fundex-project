@@ -116,9 +116,9 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
     <div>
       {/* Progress bar */}
       <div className="mb-1">
-        <div className="h-1.5 w-full rounded-full bg-stone-200 overflow-hidden">
+        <div className="h-1.5 w-full  bg-stone-200 overflow-hidden">
           <div
-            className="h-full bg-fundex-forest transition-all duration-500 rounded-full"
+            className="h-full bg-fundex-forest transition-all duration-500 "
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -127,7 +127,7 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
         </p>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
+      <div className="mt-6  border border-stone-100 bg-white p-6 shadow-sm">
         {/* Step 0: Welcome */}
         {step === 0 && (
           <div className="text-center py-4">
@@ -138,7 +138,7 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
               We&apos;ll personalize Fundex based on your firm so you can manage deals, investors, and capital more efficiently.
             </p>
             <p className="mt-6 text-xs text-fundex-forest font-medium flex items-center justify-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-fundex-forest" />
+              <span className="h-1.5 w-1.5  bg-fundex-forest" />
               Takes about 2 minutes
             </p>
           </div>
@@ -161,7 +161,7 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
                   value={firmName}
                   onChange={(e) => setFirmName(e.target.value)}
                   placeholder="e.g., Acme Capital Partners"
-                  className="mt-1.5 w-full rounded-xl border border-stone-200 px-4 py-2.5 text-sm text-stone-900 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
+                  className="mt-1.5 w-full  border border-stone-200 px-4 py-2.5 text-sm text-stone-900 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
                 />
               </div>
 
@@ -175,7 +175,7 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
                       key={type}
                       type="button"
                       onClick={() => setBusinessType(type)}
-                      className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                      className={`w-full text-left px-4 py-3  border text-sm font-medium transition-all ${
                         businessType === type
                           ? 'border-fundex-forest bg-fundex-gold/10 text-fundex-forest ring-1 ring-fundex-forest'
                           : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'
@@ -210,7 +210,7 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
                       key={size}
                       type="button"
                       onClick={() => setTeamSize(size)}
-                      className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                      className={`px-4 py-3  border text-sm font-medium transition-all ${
                         teamSize === size
                           ? 'border-fundex-forest bg-fundex-gold/10 text-fundex-forest ring-1 ring-fundex-forest'
                           : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'
@@ -232,7 +232,7 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
                       key={count}
                       type="button"
                       onClick={() => setActiveInvestors(count)}
-                      className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                      className={`px-4 py-3  border text-sm font-medium transition-all ${
                         activeInvestors === count
                           ? 'border-fundex-forest bg-fundex-gold/10 text-fundex-forest ring-1 ring-fundex-forest'
                           : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'
@@ -263,7 +263,7 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
                     key={vol}
                     type="button"
                     onClick={() => setDealVolume(vol)}
-                    className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                    className={`px-4 py-3  border text-sm font-medium transition-all ${
                       dealVolume === vol
                         ? 'border-fundex-forest bg-fundex-gold/10 text-fundex-forest ring-1 ring-fundex-forest'
                         : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'
@@ -289,7 +289,7 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
                   key={role}
                   type="button"
                   onClick={() => setUserRole(role)}
-                  className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                  className={`w-full text-left px-4 py-3  border text-sm font-medium transition-all ${
                     userRole === role
                       ? 'border-fundex-forest bg-fundex-gold/10 text-fundex-forest ring-1 ring-fundex-forest'
                       : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'
@@ -308,7 +308,7 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
         {/* Step 5: Connect Bank */}
         {step === 5 && (
           <div className="text-center py-4">
-            <div className="mx-auto w-12 h-12 rounded-full bg-fundex-gold/10 flex items-center justify-center mb-4">
+            <div className="mx-auto w-12 h-12  bg-fundex-gold/10 flex items-center justify-center mb-4">
               <Shield className="h-6 w-6 text-fundex-forest" />
             </div>
             <h2 className="text-xl font-semibold tracking-tight text-stone-900">
@@ -325,7 +325,7 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
                 { title: 'Reduce Manual Work', desc: 'Reduce manual reconciliation' },
                 { title: 'Improve Accuracy', desc: 'Improve reporting accuracy' },
               ].map((item) => (
-                <div key={item.title} className="flex items-start gap-2.5 rounded-xl border border-stone-100 bg-stone-50 p-3">
+                <div key={item.title} className="flex items-start gap-2.5  border border-stone-100 bg-stone-50 p-3">
                   <Shield className="h-4 w-4 text-fundex-forest shrink-0 mt-0.5" />
                   <div>
                     <p className="text-xs font-semibold text-stone-900">{item.title}</p>
@@ -339,7 +339,7 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
               type="button"
               onClick={() => handleSubmit(false)}
               disabled={submitting}
-              className="mt-6 w-full rounded-xl bg-fundex-forest py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-fundex-green disabled:opacity-50 flex items-center justify-center gap-2"
+              className="mt-6 w-full  bg-fundex-forest py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-fundex-green disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Shield className="h-4 w-4" />
               Connect Bank (via Plaid) <ArrowRight className="h-4 w-4" />
@@ -362,7 +362,7 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
         {/* Step 6: Complete */}
         {step > TOTAL_STEPS && (
           <div className="text-center py-8">
-            <div className="mx-auto w-14 h-14 rounded-full bg-fundex-gold/10 flex items-center justify-center mb-5">
+            <div className="mx-auto w-14 h-14  bg-fundex-gold/10 flex items-center justify-center mb-5">
               <Check className="h-7 w-7 text-fundex-forest" />
             </div>
             <h2 className="text-2xl font-semibold tracking-tight text-stone-900">
@@ -394,7 +394,7 @@ export function FirmWizard({ userId, companyId, onBack, onComplete }: FirmWizard
             type="button"
             onClick={handleNext}
             disabled={!canContinue()}
-            className="flex items-center gap-1.5 rounded-xl bg-fundex-forest px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-fundex-green disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5  bg-fundex-forest px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-fundex-green disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Continue <ArrowRight className="h-3.5 w-3.5" />
           </button>

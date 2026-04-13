@@ -14,20 +14,20 @@ import {
 import { useState } from 'react';
 import { logOut } from '@/lib/auth';
 
-interface CompanyTopbarProps {
-  userName: string;
-  userInitials: string;
+interface NavLink {
+  label: string;
+  href: string;
 }
 
-const NAV_LINKS = [
-  { label: 'Dashboard', href: '/company' },
-  { label: 'Deals', href: '/company/deals' },
-  { label: 'Investors', href: '/company/investors' },
-  { label: 'Documents', href: '/company/documents' },
-  { label: 'Broadcast', href: '/company/broadcast' },
-] as const;
+interface DashboardTopbarProps {
+  userName: string;
+  userInitials: string;
+  basePath: string;
+  navLinks: NavLink[];
+  portalLabel?: string;
+}
 
-export function CompanyTopbar({ userName, userInitials }: CompanyTopbarProps) {
+export function DashboardTopbar({ userName, userInitials, basePath, navLinks, portalLabel }: DashboardTopbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -38,8 +38,8 @@ export function CompanyTopbar({ userName, userInitials }: CompanyTopbarProps) {
   };
 
   const isActive = (href: string) =>
-    href === '/company'
-      ? pathname === '/company'
+    href === basePath
+      ? pathname === basePath
       : pathname.startsWith(href);
 
   return (
@@ -47,23 +47,30 @@ export function CompanyTopbar({ userName, userInitials }: CompanyTopbarProps) {
       <div className="mx-auto flex h-[60px] max-w-screen-2xl items-center justify-between px-5 md:px-8">
         {/* Left — Logo */}
         <div className="flex items-center gap-3">
-          <Link href="/company" className="flex items-center gap-2.5">
+          <Link href={basePath} className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center  bg-fundex-gold font-display text-sm font-bold text-fundex-forest">
               F
             </div>
-            <span className="hidden font-display text-lg font-normal text-stone-900 sm:block">
-              Fundex
-            </span>
+            <div className="hidden sm:block">
+              <span className="font-display text-lg font-normal text-stone-900">
+                Fundex
+              </span>
+              {portalLabel && (
+                <span className="ml-1.5 text-xs font-normal text-stone-400">
+                  {portalLabel}
+                </span>
+              )}
+            </div>
           </Link>
         </div>
 
         {/* Center — Nav links (desktop) */}
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-0 md:flex">
-          {NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`relative px-5 py-[18px] text-[13px] font-normal tracking-wide transition-colors ${
+              className={`relative px-4 py-[18px] text-[13px] font-normal tracking-wide transition-colors ${
                 isActive(link.href)
                   ? 'text-stone-900'
                   : 'text-stone-400 hover:text-stone-600'
@@ -71,7 +78,7 @@ export function CompanyTopbar({ userName, userInitials }: CompanyTopbarProps) {
             >
               {link.label}
               {isActive(link.href) && (
-                <span className="absolute bottom-0 left-5 right-5 h-[2px] rounded-full bg-fundex-gold" />
+                <span className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full bg-fundex-gold" />
               )}
             </Link>
           ))}
@@ -137,7 +144,7 @@ export function CompanyTopbar({ userName, userInitials }: CompanyTopbarProps) {
               </div>
 
               <nav className="space-y-1 px-3 py-4">
-                {NAV_LINKS.map((link) => (
+                {navLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}

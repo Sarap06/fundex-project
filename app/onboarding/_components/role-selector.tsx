@@ -20,9 +20,9 @@ export function RoleSelector({ onSelect }: RoleSelectorProps) {
         <button
           type="button"
           onClick={() => onSelect('firm')}
-          className="group flex flex-col items-center gap-4 rounded-2xl border border-stone-100 bg-white p-8 text-center shadow-sm transition-all hover:border-fundex-gold hover:shadow-md"
+          className="group flex flex-col items-center gap-4  border border-stone-100 bg-white p-8 text-center shadow-sm transition-all hover:border-fundex-gold hover:shadow-md"
         >
-          <div className="rounded-xl bg-fundex-gold/10 p-4 text-fundex-forest transition-colors group-hover:bg-fundex-gold/20">
+          <div className=" bg-fundex-gold/10 p-4 text-fundex-forest transition-colors group-hover:bg-fundex-gold/20">
             <BriefcaseBusiness className="h-8 w-8" />
           </div>
           <div>
@@ -36,9 +36,9 @@ export function RoleSelector({ onSelect }: RoleSelectorProps) {
         <button
           type="button"
           onClick={() => onSelect('investor')}
-          className="group flex flex-col items-center gap-4 rounded-2xl border border-stone-100 bg-white p-8 text-center shadow-sm transition-all hover:border-fundex-gold hover:shadow-md"
+          className="group flex flex-col items-center gap-4  border border-stone-100 bg-white p-8 text-center shadow-sm transition-all hover:border-fundex-gold hover:shadow-md"
         >
-          <div className="rounded-xl bg-fundex-gold/10 p-4 text-fundex-forest transition-colors group-hover:bg-fundex-gold/20">
+          <div className=" bg-fundex-gold/10 p-4 text-fundex-forest transition-colors group-hover:bg-fundex-gold/20">
             <TrendingUp className="h-8 w-8" />
           </div>
           <div>

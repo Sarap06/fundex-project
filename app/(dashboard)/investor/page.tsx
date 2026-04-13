@@ -44,7 +44,7 @@ function StatCard({ title, value, subtext, filled = false }: StatCardProps) {
     <div
       className={`flex h-full w-full min-w-[220px] flex-col p-6 shadow-sm transition-shadow duration-200 ${
         filled
-          ? "rounded-2xl bg-gradient-to-br from-fundex-forest to-fundex-green text-white shadow-sm shadow-fundex-forest/15"
+          ? " bg-gradient-to-br from-fundex-forest to-fundex-green text-white shadow-sm shadow-fundex-forest/15"
           : "fdx-card hover:shadow-md"
       }`}
     >
@@ -78,7 +78,7 @@ function SectionCard({ title, subtitle, topRight, className, children }: Section
     >
       <div className="mb-6 flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h2 className="text-2xl font-semibold tracking-tight text-stone-900 md:text-[1.65rem]">{title}</h2>
+          <h2 className="text-2xl font-medium tracking-tight text-stone-900 md:text-[1.65rem]">{title}</h2>
           <p className="mt-1.5 text-sm text-stone-500 md:text-base">{subtitle}</p>
         </div>
         {topRight}
@@ -94,9 +94,9 @@ function ActionItem({ icon, title, subtitle }: ActionItemProps) {
       type="button"
       className="flex w-full items-center gap-4 fdx-card px-5 py-5 text-left transition duration-200 hover:border-stone-200 hover:bg-stone-50 hover:shadow-md"
     >
-      <div className="shrink-0 rounded-lg bg-fundex-gold/10 p-2.5 text-fundex-forest">{icon}</div>
+      <div className="shrink-0  bg-fundex-gold/10 p-2.5 text-fundex-forest">{icon}</div>
       <div className="min-w-0 flex-1">
-        <p className="text-[0.9375rem] font-semibold leading-snug text-stone-900">{title}</p>
+        <p className="text-[0.9375rem] font-medium leading-snug text-stone-900">{title}</p>
         <p className="mt-1 text-sm text-stone-500">{subtitle}</p>
       </div>
       <ChevronRight className="h-5 w-5 shrink-0 text-stone-400" />
@@ -107,9 +107,9 @@ function ActionItem({ icon, title, subtitle }: ActionItemProps) {
 function ActivityItem({ icon, title, subtitle, date }: ActivityItemProps) {
   return (
     <div className="flex items-start gap-4 py-5 first:pt-0.5 last:pb-0.5">
-      <div className="shrink-0 rounded-xl bg-stone-100 p-2.5 text-stone-500">{icon}</div>
+      <div className="shrink-0  bg-stone-100 p-2.5 text-stone-500">{icon}</div>
       <div className="min-w-0 flex-1 pt-0.5">
-        <p className="text-[0.9375rem] font-semibold leading-snug text-stone-900">{title}</p>
+        <p className="text-[0.9375rem] font-medium leading-snug text-stone-900">{title}</p>
         <p className="mt-1 text-sm text-stone-500">{subtitle}</p>
       </div>
       <p className="shrink-0 self-center text-right text-sm font-medium tabular-nums text-stone-400">{date}</p>
@@ -120,11 +120,9 @@ function ActivityItem({ icon, title, subtitle, date }: ActivityItemProps) {
 export default function Page() {
   return (
         <div className="mx-auto w-full max-w-screen-2xl space-y-8 pb-10 md:space-y-10">
-          <header className="rounded-2xl bg-gradient-to-br from-fundex-forest via-fundex-green to-fundex-forest px-7 py-9 text-white shadow-sm shadow-fundex-forest/20 md:px-9 md:py-10">
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Dashboard</h1>
-            <p className="mt-2 max-w-xl text-base font-medium text-white/90 md:text-[1.05rem]">
-              Your investment overview
-            </p>
+          <header>
+            <h1 className="font-display text-3xl font-normal tracking-tight text-stone-900 md:text-4xl">Dashboard</h1>
+            <p className="mt-2 text-sm font-normal text-stone-400">Your investment overview</p>
           </header>
 
           <section className="grid gap-5 lg:grid-cols-4 lg:items-stretch">
@@ -140,29 +138,29 @@ export default function Page() {
           </section>
 
           <section className="grid gap-5 xl:grid-cols-2">
-            <div className="rounded-2xl border border-fundex-gold/20 bg-gradient-to-br from-fundex-cream/30 via-white to-fundex-cream/10 p-6 shadow-sm md:p-7">
+            <div className=" border border-fundex-gold/20 bg-gradient-to-br from-fundex-cream/30 via-white to-fundex-cream/10 p-6 shadow-sm md:p-7">
               <div className="flex items-start justify-between gap-5">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-fundex-forest">Funds Being Deployed</p>
+                  <p className="text-sm font-medium text-fundex-forest">Funds Being Deployed</p>
                   <p className="mt-3 text-3xl font-semibold tabular-nums tracking-tight text-stone-900">$300,000</p>
                   <p className="mt-2 text-sm leading-relaxed text-stone-600 md:text-[0.9375rem]">
                     Being placed into active opportunities
                   </p>
                 </div>
-                <span className="shrink-0 rounded-full border border-fundex-gold/30 bg-fundex-gold/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-stone-900">
+                <span className="shrink-0  border border-fundex-gold/30 bg-fundex-gold/15 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-stone-900">
                   Deploying
                 </span>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-stone-200 bg-gradient-to-br from-stone-50 via-white to-stone-50 p-6 shadow-sm md:p-7">
+            <div className=" border border-stone-200 bg-gradient-to-br from-stone-50 via-white to-stone-50 p-6 shadow-sm md:p-7">
               <div className="flex items-start justify-between gap-5">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-stone-700">Collateral Backing (Active Deals)</p>
+                  <p className="text-sm font-medium text-stone-700">Collateral Backing (Active Deals)</p>
                   <p className="mt-3 text-3xl font-semibold tabular-nums tracking-tight text-stone-900">$8,500,000</p>
                   <p className="mt-1.5 text-sm text-stone-600">Total collateral value</p>
                 </div>
-                <span className="shrink-0 rounded-full border border-stone-200 bg-stone-100 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-stone-900">
+                <span className="shrink-0  border border-stone-200 bg-stone-100 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-stone-900">
                   Active
                 </span>
               </div>
@@ -201,7 +199,7 @@ export default function Page() {
             title="Recent Activity"
             subtitle="Latest updates and transactions"
             topRight={
-              <div className="absolute -right-1.5 top-9 rounded-full border border-stone-200 bg-white p-2 shadow-sm">
+              <div className="absolute -right-1.5 top-9  border border-stone-200 bg-white p-2 shadow-sm">
                 <FileText className="h-4 w-4 text-stone-600" />
               </div>
             }

@@ -302,7 +302,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               <h1 className="text-2xl font-display font-semibold text-stone-900">Deal Communications</h1>
               <p className="text-sm text-stone-500 mt-1">Official updates from your active deals.</p>
             </div>
-            <button className="px-4 py-2 bg-white border border-stone-100 rounded-lg text-sm font-medium text-stone-500 hover:bg-stone-50 transition">
+            <button className="px-4 py-2 bg-white border border-stone-100  text-sm font-medium text-stone-500 hover:bg-stone-50 transition">
               Manage Communications
             </button>
           </div>
@@ -347,7 +347,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               placeholder="Search deals or updates"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-stone-100 rounded-lg bg-stone-50 focus:outline-none focus:bg-white focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold text-sm"
+              className="w-full pl-10 pr-4 py-2 border border-stone-100  bg-stone-50 focus:outline-none focus:bg-white focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold text-sm"
             />
           </div>
         </div>
@@ -356,7 +356,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
         {activeTab === 'deals' ? (
           <div className="space-y-3 pt-6">
             {filteredDeals.length === 0 ? (
-              <div className="text-center py-12 bg-stone-50 rounded-2xl border border-stone-100">
+              <div className="text-center py-12 bg-stone-50  border border-stone-100">
                 <AlertCircle className="mx-auto text-stone-500 mb-2" size={40} />
                 <p className="text-stone-500">
                   {searchQuery ? 'No deals match your search' : 'No deal channels available'}
@@ -371,11 +371,11 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
                       setSelectedDeal(deal);
                       setCurrentView('deal-detail');
                     }}
-                    className="flex items-center justify-between p-4 bg-white border border-stone-100 rounded-2xl hover:shadow-md hover:border-fundex-gold/20 cursor-pointer transition"
+                    className="flex items-center justify-between p-4 bg-white border border-stone-100  hover:shadow-md hover:border-fundex-gold/20 cursor-pointer transition"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-fundex-gold/10 rounded-full flex items-center justify-center">
+                        <div className="w-10 h-10 bg-fundex-gold/10  flex items-center justify-center">
                           <span className="text-sm font-semibold text-fundex-forest">
                             {deal.name.charAt(0)}
                           </span>
@@ -396,7 +396,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
           </div>
         ) : (
           <div className="space-y-3 pt-6">
-            <div className="text-center py-12 bg-stone-50 rounded-2xl border border-stone-100">
+            <div className="text-center py-12 bg-stone-50  border border-stone-100">
               <AlertCircle className="mx-auto text-stone-500 mb-2" size={40} />
               <p className="text-stone-500">Investor inbox coming soon</p>
             </div>
@@ -412,7 +412,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
       <div className="flex items-center gap-4">
         <button
           onClick={handleGoBack}
-          className="p-2 hover:bg-stone-50 rounded-lg transition"
+          className="p-2 hover:bg-stone-50  transition"
         >
           <ArrowLeft size={24} className="text-stone-500" />
         </button>
@@ -426,7 +426,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
       <div className="flex flex-wrap gap-3">
         <button
           onClick={() => setCurrentView('send-update')}
-          className="px-6 py-2 bg-fundex-forest text-white font-medium rounded-lg hover:bg-fundex-forest/90 transition flex items-center gap-2"
+          className="px-6 py-2 bg-fundex-forest text-white font-medium  hover:bg-fundex-forest/90 transition flex items-center gap-2"
         >
           <Send size={18} />
           Send Update
@@ -434,7 +434,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
 
         <button
           onClick={() => setCurrentView('linked-docs')}
-          className="px-4 py-2 bg-white border border-stone-100 text-stone-900 font-medium rounded-lg hover:bg-stone-50 transition flex items-center gap-2"
+          className="px-4 py-2 bg-white border border-stone-100 text-stone-900 font-medium  hover:bg-stone-50 transition flex items-center gap-2"
         >
           <FileText size={18} />
           Linked Docs
@@ -442,7 +442,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
 
         <button
           onClick={() => setCurrentView('schedule-update')}
-          className="px-4 py-2 bg-white border border-stone-100 text-stone-900 font-medium rounded-lg hover:bg-stone-50 transition flex items-center gap-2"
+          className="px-4 py-2 bg-white border border-stone-100 text-stone-900 font-medium  hover:bg-stone-50 transition flex items-center gap-2"
         >
           <Calendar size={18} />
           Schedule
@@ -450,7 +450,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
 
         <button
           disabled
-          className="px-4 py-2 bg-white border border-stone-100 text-stone-500 font-medium rounded-lg cursor-not-allowed opacity-50 flex items-center gap-2"
+          className="px-4 py-2 bg-white border border-stone-100 text-stone-500 font-medium  cursor-not-allowed opacity-50 flex items-center gap-2"
         >
           <AlertCircle size={18} />
           Pending Actions
@@ -458,7 +458,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
       </div>
 
       {/* Deal Details Card */}
-      <div className="rounded-2xl border border-stone-100 bg-white overflow-hidden">
+      <div className=" border border-stone-100 bg-white overflow-hidden">
         <div className="p-6 space-y-4">
           {/* Header with Title and Status */}
           <div className="border-b border-stone-100 pb-4 flex items-start justify-between">
@@ -467,7 +467,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               <p className="text-xs text-stone-500 mt-1">{selectedDeal?.name}</p>
             </div>
             <span
-              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+              className={`px-3 py-1  text-xs font-semibold whitespace-nowrap ${
                 selectedDeal?.status === 'Active'
                   ? 'bg-fundex-gold/10 text-fundex-forest'
                   : selectedDeal?.status === 'Closed'
@@ -480,7 +480,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
           </div>
 
           {/* Compact Key Info Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-fundex-cream/30 rounded-2xl">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-fundex-cream/30 ">
             <div>
               <p className="text-xs text-fundex-forest font-semibold uppercase mb-1">Target Amount</p>
               <p className="text-sm font-semibold text-stone-900">
@@ -511,9 +511,9 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
 
           {/* Progress Bar */}
           <div>
-            <div className="w-full bg-stone-50 rounded-full h-2">
+            <div className="w-full bg-stone-50  h-2">
               <div
-                className="bg-fundex-forest h-2 rounded-full transition-all"
+                className="bg-fundex-forest h-2  transition-all"
                 style={{
                   width: `${selectedDeal?.progress || 0}%`,
                 }}
@@ -571,11 +571,11 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
       />
 
       {/* Timeline */}
-      <div className="rounded-2xl border border-stone-100 bg-white overflow-hidden">
+      <div className=" border border-stone-100 bg-white overflow-hidden">
         <div className="p-6">
           <h3 className="text-lg font-display font-semibold text-stone-900 mb-4">Communication Timeline</h3>
           {timeline.length === 0 ? (
-            <div className="text-center py-8 bg-stone-50 rounded-2xl border border-stone-100">
+            <div className="text-center py-8 bg-stone-50  border border-stone-100">
               <Clock className="mx-auto text-stone-500 mb-2" size={32} />
               <p className="text-stone-500">No communications yet</p>
             </div>
@@ -583,7 +583,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
             <div className="space-y-3">
               {timeline.map((event) => (
                 <div key={event.id} className="flex gap-4 pb-4 border-l-2 border-fundex-gold/20 pl-4">
-                  <div className="mt-2 w-3 h-3 bg-fundex-forest rounded-full -ml-6"></div>
+                  <div className="mt-2 w-3 h-3 bg-fundex-forest  -ml-6"></div>
                   <div className="flex-1">
                     <p className="font-semibold text-stone-900">{event.title}</p>
                     <p className="text-sm text-stone-500">{event.description}</p>
@@ -602,7 +602,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
 
   const renderSendUpdateView = () => (
     <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="rounded-2xl border border-stone-100 bg-white shadow-sm w-full max-w-2xl max-h-[85vh] flex flex-col">
+      <div className=" border border-stone-100 bg-white shadow-sm w-full max-w-2xl max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-stone-100 flex-shrink-0">
           <div>
@@ -613,7 +613,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
           </div>
           <button
             onClick={handleGoBack}
-            className="p-1 hover:bg-stone-50 rounded-lg transition"
+            className="p-1 hover:bg-stone-50  transition"
           >
             <X size={20} className="text-stone-500" />
           </button>
@@ -622,14 +622,14 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
         {/* Content */}
         <form onSubmit={handleSendUpdate} className="flex-1 overflow-y-auto p-5 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm flex items-center gap-2">
+            <div className="p-3 bg-red-50 border border-red-200  text-red-800 text-sm flex items-center gap-2">
               <AlertCircle size={16} />
               {error}
             </div>
           )}
 
           {successMessage && (
-            <div className="p-3 bg-fundex-gold/10 border border-fundex-gold/20 rounded-lg text-fundex-forest text-sm flex items-center gap-2">
+            <div className="p-3 bg-fundex-gold/10 border border-fundex-gold/20  text-fundex-forest text-sm flex items-center gap-2">
               <CheckCircle size={16} />
               {successMessage}
             </div>
@@ -642,7 +642,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               value={updateTitle}
               onChange={(e) => setUpdateTitle(e.target.value)}
               placeholder="e.g., Q1 2025 Performance Update"
-              className="w-full px-3 py-2 text-sm border border-stone-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
+              className="w-full px-3 py-2 text-sm border border-stone-100  focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
             />
           </div>
 
@@ -653,13 +653,13 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               onChange={(e) => setUpdateMessage(e.target.value)}
               placeholder="Write your message to investors..."
               rows={5}
-              className="w-full px-3 py-2 text-sm border border-stone-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-fundex-gold/30 resize-none"
+              className="w-full px-3 py-2 text-sm border border-stone-100  focus:outline-none focus:ring-2 focus:ring-fundex-gold/30 resize-none"
             />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-stone-900 mb-2">Document Attachments</label>
-            <label className="flex flex-col items-center justify-center w-full px-4 py-5 border-2 border-dashed border-stone-100 rounded-lg cursor-pointer hover:border-gray-400 hover:bg-stone-50 transition">
+            <label className="flex flex-col items-center justify-center w-full px-4 py-5 border-2 border-dashed border-stone-100  cursor-pointer hover:border-gray-400 hover:bg-stone-50 transition">
               <div className="flex flex-col items-center justify-center">
                 <Upload size={32} className="text-stone-500 mb-1" />
                 <p className="text-xs font-medium text-stone-900">Click to upload documents</p>
@@ -683,7 +683,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               type="checkbox"
               checked={requireAcknowledgment}
               onChange={(e) => setRequireAcknowledgment(e.target.checked)}
-              className="w-4 h-4 border border-stone-100 rounded-md"
+              className="w-4 h-4 border border-stone-100 "
             />
             <span className="text-sm text-stone-500">Require investor acknowledgment</span>
           </label>
@@ -698,7 +698,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
             <button
               type="button"
               onClick={handleGoBack}
-              className="flex-1 px-3 py-2 text-sm border border-stone-100 rounded-lg text-stone-900 font-medium hover:bg-stone-50 transition"
+              className="flex-1 px-3 py-2 text-sm border border-stone-100  text-stone-900 font-medium hover:bg-stone-50 transition"
             >
               Cancel
             </button>
@@ -706,7 +706,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               type="button"
               onClick={handleSendUpdate}
               disabled={sending}
-              className="flex-1 px-3 py-2 text-sm bg-fundex-forest text-white rounded-lg font-medium hover:bg-fundex-forest/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="flex-1 px-3 py-2 text-sm bg-fundex-forest text-white  font-medium hover:bg-fundex-forest/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               {sending ? 'Sending...' : 'Send Update'}
             </button>
@@ -718,7 +718,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
 
   const renderScheduleUpdateView = () => (
     <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="rounded-2xl border border-stone-100 bg-white shadow-sm w-full max-w-2xl max-h-[85vh] flex flex-col">
+      <div className=" border border-stone-100 bg-white shadow-sm w-full max-w-2xl max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-stone-100 flex-shrink-0">
           <div>
@@ -729,7 +729,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
           </div>
           <button
             onClick={handleGoBack}
-            className="p-1 hover:bg-stone-50 rounded-lg transition"
+            className="p-1 hover:bg-stone-50  transition"
           >
             <X size={20} className="text-stone-500" />
           </button>
@@ -738,14 +738,14 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
         {/* Content */}
         <form onSubmit={handleScheduleUpdate} className="flex-1 overflow-y-auto p-5 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm flex items-center gap-2">
+            <div className="p-3 bg-red-50 border border-red-200  text-red-800 text-sm flex items-center gap-2">
               <AlertCircle size={16} />
               {error}
             </div>
           )}
 
           {successMessage && (
-            <div className="p-3 bg-fundex-gold/10 border border-fundex-gold/20 rounded-lg text-fundex-forest text-sm flex items-center gap-2">
+            <div className="p-3 bg-fundex-gold/10 border border-fundex-gold/20  text-fundex-forest text-sm flex items-center gap-2">
               <CheckCircle size={16} />
               {successMessage}
             </div>
@@ -758,7 +758,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               value={updateTitle}
               onChange={(e) => setUpdateTitle(e.target.value)}
               placeholder="e.g., Monthly Distribution Notice"
-              className="w-full px-3 py-2 text-sm border border-stone-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
+              className="w-full px-3 py-2 text-sm border border-stone-100  focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
             />
           </div>
 
@@ -769,7 +769,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               onChange={(e) => setUpdateMessage(e.target.value)}
               placeholder="Write your scheduled message..."
               rows={4}
-              className="w-full px-3 py-2 text-sm border border-stone-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-fundex-gold/30 resize-none"
+              className="w-full px-3 py-2 text-sm border border-stone-100  focus:outline-none focus:ring-2 focus:ring-fundex-gold/30 resize-none"
             />
           </div>
 
@@ -781,7 +781,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
                 value={scheduleDate}
                 onChange={(e) => setScheduleDate(e.target.value)}
                 placeholder="dd-mm-yyyy"
-                className="w-full px-3 py-2 text-sm border border-stone-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
+                className="w-full px-3 py-2 text-sm border border-stone-100  focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
               />
             </div>
             <div>
@@ -791,12 +791,12 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
                 value={scheduleTime}
                 onChange={(e) => setScheduleTime(e.target.value)}
                 placeholder="--:--"
-                className="w-full px-3 py-2 text-sm border border-stone-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
+                className="w-full px-3 py-2 text-sm border border-stone-100  focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
               />
             </div>
           </div>
 
-          <div className="p-3 bg-stone-50 border border-stone-200 rounded-lg">
+          <div className="p-3 bg-stone-50 border border-stone-200 ">
             <div className="flex items-start gap-3">
               <Clock size={18} className="text-stone-600 mt-0.5 flex-shrink-0" />
               <div>
@@ -818,7 +818,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
             <button
               type="button"
               onClick={handleGoBack}
-              className="flex-1 px-3 py-2 text-sm border border-stone-100 rounded-lg text-stone-900 font-medium hover:bg-stone-50 transition"
+              className="flex-1 px-3 py-2 text-sm border border-stone-100  text-stone-900 font-medium hover:bg-stone-50 transition"
             >
               Cancel
             </button>
@@ -826,7 +826,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               type="button"
               onClick={handleScheduleUpdate}
               disabled={scheduling}
-              className="flex-1 px-3 py-2 text-sm bg-fundex-forest text-white rounded-lg font-medium hover:bg-fundex-forest/90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+              className="flex-1 px-3 py-2 text-sm bg-fundex-forest text-white  font-medium hover:bg-fundex-forest/90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
             >
               <Calendar size={16} />
               {scheduling ? 'Scheduling...' : 'Schedule Update'}
@@ -842,7 +842,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
       <div className="flex items-center gap-4">
         <button
           onClick={handleGoBack}
-          className="p-2 hover:bg-stone-50 rounded-lg transition"
+          className="p-2 hover:bg-stone-50  transition"
         >
           <ArrowLeft size={24} className="text-stone-500" />
         </button>
@@ -851,7 +851,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
 
       <div className="space-y-4">
         {documents.length === 0 ? (
-          <div className="text-center py-12 bg-stone-50 rounded-2xl border border-stone-100">
+          <div className="text-center py-12 bg-stone-50  border border-stone-100">
             <FileText className="mx-auto text-stone-500 mb-2" size={40} />
             <p className="text-stone-500">No documents linked to this deal</p>
           </div>
@@ -863,7 +863,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
                 href={doc.file_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-4 bg-white border border-stone-100 rounded-2xl hover:shadow-md hover:border-stone-300 transition"
+                className="flex items-center justify-between p-4 bg-white border border-stone-100  hover:shadow-md hover:border-stone-300 transition"
               >
                 <div className="flex items-center gap-3">
                   <FileText className="text-stone-600" size={24} />

@@ -10,7 +10,7 @@ export default function OnboardingLayout({
 
       {/* Header */}
       <div className="relative z-10 pt-10 pb-4 flex justify-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-fundex-gold text-fundex-forest text-lg font-semibold shadow-sm">
+        <div className="flex h-12 w-12 items-center justify-center  bg-fundex-gold text-fundex-forest text-lg font-semibold shadow-sm">
           F
         </div>
       </div>

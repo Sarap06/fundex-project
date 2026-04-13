@@ -191,7 +191,7 @@ export function BroadcastAcknowledgmentStatus({
         <div className="flex gap-4 mb-6 border-b border-border pb-4">
           <button
             onClick={() => setSelectedTab('all')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            className={`px-4 py-2 text-sm font-medium  transition-colors ${
               selectedTab === 'all'
                 ? 'bg-muted text-foreground'
                 : 'text-muted-foreground hover:text-foreground'
@@ -201,7 +201,7 @@ export function BroadcastAcknowledgmentStatus({
           </button>
           <button
             onClick={() => setSelectedTab('pending')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            className={`px-4 py-2 text-sm font-medium  transition-colors ${
               selectedTab === 'pending'
                 ? 'bg-muted text-foreground'
                 : 'text-muted-foreground hover:text-foreground'
@@ -211,7 +211,7 @@ export function BroadcastAcknowledgmentStatus({
           </button>
           <button
             onClick={() => setSelectedTab('opened')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            className={`px-4 py-2 text-sm font-medium  transition-colors ${
               selectedTab === 'opened'
                 ? 'bg-muted text-foreground'
                 : 'text-muted-foreground hover:text-foreground'
@@ -221,7 +221,7 @@ export function BroadcastAcknowledgmentStatus({
           </button>
           <button
             onClick={() => setSelectedTab('acknowledged')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            className={`px-4 py-2 text-sm font-medium  transition-colors ${
               selectedTab === 'acknowledged'
                 ? 'bg-muted text-foreground'
                 : 'text-muted-foreground hover:text-foreground'
@@ -241,11 +241,11 @@ export function BroadcastAcknowledgmentStatus({
             filteredRecipients.map((recipient) => (
               <div
                 key={recipient.id}
-                className="flex items-center justify-between p-4 bg-background border border-border rounded-lg hover:border-border transition-colors"
+                className="flex items-center justify-between p-4 bg-background border border-border  hover:border-border transition-colors"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-medium text-blue-600">
+                    <div className="w-8 h-8  bg-blue-100 flex items-center justify-center text-xs font-medium text-blue-600">
                       {recipient.email
                         .split('@')[0]
                         .split('.')
@@ -264,7 +264,7 @@ export function BroadcastAcknowledgmentStatus({
                 </div>
                 <div className="flex items-center gap-3">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                    className={`px-3 py-1  text-xs font-medium ${getStatusColor(
                       recipient.delivery_status
                     )}`}
                   >

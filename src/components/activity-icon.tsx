@@ -42,7 +42,7 @@ export function ActivityIcon({
 
   return (
     <div
-      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+      className="w-8 h-8  flex items-center justify-center flex-shrink-0"
       style={{ backgroundColor: iconBgColorHex }}
     >
       <IconComponent size={18} className="text-gray-700" strokeWidth={2.5} />

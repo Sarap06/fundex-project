@@ -24,6 +24,7 @@ export default {
       fontFamily: {
         sans: ["'General Sans'", "system-ui", "sans-serif"],
         display: ["'Trench Slab'", "'General Sans'", "system-ui", "sans-serif"],
+        inter: ["'General Sans'", "system-ui", "sans-serif"],
       },
       colors: {
         border: "var(--border)",
@@ -68,6 +69,11 @@ export default {
           green: "#427A43",
           gold: "#C0B87A",
           cream: "#F2E3BB",
+          orange: "#F97316",
+          "orange-dark": "#EA580C",
+          "orange-light": "#FFF7ED",
+          "warm-bg": "#F5F3EF",
+          peach: "#FDBA74",
         },
       },
       borderRadius: {

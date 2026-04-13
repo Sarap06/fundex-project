@@ -182,10 +182,10 @@ function FeatureCard({ children, step, steps: stepItems }: { children: React.Rea
     <motion.div
       onMouseMove={handleMouseMove}
       style={{ '--x': mouseX, '--y': mouseY } as WrapperStyle}
-      className="group relative w-full overflow-hidden rounded-xl border border-border bg-gradient-to-b from-card/80 to-card p-2"
+      className="group relative w-full overflow-hidden  border border-border bg-gradient-to-b from-card/80 to-card p-2"
     >
       <div className="absolute right-5 top-0 h-px w-80 bg-gradient-to-l from-transparent via-primary/30 via-10% to-transparent" />
-      <div className="rounded-xl p-6">
+      <div className=" p-6">
         <div className="relative flex flex-col gap-6 md:flex-row md:items-start">
           <motion.div initial="inactive" animate="active" variants={stepVariants} className="flex flex-col gap-2 md:w-1/2">
             <span className="font-sans text-xs uppercase tracking-widest text-muted-foreground">{stepItems[step].name}</span>
@@ -210,13 +210,13 @@ function StepsNav({ steps: stepItems, current, onChange }: { steps: readonly Ste
             <li key={step.id} className="flex items-center gap-2">
               <button
                 className={cn(
-                  'flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-all',
+                  'flex items-center gap-2  px-3 py-1.5 text-sm font-medium transition-all',
                   isCurrent ? 'bg-primary text-white' : isCompleted ? 'bg-primary/20 text-foreground' : 'text-muted-foreground hover:text-foreground'
                 )}
                 onClick={() => onChange(idx)}
               >
                 <span className={cn(
-                  'flex size-5 items-center justify-center rounded-full text-xs',
+                  'flex size-5 items-center justify-center  text-xs',
                   isCurrent ? 'bg-white/20' : isCompleted ? 'bg-primary text-white' : 'bg-muted'
                 )}>
                   {isCompleted ? <IconCheck /> : <span>{idx + 1}</span>}
@@ -232,7 +232,7 @@ function StepsNav({ steps: stepItems, current, onChange }: { steps: readonly Ste
 }
 
 const defaultClasses = {
-  img: 'rounded-xl border border-border shadow-2xl shadow-black/10',
+  img: ' border border-border shadow-2xl shadow-black/10',
   step1img1: 'w-[50%] left-0 top-[15%]',
   step1img2: 'w-[60%] left-[40%] top-[35%]',
   step2img1: 'w-[50%] left-[5%] top-[20%]',

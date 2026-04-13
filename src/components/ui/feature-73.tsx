@@ -46,7 +46,7 @@ export const Feature73 = ({
 
         <div className="grid gap-6 md:grid-cols-2">
           {features[0] && (
-            <div className="rounded-2xl clean-border bg-background overflow-hidden md:row-span-2">
+            <div className=" clean-border bg-background overflow-hidden md:row-span-2">
               <div className="h-64 md:h-80 overflow-hidden">
                 <img
                   src={features[0].image}
@@ -67,7 +67,7 @@ export const Feature73 = ({
           {features.slice(1).map((feature) => (
             <div
               key={feature.id}
-              className="flex flex-col sm:flex-row gap-4 rounded-2xl clean-border bg-background overflow-hidden"
+              className="flex flex-col sm:flex-row gap-4  clean-border bg-background overflow-hidden"
             >
               <div className="h-48 sm:h-auto sm:w-1/3 overflow-hidden">
                 <img

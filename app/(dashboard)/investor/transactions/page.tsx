@@ -17,21 +17,21 @@ import { useEffect, useState } from "react";
 
 function FilterBar() {
   return (
-    <div className="rounded-xl border border-stone-100 bg-white p-4 shadow-sm md:p-5">
+    <div className=" border border-stone-100 bg-white p-4 shadow-sm md:p-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:gap-3">
         <div className="relative min-w-0 flex-1 lg:min-w-[200px] lg:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
           <input
             type="search"
             placeholder="Search transactions..."
-            className="w-full rounded-lg border border-stone-200 bg-white py-2.5 pl-9 pr-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
+            className="w-full  border border-stone-200 bg-white py-2.5 pl-9 pr-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
           />
         </div>
 
         <div className="relative w-full lg:w-40">
           <select
             aria-label="Transaction type"
-            className="w-full appearance-none rounded-lg border border-stone-200 bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-stone-600 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
+            className="w-full appearance-none  border border-stone-200 bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-stone-600 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
             defaultValue="all-types"
           >
             <option value="all-types">All Types</option>
@@ -46,7 +46,7 @@ function FilterBar() {
         <div className="relative w-full lg:w-40">
           <select
             aria-label="Status"
-            className="w-full appearance-none rounded-lg border border-stone-200 bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-stone-600 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
+            className="w-full appearance-none  border border-stone-200 bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-stone-600 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
             defaultValue="all-status"
           >
             <option value="all-status">All Status</option>
@@ -61,7 +61,7 @@ function FilterBar() {
         <div className="relative w-full lg:w-44">
           <select
             aria-label="Date range"
-            className="w-full appearance-none rounded-lg border border-stone-200 bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-stone-600 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
+            className="w-full appearance-none  border border-stone-200 bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-stone-600 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
             defaultValue="30d"
           >
             <option value="30d">Last 30 days</option>
@@ -75,14 +75,14 @@ function FilterBar() {
         <div className="flex w-full flex-col gap-2 sm:flex-row lg:ml-auto lg:w-auto">
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-600 shadow-sm transition hover:bg-stone-50"
+            className="inline-flex items-center justify-center gap-2  border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-600 shadow-sm transition hover:bg-stone-50"
           >
             <Download className="h-4 w-4 text-stone-600" />
             Export CSV
           </button>
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-fundex-gold px-4 py-2.5 text-sm font-semibold text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90"
+            className="inline-flex items-center justify-center gap-2  bg-fundex-gold px-4 py-2.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90"
           >
             <Download className="h-4 w-4" />
             Download Statement
@@ -203,7 +203,7 @@ function TypeCell({ type }: { type: TxType }) {
   if (type === "Contribution") {
     return (
       <span className="inline-flex items-center gap-2 text-sm font-medium text-stone-900">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest">
+        <span className="flex h-8 w-8 items-center justify-center  bg-fundex-gold/10 text-fundex-forest">
           <ArrowUp className="h-4 w-4" />
         </span>
         {type}
@@ -213,7 +213,7 @@ function TypeCell({ type }: { type: TxType }) {
   if (type === "Distribution") {
     return (
       <span className="inline-flex items-center gap-2 text-sm font-medium text-stone-900">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600">
+        <span className="flex h-8 w-8 items-center justify-center  bg-red-50 text-red-600">
           <ArrowDown className="h-4 w-4" />
         </span>
         {type}
@@ -223,7 +223,7 @@ function TypeCell({ type }: { type: TxType }) {
   if (type === "Interest Income") {
     return (
       <span className="inline-flex items-center gap-2 text-sm font-medium text-stone-900">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest">
+        <span className="flex h-8 w-8 items-center justify-center  bg-fundex-gold/10 text-fundex-forest">
           <DollarSign className="h-4 w-4" />
         </span>
         {type}
@@ -232,7 +232,7 @@ function TypeCell({ type }: { type: TxType }) {
   }
   return (
     <span className="inline-flex items-center gap-2 text-sm font-medium text-stone-900">
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-stone-50 text-stone-600">
+      <span className="flex h-8 w-8 items-center justify-center  bg-stone-50 text-stone-600">
         <RefreshCw className="h-4 w-4" />
       </span>
       {type}
@@ -243,13 +243,13 @@ function TypeCell({ type }: { type: TxType }) {
 function StatusBadge({ status }: { status: TxStatus }) {
   const styles: Record<TxStatus, string> = {
     Completed: "bg-fundex-gold/10 text-fundex-forest ring-fundex-gold/20",
-    Pending: "bg-amber-50 text-amber-800 ring-amber-100",
+    Pending: "bg-stone-100 text-stone-600 ring-stone-200",
     Processing: "bg-stone-50 text-stone-700 ring-stone-200",
     Failed: "bg-red-50 text-red-800 ring-red-100",
   };
   return (
     <span
-      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${styles[status]}`}
+      className={`inline-flex  px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${styles[status]}`}
     >
       {status}
     </span>
@@ -307,23 +307,23 @@ function DrawerTypeRow({ type }: { type: TxType }) {
   return (
     <div className="flex items-center gap-2">
       {type === "Interest Income" ? (
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest">
+        <span className="flex h-9 w-9 items-center justify-center  bg-fundex-gold/10 text-fundex-forest">
           <DollarSign className="h-4 w-4" />
         </span>
       ) : type === "Contribution" ? (
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest">
+        <span className="flex h-9 w-9 items-center justify-center  bg-fundex-gold/10 text-fundex-forest">
           <ArrowUp className="h-4 w-4" />
         </span>
       ) : type === "Distribution" ? (
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-600">
+        <span className="flex h-9 w-9 items-center justify-center  bg-red-50 text-red-600">
           <ArrowDown className="h-4 w-4" />
         </span>
       ) : (
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-stone-50 text-stone-600">
+        <span className="flex h-9 w-9 items-center justify-center  bg-stone-50 text-stone-600">
           <RefreshCw className="h-4 w-4" />
         </span>
       )}
-      <span className="text-sm font-semibold text-stone-900">{type}</span>
+      <span className="text-sm font-medium text-stone-900">{type}</span>
     </div>
   );
 }
@@ -375,14 +375,14 @@ function TransactionDetailsDrawer({
       >
         <div className="flex h-full w-full flex-col bg-white">
           <div className="flex shrink-0 items-center justify-between border-b border-stone-100 px-5 py-4 md:px-6">
-            <h2 id="txn-drawer-title" className="text-lg font-semibold text-stone-900 md:text-xl">
+            <h2 id="txn-drawer-title" className="text-lg font-medium text-stone-900 md:text-xl">
               Transaction Details
             </h2>
             <button
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="rounded-lg p-2 text-stone-500 transition hover:bg-stone-100 hover:text-stone-900"
+              className=" p-2 text-stone-500 transition hover:bg-stone-100 hover:text-stone-900"
             >
               <X className="h-5 w-5" />
             </button>
@@ -411,7 +411,7 @@ function TransactionDetailsDrawer({
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-stone-100 bg-stone-50/50 p-4 shadow-sm">
+                <div className=" border border-stone-100 bg-stone-50/50 p-4 shadow-sm">
                   <p className="text-xs font-medium text-stone-500">Amount</p>
                   <p
                     className={`mt-2 text-lg font-semibold tabular-nums ${positive ? "text-fundex-forest" : "text-red-600"}`}
@@ -419,7 +419,7 @@ function TransactionDetailsDrawer({
                     {formatAmount(transaction.amount)}
                   </p>
                 </div>
-                <div className="rounded-xl border border-stone-100 bg-stone-50/50 p-4 shadow-sm">
+                <div className=" border border-stone-100 bg-stone-50/50 p-4 shadow-sm">
                   <p className="text-xs font-medium text-stone-500">Net Position After</p>
                   <p className="mt-2 text-lg font-semibold tabular-nums text-stone-900">$1,975,000</p>
                 </div>
@@ -440,8 +440,8 @@ function TransactionDetailsDrawer({
             </section>
 
             <section className="mt-8 border-t border-stone-100 pt-8">
-              <h3 className="text-sm font-semibold text-stone-900">Deal Information</h3>
-              <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-fundex-gold/20 bg-fundex-gold/5 px-4 py-4 shadow-sm">
+              <h3 className="text-sm font-medium text-stone-900">Deal Information</h3>
+              <div className="mt-4 flex items-center justify-between gap-3  border border-fundex-gold/20 bg-fundex-gold/5 px-4 py-4 shadow-sm">
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-stone-500">Deal Name</p>
                   <p className="mt-1 text-sm font-semibold text-stone-900">{transaction.deal}</p>
@@ -449,7 +449,7 @@ function TransactionDetailsDrawer({
                 <button
                   type="button"
                   aria-label="Open deal"
-                  className="shrink-0 rounded-lg p-2 text-fundex-forest transition hover:bg-fundex-gold/10"
+                  className="shrink-0  p-2 text-fundex-forest transition hover:bg-fundex-gold/10"
                 >
                   <ExternalLink className="h-4 w-4" />
                 </button>
@@ -457,20 +457,20 @@ function TransactionDetailsDrawer({
             </section>
 
             <section className="mt-8 border-t border-stone-100 pt-8">
-              <h3 className="text-sm font-semibold text-stone-900">Flow of Funds</h3>
+              <h3 className="text-sm font-medium text-stone-900">Flow of Funds</h3>
               <div className="mt-4 space-y-0">
-                <div className="rounded-xl border border-stone-100 bg-white p-4 shadow-sm">
+                <div className=" border border-stone-100 bg-white p-4 shadow-sm">
                   <p className="text-xs font-medium text-stone-500">Source</p>
                   <p className="mt-1 text-sm font-semibold leading-snug text-stone-900">
                     IHIG Operating Account (Wells Fargo)
                   </p>
                 </div>
                 <div className="flex justify-center py-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 bg-stone-50 text-stone-500">
+                  <div className="flex h-9 w-9 items-center justify-center  border border-stone-200 bg-stone-50 text-stone-500">
                     <ArrowDown className="h-4 w-4" />
                   </div>
                 </div>
-                <div className="rounded-xl border border-stone-100 bg-white p-4 shadow-sm">
+                <div className=" border border-stone-100 bg-white p-4 shadow-sm">
                   <p className="text-xs font-medium text-stone-500">Destination</p>
                   <p className="mt-1 text-sm font-semibold text-stone-900">Investor Capital Account</p>
                   <p className="mt-2 text-xs text-stone-500">Bank Account: ****4832</p>
@@ -479,14 +479,14 @@ function TransactionDetailsDrawer({
             </section>
 
             <section className="mt-8 border-t border-stone-100 pt-8">
-              <h3 className="text-sm font-semibold text-stone-900">Notes</h3>
+              <h3 className="text-sm font-medium text-stone-900">Notes</h3>
               <p className="mt-3 text-sm leading-relaxed text-stone-600">{drawerNotesFor(transaction)}</p>
             </section>
 
             <div className="mt-10 border-t border-stone-100 pt-6">
               <button
                 type="button"
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white py-3 text-sm font-semibold text-stone-600 shadow-sm transition hover:bg-stone-50"
+                className="flex w-full items-center justify-center gap-2  border border-stone-200 bg-white py-3 text-sm font-medium text-stone-600 shadow-sm transition hover:bg-stone-50"
               >
                 <Download className="h-4 w-4 text-stone-600" />
                 Download Receipt
@@ -529,15 +529,15 @@ function TransactionRow({ tx, onView }: { tx: Transaction; onView: (tx: Transact
         <p className="mt-1 text-xs tabular-nums text-stone-500">
           {tx.completedPayments} / {tx.totalPayments} payments
         </p>
-        <div className="mt-2 h-1.5 w-full max-w-[100px] overflow-hidden rounded-full bg-stone-100">
-          <div className="h-full rounded-full bg-fundex-gold" style={{ width: `${paymentPct}%` }} />
+        <div className="mt-2 h-1.5 w-full max-w-[100px] overflow-hidden  bg-stone-100">
+          <div className="h-full  bg-fundex-gold" style={{ width: `${paymentPct}%` }} />
         </div>
       </td>
       <td className="whitespace-nowrap px-4 py-4 align-middle text-right">
         <button
           type="button"
           onClick={() => onView(tx)}
-          className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-semibold text-fundex-forest shadow-sm transition hover:bg-fundex-gold/10"
+          className=" border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/10"
         >
           View
         </button>
@@ -554,7 +554,7 @@ function TransactionTable({
   onViewTransaction: (tx: Transaction) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-stone-100 bg-white shadow-sm">
+    <div className="overflow-hidden  border border-stone-100 bg-white shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[960px] text-left text-sm">
           <thead>
@@ -602,11 +602,9 @@ export default function TransactionsPage() {
   return (
     <>
       <div className="mx-auto w-full max-w-screen-2xl space-y-6 pb-12 md:space-y-8">
-          <header className="rounded-xl border border-fundex-green/20 bg-gradient-to-br from-fundex-forest via-fundex-green to-fundex-forest px-7 py-8 text-white shadow-sm shadow-fundex-forest/15 md:rounded-2xl md:px-9 md:py-9">
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Transactions</h1>
-            <p className="mt-2 max-w-2xl text-base font-medium text-white/90">
-              Capital activity and payment history
-            </p>
+          <header>
+            <h1 className="font-display text-3xl font-normal tracking-tight text-stone-900 md:text-4xl">Transactions</h1>
+            <p className="mt-2 text-sm font-normal text-stone-400">Capital activity and payment history</p>
           </header>
 
           <FilterBar />

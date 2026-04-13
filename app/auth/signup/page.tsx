@@ -16,7 +16,7 @@ export default function Signup() {
         <div className="relative min-h-screen bg-white font-sans flex items-center justify-center p-4">
           <div className="pointer-events-none fixed right-0 top-0 z-0 h-[700px] w-[800px]" style={{ background: 'radial-gradient(ellipse at 85% 15%, rgba(192,184,122,0.13) 0%, rgba(242,227,187,0.08) 40%, transparent 70%)' }} />
           <div className="pointer-events-none fixed bottom-0 left-0 z-0 h-[500px] w-[600px]" style={{ background: 'radial-gradient(ellipse at 15% 80%, rgba(192,184,122,0.06) 0%, transparent 60%)' }} />
-          <div className="relative z-10 rounded-2xl border border-stone-100 bg-white shadow-sm p-8 max-w-md w-full">
+          <div className="relative z-10  border border-stone-100 bg-white shadow-sm p-8 max-w-md w-full">
             <h1 className="text-3xl font-display font-semibold text-stone-900 mb-2">Sign Up</h1>
             <p className="text-stone-500 mb-6">Create your Fundex account</p>
           </div>
@@ -107,7 +107,7 @@ function SignupContent() {
       <div className="relative min-h-screen bg-white font-sans flex items-center justify-center p-4">
         <div className="pointer-events-none fixed right-0 top-0 z-0 h-[700px] w-[800px]" style={{ background: 'radial-gradient(ellipse at 85% 15%, rgba(192,184,122,0.13) 0%, rgba(242,227,187,0.08) 40%, transparent 70%)' }} />
         <div className="pointer-events-none fixed bottom-0 left-0 z-0 h-[500px] w-[600px]" style={{ background: 'radial-gradient(ellipse at 15% 80%, rgba(192,184,122,0.06) 0%, transparent 60%)' }} />
-        <div className="relative z-10 rounded-2xl border border-stone-100 bg-white shadow-sm p-8 max-w-md w-full">
+        <div className="relative z-10  border border-stone-100 bg-white shadow-sm p-8 max-w-md w-full">
           <h1 className="text-3xl font-display font-semibold text-stone-900 mb-2">Sign Up</h1>
           <p className="text-stone-500 mb-6">Create your Fundex account</p>
         </div>
@@ -120,7 +120,7 @@ function SignupContent() {
       <div className="relative min-h-screen bg-white font-sans flex items-center justify-center p-4">
         <div className="pointer-events-none fixed right-0 top-0 z-0 h-[700px] w-[800px]" style={{ background: 'radial-gradient(ellipse at 85% 15%, rgba(192,184,122,0.13) 0%, rgba(242,227,187,0.08) 40%, transparent 70%)' }} />
         <div className="pointer-events-none fixed bottom-0 left-0 z-0 h-[500px] w-[600px]" style={{ background: 'radial-gradient(ellipse at 15% 80%, rgba(192,184,122,0.06) 0%, transparent 60%)' }} />
-        <FadeIn className="relative z-10 rounded-2xl border border-stone-100 bg-white shadow-sm p-8 max-w-md w-full text-center">
+        <FadeIn className="relative z-10  border border-stone-100 bg-white shadow-sm p-8 max-w-md w-full text-center">
           <div className="flex justify-center mb-4">
             <CheckCircle className="text-fundex-forest" size={56} />
           </div>
@@ -154,16 +154,16 @@ function SignupContent() {
     <div className="relative min-h-screen bg-white font-sans flex items-center justify-center p-4">
       <div className="pointer-events-none fixed right-0 top-0 z-0 h-[700px] w-[800px]" style={{ background: 'radial-gradient(ellipse at 85% 15%, rgba(192,184,122,0.13) 0%, rgba(242,227,187,0.08) 40%, transparent 70%)' }} />
       <div className="pointer-events-none fixed bottom-0 left-0 z-0 h-[500px] w-[600px]" style={{ background: 'radial-gradient(ellipse at 15% 80%, rgba(192,184,122,0.06) 0%, transparent 60%)' }} />
-      <FadeIn className="relative z-10 rounded-2xl border border-stone-100 bg-white shadow-sm p-8 max-w-md w-full">
+      <FadeIn className="relative z-10  border border-stone-100 bg-white shadow-sm p-8 max-w-md w-full">
         <h1 className="text-3xl font-display font-semibold text-stone-900 mb-2">Sign Up</h1>
         <p className="text-stone-500 mb-6">Create your Fundex account</p>
 
         {/* Type Toggle */}
-        <div className="mb-6 bg-stone-50 rounded-xl p-1 flex gap-1">
+        <div className="mb-6 bg-stone-50  p-1 flex gap-1">
           <button
             type="button"
             onClick={() => setSignupType('company')}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+            className={`flex-1 py-2 px-4  font-medium transition-colors ${
               signupType === 'company'
                 ? 'bg-fundex-forest text-white'
                 : 'text-stone-500 hover:text-stone-900'
@@ -174,7 +174,7 @@ function SignupContent() {
           <button
             type="button"
             onClick={() => setSignupType('admin')}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+            className={`flex-1 py-2 px-4  font-medium transition-colors ${
               signupType === 'admin'
                 ? 'bg-fundex-forest text-white'
                 : 'text-stone-500 hover:text-stone-900'
@@ -185,7 +185,7 @@ function SignupContent() {
         </div>
 
         {isFromInvite && signupType === 'company' && (
-          <div className="bg-fundex-gold/10 border border-fundex-gold/20 rounded-lg p-3 mb-6 flex items-center gap-2">
+          <div className="bg-fundex-gold/10 border border-fundex-gold/20  p-3 mb-6 flex items-center gap-2">
             <Check className="text-fundex-forest flex-shrink-0" size={20} />
             <p className="text-sm text-fundex-forest">You were invited to join this company</p>
           </div>
@@ -204,7 +204,7 @@ function SignupContent() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
+                  className="w-full px-4 py-2 border border-stone-200  focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
                   placeholder="John Doe"
                 />
               </div>
@@ -219,7 +219,7 @@ function SignupContent() {
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isFromInvite}
                   required
-                  className={`w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none ${
+                  className={`w-full px-4 py-2 border border-stone-200  focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none ${
                     isFromInvite ? 'bg-stone-50 cursor-not-allowed' : ''
                   }`}
                   placeholder="user@example.com"
@@ -236,7 +236,7 @@ function SignupContent() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
+                  className="w-full px-4 py-2 border border-stone-200  focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
                   placeholder="••••••••"
                 />
               </div>
@@ -251,7 +251,7 @@ function SignupContent() {
                   onChange={(e) => setCompanyCode(e.target.value.toUpperCase())}
                   disabled={isFromInvite}
                   required
-                  className={`w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none ${
+                  className={`w-full px-4 py-2 border border-stone-200  focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none ${
                     isFromInvite ? 'bg-stone-50 cursor-not-allowed' : ''
                   }`}
                   placeholder="ABC123"
@@ -277,7 +277,7 @@ function SignupContent() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
+                  className="w-full px-4 py-2 border border-stone-200  focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
                   placeholder="admin@company.com"
                 />
               </div>
@@ -291,7 +291,7 @@ function SignupContent() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
+                  className="w-full px-4 py-2 border border-stone-200  focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
                   placeholder="••••••••"
                 />
               </div>
@@ -305,7 +305,7 @@ function SignupContent() {
                   value={accessCode}
                   onChange={(e) => setAccessCode(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
+                  className="w-full px-4 py-2 border border-stone-200  focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
                   placeholder="Enter access code"
                 />
               </div>
@@ -321,7 +321,7 @@ function SignupContent() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-fundex-forest text-white py-2 rounded-xl font-semibold hover:bg-fundex-forest/90 disabled:bg-stone-300 disabled:text-stone-500 transition"
+            className="w-full bg-fundex-forest text-white py-2  font-semibold hover:bg-fundex-forest/90 disabled:bg-stone-300 disabled:text-stone-500 transition"
           >
             {loading ? 'Creating account...' : 'Sign Up'}
           </button>

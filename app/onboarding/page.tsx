@@ -111,7 +111,7 @@ export default function OnboardingPage() {
   if (step === 'loading' || approving) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin  border-2 border-emerald-500 border-t-transparent" />
         {approving && <p className="text-sm text-slate-500">Setting up your account...</p>}
       </div>
     );
@@ -145,7 +145,7 @@ export default function OnboardingPage() {
   // Complete — show brief loading while redirecting
   return (
     <div className="flex items-center justify-center py-20">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+      <div className="h-8 w-8 animate-spin  border-2 border-emerald-500 border-t-transparent" />
     </div>
   );
 }

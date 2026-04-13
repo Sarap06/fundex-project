@@ -13,7 +13,7 @@ type StatCardProps = {
 
 function StatCard({ title, value, valueClassName, titleAdornment }: StatCardProps) {
   return (
-    <div className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
+    <div className=" border border-stone-100 bg-white p-6 shadow-sm">
       <div className="flex items-center gap-2">
         <p className="text-sm font-medium text-stone-500">{title}</p>
         {titleAdornment}
@@ -32,7 +32,7 @@ type SectionCardProps = {
 
 function SectionCard({ children, className }: SectionCardProps) {
   return (
-    <div className={`rounded-2xl border border-stone-100 bg-white p-6 shadow-sm md:p-8 ${className ?? ""}`}>
+    <div className={` border border-stone-100 bg-white p-6 shadow-sm md:p-8 ${className ?? ""}`}>
       {children}
     </div>
   );
@@ -47,25 +47,25 @@ function TabSwitcher({ activeTab, onChange }: { activeTab: TabId; onChange: (t: 
         <button
           type="button"
           onClick={() => onChange("all")}
-          className={`relative pb-3 text-sm font-semibold transition ${
+          className={`relative pb-3 text-sm font-medium transition ${
             activeTab === "all" ? "text-fundex-forest" : "text-stone-500 hover:text-stone-800"
           }`}
         >
           All Documents
           {activeTab === "all" ? (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-fundex-gold" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5  bg-fundex-gold" />
           ) : null}
         </button>
         <button
           type="button"
           onClick={() => onChange("tax")}
-          className={`relative pb-3 text-sm font-semibold transition ${
+          className={`relative pb-3 text-sm font-medium transition ${
             activeTab === "tax" ? "text-fundex-forest" : "text-stone-500 hover:text-stone-800"
           }`}
         >
           Tax Documents
           {activeTab === "tax" ? (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-fundex-gold" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5  bg-fundex-gold" />
           ) : null}
         </button>
       </div>
@@ -104,11 +104,11 @@ function DocumentPreviewModal({
       aria-labelledby="document-preview-title"
     >
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" aria-hidden />
-      <div className="relative flex max-h-[min(90vh,880px)] w-full max-w-2xl min-w-0 flex-col overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-[0_24px_48px_-12px_rgba(15,23,42,0.25)] md:w-[54%] md:max-w-[720px] md:min-w-[min(100%,520px)]">
+      <div className="relative flex max-h-[min(90vh,880px)] w-full max-w-2xl min-w-0 flex-col overflow-hidden  border border-stone-100 bg-white shadow-[0_24px_48px_-12px_rgba(15,23,42,0.25)] md:w-[54%] md:max-w-[720px] md:min-w-[min(100%,520px)]">
         <div className="shrink-0 border-b border-stone-100 bg-white px-6 pb-5 pt-6 md:px-8 md:pt-8">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h2 id="document-preview-title" className="text-xl font-semibold tracking-tight text-stone-900 md:text-2xl">
+              <h2 id="document-preview-title" className="text-xl font-medium tracking-tight text-stone-900 md:text-2xl">
                 Document Preview
               </h2>
               <p className="mt-1.5 text-sm text-stone-500">View the document details</p>
@@ -117,7 +117,7 @@ function DocumentPreviewModal({
               type="button"
               aria-label="Close"
               onClick={onClose}
-              className="shrink-0 rounded-xl border border-stone-200 bg-white p-2.5 text-stone-500 shadow-sm transition hover:bg-stone-50 hover:text-stone-900"
+              className="shrink-0  border border-stone-200 bg-white p-2.5 text-stone-500 shadow-sm transition hover:bg-stone-50 hover:text-stone-900"
             >
               <X className="h-5 w-5" />
             </button>
@@ -125,27 +125,27 @@ function DocumentPreviewModal({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 md:px-8 md:py-7">
-          <div className="rounded-2xl border border-stone-100 bg-stone-50/80 p-5 md:p-6">
+          <div className=" border border-stone-100 bg-stone-50/80 p-5 md:p-6">
             <p className="text-lg font-semibold text-stone-900">{doc.name}</p>
             <p className="mt-1 font-mono text-sm text-stone-600">{doc.id}</p>
             <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div className="space-y-5">
                 <div>
-                  <p className="text-[0.6875rem] font-semibold uppercase tracking-wider text-stone-400">Type</p>
+                  <p className="text-[0.6875rem] font-medium uppercase tracking-wider text-stone-400">Type</p>
                   <p className="mt-1.5 text-[0.9375rem] font-semibold text-stone-900">{doc.type}</p>
                 </div>
                 <div>
-                  <p className="text-[0.6875rem] font-semibold uppercase tracking-wider text-stone-400">Upload date</p>
+                  <p className="text-[0.6875rem] font-medium uppercase tracking-wider text-stone-400">Upload date</p>
                   <p className="mt-1.5 text-[0.9375rem] font-semibold text-stone-900">{doc.date}</p>
                 </div>
               </div>
               <div className="space-y-5">
                 <div>
-                  <p className="text-[0.6875rem] font-semibold uppercase tracking-wider text-stone-400">Deal</p>
+                  <p className="text-[0.6875rem] font-medium uppercase tracking-wider text-stone-400">Deal</p>
                   <p className="mt-1.5 text-[0.9375rem] font-semibold leading-snug text-stone-900">{dealLabel}</p>
                 </div>
                 <div>
-                  <p className="text-[0.6875rem] font-semibold uppercase tracking-wider text-stone-400">File size</p>
+                  <p className="text-[0.6875rem] font-medium uppercase tracking-wider text-stone-400">File size</p>
                   <p className="mt-1.5 text-[0.9375rem] font-semibold text-stone-900">{fileSize}</p>
                 </div>
               </div>
@@ -153,9 +153,9 @@ function DocumentPreviewModal({
           </div>
 
           <div className="mt-8">
-            <h3 className="text-base font-semibold text-stone-900">Document Preview</h3>
-            <div className="mt-4 flex min-h-[220px] flex-col items-center justify-center rounded-2xl border border-stone-200 bg-stone-100/90 px-6 py-16 md:min-h-[280px]">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-stone-200/80 bg-white text-stone-400 shadow-sm">
+            <h3 className="text-base font-medium text-stone-900">Document Preview</h3>
+            <div className="mt-4 flex min-h-[220px] flex-col items-center justify-center  border border-stone-200 bg-stone-100/90 px-6 py-16 md:min-h-[280px]">
+              <div className="flex h-14 w-14 items-center justify-center  border border-stone-200/80 bg-white text-stone-400 shadow-sm">
                 <FileText className="h-7 w-7" strokeWidth={1.5} />
               </div>
               <p className="mt-5 text-base font-semibold text-stone-800">Preview Unavailable</p>
@@ -171,20 +171,20 @@ function DocumentPreviewModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-stone-200 bg-white px-5 py-2.5 text-sm font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50 sm:justify-self-start"
+              className=" border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-700 shadow-sm transition hover:bg-stone-50 sm:justify-self-start"
             >
               Close
             </button>
             <button
               type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-5 py-2.5 text-sm font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50 sm:justify-self-center"
+              className="inline-flex items-center justify-center gap-2  border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-700 shadow-sm transition hover:bg-stone-50 sm:justify-self-center"
             >
               <Eye className="h-4 w-4" />
               Open Full Document
             </button>
             <button
               type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-fundex-gold px-5 py-2.5 text-sm font-semibold text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 sm:justify-self-end"
+              className="inline-flex items-center justify-center gap-2  bg-fundex-gold px-5 py-2.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 sm:justify-self-end"
             >
               <Download className="h-4 w-4" />
               Download
@@ -201,7 +201,7 @@ function DocumentRow({ doc, onView }: { doc: DocumentRowData; onView: (doc: Docu
     <tr className="border-b border-stone-50 transition-colors last:border-0 hover:bg-stone-50/50">
       <td className="px-4 py-4 align-top">
         <div className="flex gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center  bg-fundex-gold/10 text-fundex-forest">
             <FileText className="h-5 w-5" />
           </div>
           <div className="min-w-0">
@@ -225,14 +225,14 @@ function DocumentRow({ doc, onView }: { doc: DocumentRowData; onView: (doc: Docu
             type="button"
             aria-label="View document"
             onClick={() => onView(doc)}
-            className="rounded-lg border border-stone-200 bg-white p-2 text-fundex-forest shadow-sm transition hover:bg-fundex-gold/10"
+            className=" border border-stone-200 bg-white p-2 text-fundex-forest shadow-sm transition hover:bg-fundex-gold/10"
           >
             <Eye className="h-4 w-4" />
           </button>
           <button
             type="button"
             aria-label="Download document"
-            className="rounded-lg border border-stone-200 bg-white p-2 text-stone-500 shadow-sm transition hover:bg-stone-50"
+            className=" border border-stone-200 bg-white p-2 text-stone-500 shadow-sm transition hover:bg-stone-50"
           >
             <Download className="h-4 w-4" />
           </button>
@@ -296,10 +296,8 @@ export default function DocumentsPage() {
 
       <div className="mx-auto w-full max-w-screen-2xl space-y-8 pb-12">
           <header>
-            <h1 className="text-3xl font-semibold tracking-tight text-stone-900 md:text-4xl">Documents</h1>
-            <p className="mt-2 max-w-2xl text-base text-stone-600">
-              View and manage all documents related to your investments
-            </p>
+            <h1 className="font-display text-3xl font-normal tracking-tight text-stone-900 md:text-4xl">Documents</h1>
+            <p className="mt-2 text-sm font-normal text-stone-400">View and manage all documents related to your investments</p>
           </header>
 
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
@@ -307,9 +305,9 @@ export default function DocumentsPage() {
             <StatCard
               title="New Documents"
               value={2}
-              titleAdornment={<span className="h-2 w-2 rounded-full bg-fundex-gold" aria-hidden />}
+              titleAdornment={<span className="h-2 w-2  bg-fundex-gold" aria-hidden />}
             />
-            <StatCard title="Requires Attention" value={0} valueClassName="text-orange-500" />
+            <StatCard title="Requires Attention" value={0} />
             <StatCard title="Active Documents" value={8} valueClassName="text-fundex-forest" />
           </section>
 
@@ -318,7 +316,7 @@ export default function DocumentsPage() {
             <input
               type="search"
               placeholder="Search by document, deal, or type..."
-              className="w-full rounded-2xl border border-stone-200 bg-white py-3.5 pl-12 pr-4 text-sm text-stone-900 shadow-sm placeholder:text-stone-400 outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
+              className="w-full  border border-stone-200 bg-white py-3.5 pl-12 pr-4 text-sm text-stone-900 shadow-sm placeholder:text-stone-400 outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
             />
           </div>
 
@@ -332,7 +330,7 @@ export default function DocumentsPage() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <button
                     type="button"
-                    className="inline-flex w-fit items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-semibold text-stone-700 shadow-sm transition hover:bg-stone-100"
+                    className="inline-flex w-fit items-center gap-2  border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-medium text-stone-700 shadow-sm transition hover:bg-stone-100"
                   >
                     <Filter className="h-4 w-4 text-stone-500" />
                     Deal Status
@@ -349,7 +347,7 @@ export default function DocumentsPage() {
                         key={p.id}
                         type="button"
                         onClick={() => setDealPill(p.id)}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        className={` px-4 py-2 text-sm font-medium transition ${
                           dealPill === p.id
                             ? "bg-fundex-gold text-fundex-forest shadow-sm"
                             : "border border-stone-200 bg-white text-stone-600 shadow-sm hover:bg-stone-50"
@@ -361,7 +359,7 @@ export default function DocumentsPage() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-stone-100">
+                <div className="overflow-hidden  border border-stone-100">
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[800px] text-left text-sm">
                       <thead>
@@ -384,9 +382,9 @@ export default function DocumentsPage() {
               </div>
             ) : (
               <div className="space-y-6 px-6 py-6 md:px-8 md:py-8">
-                <div className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
+                <div className=" border border-stone-100 bg-white p-6 shadow-sm">
                   <div className="flex flex-col gap-1 border-b border-stone-100 pb-4 sm:flex-row sm:items-baseline sm:justify-between">
-                    <h3 className="text-lg font-semibold text-stone-900">2026</h3>
+                    <h3 className="text-lg font-medium text-stone-900">2026</h3>
                     <p className="text-sm font-semibold text-fundex-forest">Total Income: $18,450</p>
                   </div>
                   <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -396,7 +394,7 @@ export default function DocumentsPage() {
                     </div>
                     <button
                       type="button"
-                      className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-fundex-gold px-5 py-2.5 text-sm font-semibold text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 sm:w-auto"
+                      className="inline-flex w-full shrink-0 items-center justify-center gap-2  bg-fundex-gold px-5 py-2.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 sm:w-auto"
                     >
                       <Download className="h-4 w-4" />
                       Download
@@ -404,9 +402,9 @@ export default function DocumentsPage() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
+                <div className=" border border-stone-100 bg-white p-6 shadow-sm">
                   <div className="flex flex-col gap-1 border-b border-stone-100 pb-4 sm:flex-row sm:items-baseline sm:justify-between">
-                    <h3 className="text-lg font-semibold text-stone-900">2025</h3>
+                    <h3 className="text-lg font-medium text-stone-900">2025</h3>
                     <p className="text-sm font-semibold text-stone-700">Total Income: $12,200</p>
                   </div>
                   <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -416,7 +414,7 @@ export default function DocumentsPage() {
                     </div>
                     <button
                       type="button"
-                      className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-fundex-gold px-5 py-2.5 text-sm font-semibold text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 sm:w-auto"
+                      className="inline-flex w-full shrink-0 items-center justify-center gap-2  bg-fundex-gold px-5 py-2.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 sm:w-auto"
                     >
                       <Download className="h-4 w-4" />
                       Download

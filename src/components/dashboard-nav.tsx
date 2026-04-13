@@ -47,12 +47,12 @@ export function DashboardNav({ activeTab, onTabChange, isExpanded = false, onExp
     }`}>
       {/* Logo */}
       <div className="flex items-center gap-3 border-b border-stone-100 px-5 py-5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-fundex-gold font-display text-sm font-bold text-fundex-forest">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center  bg-fundex-gold font-display text-sm font-bold text-fundex-forest">
           F
         </div>
         {isExpanded && (
           <div className="min-w-0">
-            <p className="font-display text-base font-semibold text-stone-900">Fundex</p>
+            <p className="font-display text-base font-normal text-stone-900">Fundex</p>
             <p className="text-[11px] text-stone-400">Admin Portal</p>
           </div>
         )}
@@ -67,7 +67,7 @@ export function DashboardNav({ activeTab, onTabChange, isExpanded = false, onExp
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               title={tab.label}
-              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-normal transition-colors ${
+              className={`flex w-full items-center gap-3  px-3 py-2.5 text-sm font-normal transition-colors ${
                 isExpanded ? 'justify-start' : 'justify-center'
               } ${
                 isActive
@@ -86,7 +86,7 @@ export function DashboardNav({ activeTab, onTabChange, isExpanded = false, onExp
       <div className="px-3 py-2">
         <button
           onClick={handleToggle}
-          className="flex w-full items-center justify-center rounded-lg p-2 text-stone-400 transition-colors hover:bg-stone-50 hover:text-stone-600"
+          className="flex w-full items-center justify-center  p-2 text-stone-400 transition-colors hover:bg-stone-50 hover:text-stone-600"
           title={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
         >
           {isExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
@@ -96,7 +96,7 @@ export function DashboardNav({ activeTab, onTabChange, isExpanded = false, onExp
       {/* User section */}
       <div className="border-t border-stone-100 px-4 py-4">
         <div className={`flex items-center ${isExpanded ? 'gap-3' : 'justify-center'}`}>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fundex-gold/20 text-xs font-semibold text-fundex-forest">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center bg-fundex-gold/20 text-xs font-medium text-fundex-forest">
             JD
           </div>
           {isExpanded && (
@@ -108,7 +108,7 @@ export function DashboardNav({ activeTab, onTabChange, isExpanded = false, onExp
           {isExpanded && (
             <button
               onClick={handleLogout}
-              className="rounded-lg p-1.5 text-stone-300 transition-colors hover:bg-red-50 hover:text-red-500"
+              className=" p-1.5 text-stone-300 transition-colors hover:bg-red-50 hover:text-red-500"
               title="Log out"
             >
               <LogOut size={14} />

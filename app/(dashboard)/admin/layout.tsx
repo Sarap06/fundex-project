@@ -7,16 +7,16 @@ import { DashboardTopbar } from '@/components/dashboard-topbar';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/lib/types';
 
-const INVESTOR_NAV_LINKS = [
-  { label: 'Dashboard', href: '/investor' },
-  { label: 'My Investments', href: '/investor/investments' },
-  { label: 'Performance', href: '/investor/performance' },
-  { label: 'Transactions', href: '/investor/transactions' },
-  { label: 'Documents', href: '/investor/documents' },
-  { label: 'Broadcast', href: '/investor/broadcast' },
+const ADMIN_NAV_LINKS = [
+  { label: 'Dashboard', href: '/admin' },
+  { label: 'Deals', href: '/admin/deals' },
+  { label: 'Investors', href: '/admin/investors' },
+  { label: 'Allocations', href: '/admin/allocations' },
+  { label: 'Documents', href: '/admin/documents' },
+  { label: 'Broadcast', href: '/admin/broadcast' },
 ];
 
-export default function InvestorLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [ready, setReady] = useState(false);
@@ -32,7 +32,9 @@ export default function InvestorLayout({ children }: { children: React.ReactNode
         .eq('user_id', user.id)
         .single();
 
-      if (!p || p.role !== 'investor') { router.push('/auth/login'); return; }
+      if (!p) { router.push('/auth/login'); return; }
+      if (p.role === 'partner') { router.push('/company'); return; }
+      if (p.role === 'investor') { router.push('/investor'); return; }
 
       setProfile(p);
       setReady(true);
@@ -48,29 +50,8 @@ export default function InvestorLayout({ children }: { children: React.ReactNode
 
   const firstName = (profile?.full_name || '').split(' ')[0];
 
-  const pageShell = (content: React.ReactNode) => (
-    <div className="relative min-h-screen bg-white font-sans">
-      {/* Top-right warm bloom — gold fading into cream */}
-      <div
-        className="pointer-events-none fixed right-0 top-0 z-0 h-[800px] w-[900px]"
-        style={{ background: 'radial-gradient(ellipse at 90% 10%, rgba(192,184,122,0.12) 0%, rgba(242,227,187,0.07) 35%, transparent 65%)' }}
-      />
-      {/* Bottom-left whisper — subtle warmth for balance */}
-      <div
-        className="pointer-events-none fixed bottom-0 left-0 z-0 h-[600px] w-[700px]"
-        style={{ background: 'radial-gradient(ellipse at 10% 85%, rgba(242,227,187,0.09) 0%, rgba(192,184,122,0.04) 40%, transparent 65%)' }}
-      />
-      {/* Mid-page accent — faint gold wash */}
-      <div
-        className="pointer-events-none fixed left-1/2 top-1/2 z-0 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/3"
-        style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(192,184,122,0.05) 0%, transparent 60%)' }}
-      />
-      {content}
-    </div>
-  );
-
   if (!ready) {
-    return pageShell(
+    return (
       <>
         <header className="sticky top-0 z-40 border-b border-stone-100 bg-transparent backdrop-blur-sm">
           <div className="mx-auto flex h-[60px] max-w-screen-2xl items-center justify-between px-5 md:px-8">
@@ -107,14 +88,14 @@ export default function InvestorLayout({ children }: { children: React.ReactNode
     );
   }
 
-  return pageShell(
+  return (
     <>
       <DashboardTopbar
         userName={firstName}
         userInitials={initials}
-        basePath="/investor"
-        navLinks={INVESTOR_NAV_LINKS}
-        portalLabel="Investor"
+        basePath="/admin"
+        navLinks={ADMIN_NAV_LINKS}
+        portalLabel="Admin"
       />
       <main className="relative mx-auto max-w-screen-2xl px-5 py-6 md:px-8 md:py-8">
         {children}

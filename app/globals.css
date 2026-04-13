@@ -12,6 +12,11 @@
   --fundex-green: #427A43;
   --fundex-gold: #C0B87A;
   --fundex-cream: #F2E3BB;
+  --fundex-orange: #F97316;
+  --fundex-orange-dark: #EA580C;
+  --fundex-orange-light: #FFF7ED;
+  --fundex-warm-bg: #F5F3EF;
+  --fundex-peach: #FDBA74;
 
   /* Semantic color tokens */
   --background: #ffffff;
@@ -43,7 +48,7 @@
   --accent-blue: #427A43;
   --accent-purple: #427A43;
 
-  --radius: 0.75rem;
+  --radius: 0px;
 }
 
 .dark {
@@ -96,6 +101,11 @@
   --color-fundex-green: var(--fundex-green);
   --color-fundex-gold: var(--fundex-gold);
   --color-fundex-cream: var(--fundex-cream);
+  --color-fundex-orange: var(--fundex-orange);
+  --color-fundex-orange-dark: var(--fundex-orange-dark);
+  --color-fundex-orange-light: var(--fundex-orange-light);
+  --color-fundex-warm-bg: var(--fundex-warm-bg);
+  --color-fundex-peach: var(--fundex-peach);
 
   /* Legacy aliases for existing components */
   --color-accent-emerald: var(--accent-emerald);
@@ -224,12 +234,12 @@
 
 /* ── Fundex Dashboard Design System ─────────────────────────────── */
 @layer components {
-  .fdx-card           { @apply relative overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm font-sans; }
+  .fdx-card           { @apply relative overflow-hidden  border border-stone-100 bg-white shadow-sm font-sans; }
   .fdx-card-glow      { @apply pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full blur-2xl; background: rgba(242,227,187,0.30); }
-  .fdx-title          { @apply text-base font-semibold text-stone-900; }
+  .fdx-title          { @apply text-base font-medium text-stone-900; }
   .fdx-label          { @apply text-sm font-normal text-stone-500; }
-  .fdx-value          { @apply text-2xl font-bold tabular-nums tracking-tight text-stone-900; }
-  .fdx-badge          { @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium; }
+  .fdx-value          { @apply text-2xl font-semibold tabular-nums tracking-tight text-stone-900; }
+  .fdx-badge          { @apply inline-flex items-center border px-2.5 py-0.5 text-xs font-medium; }
   .fdx-badge-active   { @apply border-emerald-200 bg-emerald-50 text-emerald-700; }
   .fdx-badge-pending  { @apply border-amber-200 bg-amber-50 text-amber-700; }
   .fdx-badge-info     { @apply border-stone-200 bg-stone-50 text-stone-600; }
@@ -237,11 +247,11 @@
   .fdx-badge-role     { @apply border-fundex-gold/30 bg-fundex-gold/10 text-fundex-forest; }
   .fdx-table-header   { @apply border-b border-stone-100 bg-transparent py-3 px-4 text-left text-xs font-medium uppercase tracking-wide text-stone-400; }
   .fdx-table-row      { @apply border-b border-stone-50 transition-colors hover:bg-stone-50/50; }
-  .fdx-input          { @apply w-full rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30; }
-  .fdx-btn-primary    { @apply inline-flex items-center justify-center rounded-xl bg-fundex-gold px-5 py-2.5 text-sm font-semibold text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90; }
-  .fdx-btn-secondary  { @apply inline-flex items-center justify-center rounded-xl border border-stone-200 bg-white px-5 py-2.5 text-sm font-normal text-stone-700 shadow-sm transition hover:bg-stone-50; }
-  .fdx-btn-danger     { @apply inline-flex items-center justify-center rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-red-700; }
-  .fdx-section-title  { @apply text-base font-semibold text-stone-900; }
+  .fdx-input          { @apply w-full  border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30; }
+  .fdx-btn-primary    { @apply inline-flex items-center justify-center  bg-fundex-gold px-5 py-2.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90; }
+  .fdx-btn-secondary  { @apply inline-flex items-center justify-center  border border-stone-200 bg-white px-5 py-2.5 text-sm font-normal text-stone-700 shadow-sm transition hover:bg-stone-50; }
+  .fdx-btn-danger     { @apply inline-flex items-center justify-center  bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-red-700; }
+  .fdx-section-title  { @apply text-base font-medium text-stone-900; }
   .fdx-page-glow-tr   { @apply pointer-events-none fixed right-0 top-0 z-0 h-[700px] w-[800px]; }
   .fdx-page-glow-bl   { @apply pointer-events-none fixed bottom-0 left-0 z-0 h-[500px] w-[600px]; }
 }

@@ -365,24 +365,24 @@ export default function DocumentsPage() {
 
   if (isLoading) {
     return (
-      <main className="px-6 py-6 md:px-8 md:py-8">
+      <div>
         <div className="mb-8">
           <Skeleton className="h-8 w-48 mb-2" />
           <Skeleton className="h-4 w-72" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-2xl" />
+            <Skeleton key={i} className="h-24 " />
           ))}
         </div>
-        <Skeleton className="h-11 w-full mb-6 rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-2xl" />
-      </main>
+        <Skeleton className="h-11 w-full mb-6 " />
+        <Skeleton className="h-64 w-full " />
+      </div>
     );
   }
 
   return (
-    <main className="px-6 py-6 md:px-8 md:py-8">
+    <div>
       <StaggerContainer>
         <StaggerItem>
           <PageHeader title="Documents" subtitle="Manage document library and distribution" />
@@ -393,26 +393,26 @@ export default function DocumentsPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8 mb-6">
             <div className="fdx-card p-5">
               <div className="fdx-card-glow" />
-              <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">Total Documents</p>
-              <p className="text-3xl font-display font-bold text-stone-900 mt-2">{totalDocuments}</p>
+              <p className="text-xs font-medium text-stone-500 uppercase tracking-wide">Total Documents</p>
+              <p className="text-3xl font-semibold text-stone-900 mt-2">{totalDocuments}</p>
             </div>
 
             <div className="fdx-card p-5">
               <div className="fdx-card-glow" />
-              <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">Deal Documents</p>
-              <p className="text-3xl font-display font-bold text-stone-900 mt-2">{dealDocuments}</p>
+              <p className="text-xs font-medium text-stone-500 uppercase tracking-wide">Deal Documents</p>
+              <p className="text-3xl font-semibold text-stone-900 mt-2">{dealDocuments}</p>
             </div>
 
             <div className="fdx-card p-5">
               <div className="fdx-card-glow" />
-              <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">Investor Documents</p>
-              <p className="text-3xl font-display font-bold text-stone-900 mt-2">{investorDocuments}</p>
+              <p className="text-xs font-medium text-stone-500 uppercase tracking-wide">Investor Documents</p>
+              <p className="text-3xl font-semibold text-stone-900 mt-2">{investorDocuments}</p>
             </div>
 
             <div className="fdx-card p-5">
               <div className="fdx-card-glow" />
-              <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">Reports</p>
-              <p className="text-3xl font-display font-bold text-stone-900 mt-2">{reports}</p>
+              <p className="text-xs font-medium text-stone-500 uppercase tracking-wide">Reports</p>
+              <p className="text-3xl font-semibold text-stone-900 mt-2">{reports}</p>
             </div>
           </div>
         </StaggerItem>
@@ -459,7 +459,7 @@ export default function DocumentsPage() {
                           onDragLeave={handleDragLeave}
                           onDragOver={handleDragOver}
                           onDrop={handleDrop}
-                          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                          className={`border-2 border-dashed  p-8 text-center cursor-pointer transition-colors ${
                             dragActive ? 'border-fundex-gold bg-fundex-gold/5' : 'border-stone-100'
                           }`}
                           onClick={() => fileInputRef.current?.click()}
@@ -618,7 +618,7 @@ export default function DocumentsPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-5">
                 {/* Category */}
                 <div>
-                  <h4 className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-3">Category</h4>
+                  <h4 className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-3">Category</h4>
                   <div className="space-y-2">
                     {['Deal Documents', 'Investor Documents', 'Reports', 'Legal Documents'].map((cat) => (
                       <div key={cat} className="flex items-center gap-2">
@@ -637,7 +637,7 @@ export default function DocumentsPage() {
 
                 {/* Status */}
                 <div>
-                  <h4 className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-3">Status</h4>
+                  <h4 className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-3">Status</h4>
                   <div className="space-y-2">
                     {['Draft', 'Published', 'Signed', 'Archived'].map((status) => (
                       <div key={status} className="flex items-center gap-2">
@@ -656,7 +656,7 @@ export default function DocumentsPage() {
 
                 {/* Type */}
                 <div>
-                  <h4 className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-3">Type</h4>
+                  <h4 className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-3">Type</h4>
                   <div className="space-y-2">
                     {['Offering', 'Agreement', 'Appraisal', 'Report'].map((type) => (
                       <div key={type} className="flex items-center gap-2">
@@ -707,7 +707,7 @@ export default function DocumentsPage() {
                 <tbody>
                   {filteredDocuments.map((doc) => (
                     <tr key={doc.id} className="fdx-table-row">
-                      <td className="px-4 py-3 text-sm font-medium text-stone-900">{doc.document_id}</td>
+                      <td className="px-4 py-3 text-sm font-normal text-stone-900">{doc.document_id}</td>
                       <td className="px-4 py-3 text-sm text-stone-900 max-w-xs truncate" title={doc.name}>
                         <div className="flex items-center gap-2">
                           <FileText className="size-4 text-stone-500" />
@@ -736,7 +736,7 @@ export default function DocumentsPage() {
                                 href={doc.file_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800"
+                                className="text-fundex-forest hover:text-fundex-green"
                                 title="View document"
                               >
                                 <Eye className="size-4" />
@@ -776,6 +776,6 @@ export default function DocumentsPage() {
           </div>
         </StaggerItem>
       </StaggerContainer>
-    </main>
+    </div>
   );
 }

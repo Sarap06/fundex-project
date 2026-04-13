@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   ChevronRight, 
   ChevronLeft, 
@@ -481,57 +482,51 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-background rounded-lg shadow-xl overflow-hidden flex flex-col" style={{ width: '100%', maxWidth: '880px', height: '85vh', maxHeight: '90vh', minHeight: '600px' }}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-white border border-stone-200 shadow-2xl overflow-hidden flex flex-col" style={{ width: '100%', maxWidth: '880px', height: '90vh', maxHeight: '95vh', minHeight: '600px' }}>
         {/* Header with Step Indicators - Sticky */}
-        <div className="sticky top-0 bg-background z-40 border-b border-border">
+        <div className="shrink-0 bg-white border-b border-stone-100">
           {/* Title and Close Button */}
-          <div className="px-6 py-4 flex justify-between items-center border-b border-border">
+          <div className="px-6 py-4 flex justify-between items-center border-b border-stone-100">
             <div>
-              <h2 className="text-2xl font-display font-bold text-foreground">{initialData ? 'Edit Deal' : 'Create New Deal'}</h2>
-              <p className="text-sm text-muted-foreground mt-1">{initialData ? 'Update the deal information' : 'Set up a new lending contract or investment opportunity'}</p>
+              <h2 className="text-2xl font-display font-normal text-stone-900">{initialData ? 'Edit Deal' : 'Create New Deal'}</h2>
+              <p className="text-sm text-stone-400 mt-1">{initialData ? 'Update the deal information' : 'Set up a new lending contract or investment opportunity'}</p>
             </div>
-            <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg transition">
-              <X size={24} className="text-muted-foreground" />
+            <button onClick={onClose} className="p-2 text-stone-400 hover:bg-stone-50 hover:text-stone-600 transition">
+              <X size={20} />
             </button>
           </div>
 
           {/* Step Indicators */}
-          <div className="px-6 py-8">
+          <div className="px-6 py-6">
             <div className="flex items-start justify-between gap-0">
               {STEPS.map((step, idx) => (
                 <div key={step.number} className="flex flex-col items-center relative" style={{ flex: 1 }}>
-                  {/* Top Row: Circles and Connecting Lines */}
-                  <div className="flex items-center justify-center w-full relative mb-4">
-                    {/* Connecting Line (appears before circle) */}
+                  <div className="flex items-center justify-center w-full relative mb-3">
                     {idx > 0 && (
                       <div
-                        className={`absolute right-1/2 h-1 transition-all`}
+                        className="absolute right-1/2 h-0.5 transition-all"
                         style={{
                           width: 'calc(100% - 24px)',
-                          backgroundColor: currentStep > step.number - 1 ? '#16B981' : '#D1D5DB',
+                          backgroundColor: currentStep > step.number - 1 ? '#C0B87A' : '#e7e5e4',
                         }}
                       />
                     )}
-
-                    {/* Step Circle */}
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition flex-shrink-0 relative z-10 ${
+                      className={`w-9 h-9 flex items-center justify-center text-sm font-medium transition flex-shrink-0 relative z-10 ${
                         currentStep > step.number
-                          ? 'bg-primary text-white'
+                          ? 'bg-fundex-gold text-fundex-forest'
                           : currentStep === step.number
-                          ? 'bg-primary text-white ring-4 ring-green-100'
-                          : 'bg-gray-300 text-muted-foreground'
+                          ? 'bg-fundex-gold text-fundex-forest ring-4 ring-fundex-cream'
+                          : 'bg-stone-200 text-stone-400'
                       }`}
                     >
-                      {currentStep > step.number ? <CheckCircle size={20} /> : step.number}
+                      {currentStep > step.number ? <CheckCircle size={16} /> : step.number}
                     </div>
                   </div>
-
-                  {/* Bottom Row: Label */}
-                  <p className={`text-xs font-semibold text-center leading-tight whitespace-normal px-1 ${
-                    currentStep >= step.number ? 'text-foreground' : 'text-muted-foreground'
+                  <p className={`text-xs font-normal text-center leading-tight whitespace-normal px-1 ${
+                    currentStep >= step.number ? 'text-stone-900' : 'text-stone-400'
                   }`}>
                     {step.label}
                   </p>
@@ -542,7 +537,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
         </div>
 
         {/* Form Content - Scrollable */}
-        <div className="p-6 overflow-y-auto flex-1 w-full">
+        <div className="flex-1 overflow-y-auto p-6">
           {/* Step 1: Basic Info */}
           {currentStep === 1 && (
             <div className="space-y-6">
@@ -702,7 +697,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
 
                         {/* Dropdown */}
                         {showInvestorDropdown && (
-                          <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                          <div className="absolute z-10 w-full mt-1 bg-background border border-border  shadow-lg max-h-64 overflow-y-auto">
                             {getFilteredInvestors().length === 0 ? (
                               <div className="p-4 text-center text-muted-foreground">
                                 {investorSearch ? 'No investors found' : 'No investors available'}
@@ -740,7 +735,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                                       {formData.selectedInvestors.some(
                                         sel => sel.id === investor.id && sel.source === investor.source
                                       ) && (
-                                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                                        <div className="w-5 h-5  bg-fundex-gold flex items-center justify-center flex-shrink-0">
                                           <CheckCircle size={16} className="text-white" />
                                         </div>
                                       )}
@@ -767,7 +762,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                                       type="button"
                                       size="sm"
                                       onClick={() => setShowInvestorDropdown(false)}
-                                      className="flex-1 bg-primary hover:bg-primary/90 text-white"
+                                      className="flex-1 bg-fundex-gold hover:bg-fundex-gold/90 text-fundex-forest"
                                     >
                                       Done ({formData.selectedInvestors.length})
                                     </Button>
@@ -785,7 +780,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                           {formData.selectedInvestors.map(selected => {
                             const investor = investors.find(inv => inv.id === selected.id && inv.source === selected.source);
                             return investor ? (
-                              <div key={`${selected.source}-${selected.id}`} className="bg-primary/10 text-primary px-3 py-2 rounded-full text-sm font-medium flex items-center gap-2">
+                              <div key={`${selected.source}-${selected.id}`} className="bg-fundex-gold/10 text-fundex-forest px-3 py-2  text-sm font-medium flex items-center gap-2">
                                 <span>{investor.full_name}</span>
                                 <button
                                   onClick={() => {
@@ -1011,7 +1006,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                     onDragLeave={handleDragLeave}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={handleDrop}
-                    className={`border-2 border-dashed rounded-lg p-8 text-center transition ${
+                    className={`border-2 border-dashed  p-8 text-center transition ${
                       isDragActive ? 'border-primary bg-fundex-cream/30' : 'border-border'
                     }`}
                   >
@@ -1041,7 +1036,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                     <div className="space-y-3">
                       <p className="text-sm font-medium text-foreground">Uploaded Files ({formData.uploadedFiles.length})</p>
                       {formData.uploadedFiles.map((file, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <div key={idx} className="flex items-center justify-between p-3 bg-muted ">
                           <div className="flex items-center gap-3 flex-1">
                             <FileText size={20} className="text-muted-foreground" />
                             <div className="flex-1 min-w-0">
@@ -1100,7 +1095,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                       <Switch
                         checked={formData.enableBroadcastChannel}
                         onCheckedChange={() => handleCheckboxChange('enableBroadcastChannel')}
-                        className="data-[state=checked]:bg-primary"
+                        className="data-[state=checked]:bg-fundex-gold"
                       />
                     </div>
 
@@ -1114,7 +1109,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                       <Switch
                         checked={formData.enableInvestorInbox}
                         onCheckedChange={() => handleCheckboxChange('enableInvestorInbox')}
-                        className="data-[state=checked]:bg-primary"
+                        className="data-[state=checked]:bg-fundex-gold"
                       />
                     </div>
 
@@ -1128,7 +1123,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                       <Switch
                         checked={formData.requireInvestorAcknowledgment}
                         onCheckedChange={() => handleCheckboxChange('requireInvestorAcknowledgment')}
-                        className="data-[state=checked]:bg-primary"
+                        className="data-[state=checked]:bg-fundex-gold"
                       />
                     </div>
                   </div>
@@ -1143,7 +1138,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                       <Switch
                         checked={formData.sendAutomatedMessage}
                         onCheckedChange={() => handleCheckboxChange('sendAutomatedMessage')}
-                        className="data-[state=checked]:bg-primary"
+                        className="data-[state=checked]:bg-fundex-gold"
                       />
                     </div>
                   </div>
@@ -1239,7 +1234,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
 
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
-                    <div className="bg-muted rounded-lg p-4">
+                    <div className="bg-muted  p-4">
                       <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Basic Information</h4>
                       <div className="space-y-2 text-sm">
                         <p><span className="text-muted-foreground">Name:</span> <span className="font-medium">{formData.name}</span></p>
@@ -1249,7 +1244,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                       </div>
                     </div>
 
-                    <div className="bg-muted rounded-lg p-4">
+                    <div className="bg-muted  p-4">
                       <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Financial Terms</h4>
                       <div className="space-y-2 text-sm">
                         <p><span className="text-muted-foreground">Target Raise:</span> <span className="font-medium">${parseFloat(formData.targetAmount || '0').toLocaleString()}</span></p>
@@ -1261,7 +1256,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                   </div>
 
                   <div className="grid grid-cols-2 gap-6">
-                    <div className="bg-muted rounded-lg p-4">
+                    <div className="bg-muted  p-4">
                       <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Collateral</h4>
                       <div className="space-y-2 text-sm">
                         <p><span className="text-muted-foreground">Type:</span> <span className="font-medium">{formData.collateralType}</span></p>
@@ -1271,7 +1266,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                       </div>
                     </div>
 
-                    <div className="bg-muted rounded-lg p-4">
+                    <div className="bg-muted  p-4">
                       <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Documents & Timeline</h4>
                       <div className="space-y-2 text-sm">
                         <p><span className="text-muted-foreground">Uploaded Files:</span> <span className="font-medium">{formData.uploadedFiles.length}</span></p>
@@ -1282,7 +1277,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                     </div>
                   </div>
 
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="bg-blue-50 border border-blue-200  p-4">
                     <p className="text-sm text-blue-900">
                       <strong>Ready to create?</strong> Click "Create Deal" below to finalize this deal and make it visible to investors.
                     </p>
@@ -1293,8 +1288,8 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
           )}
         </div>
 
-        {/* Footer / Navigation - Sticky at Bottom */}
-        <div className="sticky bottom-0 border-t border-border px-6 py-4 flex justify-between gap-3 bg-background">
+        {/* Footer — pinned to bottom */}
+        <div className="shrink-0 border-t border-stone-100 bg-white px-6 py-4 flex justify-between gap-3">
           <Button
             type="button"
             variant="outline"
@@ -1311,7 +1306,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                 type="button"
                 onClick={() => setCurrentStep(currentStep + 1)}
                 disabled={!canProceedToNext()}
-                className="gap-2 bg-primary hover:bg-primary/90 disabled:opacity-50"
+                className="gap-2 bg-fundex-gold text-fundex-forest hover:bg-fundex-gold/90 disabled:opacity-50"
               >
                 Next
                 <ChevronRight size={18} />
@@ -1322,7 +1317,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="gap-2 bg-primary hover:bg-primary/90 disabled:opacity-50"
+                className="gap-2 bg-fundex-gold text-fundex-forest hover:bg-fundex-gold/90 disabled:opacity-50"
               >
                 {loading ? 'Creating...' : 'Create Deal'}
               </Button>
@@ -1330,6 +1325,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

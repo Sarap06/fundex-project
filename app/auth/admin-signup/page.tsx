@@ -52,7 +52,7 @@ export default function AdminSignUp() {
       <div className="relative min-h-screen bg-white font-sans flex items-center justify-center p-4">
         <div className="pointer-events-none fixed right-0 top-0 z-0 h-[700px] w-[800px]" style={{ background: 'radial-gradient(ellipse at 85% 15%, rgba(192,184,122,0.13) 0%, rgba(242,227,187,0.08) 40%, transparent 70%)' }} />
         <div className="pointer-events-none fixed bottom-0 left-0 z-0 h-[500px] w-[600px]" style={{ background: 'radial-gradient(ellipse at 15% 80%, rgba(192,184,122,0.06) 0%, transparent 60%)' }} />
-        <FadeIn className="relative z-10 rounded-2xl border border-stone-100 bg-white shadow-sm p-8 max-w-md w-full text-center">
+        <FadeIn className="relative z-10  border border-stone-100 bg-white shadow-sm p-8 max-w-md w-full text-center">
           <div className="flex justify-center mb-4"><CheckCircle className="text-fundex-forest" size={56} /></div>
           <h2 className="text-2xl font-display font-semibold text-fundex-forest mb-4">Signup Successful!</h2>
           <p className="text-stone-900 mb-4">Your account has been created.</p>
@@ -71,7 +71,7 @@ export default function AdminSignUp() {
     <div className="relative min-h-screen bg-white font-sans flex items-center justify-center p-4">
       <div className="pointer-events-none fixed right-0 top-0 z-0 h-[700px] w-[800px]" style={{ background: 'radial-gradient(ellipse at 85% 15%, rgba(192,184,122,0.13) 0%, rgba(242,227,187,0.08) 40%, transparent 70%)' }} />
       <div className="pointer-events-none fixed bottom-0 left-0 z-0 h-[500px] w-[600px]" style={{ background: 'radial-gradient(ellipse at 15% 80%, rgba(192,184,122,0.06) 0%, transparent 60%)' }} />
-      <FadeIn className="relative z-10 rounded-2xl border border-stone-100 bg-white shadow-sm p-8 max-w-md w-full">
+      <FadeIn className="relative z-10  border border-stone-100 bg-white shadow-sm p-8 max-w-md w-full">
         <h1 className="text-3xl font-display font-semibold text-stone-900 mb-2">Admin Signup</h1>
         <p className="text-stone-500 mb-6">Create your Fundex admin account</p>
 
@@ -85,7 +85,7 @@ export default function AdminSignUp() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
+              className="w-full px-4 py-2 border border-stone-200  focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
               placeholder="admin@company.com"
             />
           </div>
@@ -99,7 +99,7 @@ export default function AdminSignUp() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
+              className="w-full px-4 py-2 border border-stone-200  focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
               placeholder="••••••••"
             />
           </div>
@@ -113,7 +113,7 @@ export default function AdminSignUp() {
               value={accessCode}
               onChange={(e) => setAccessCode(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
+              className="w-full px-4 py-2 border border-stone-200  focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
               placeholder="Enter access code"
             />
           </div>
@@ -127,7 +127,7 @@ export default function AdminSignUp() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-fundex-forest text-white py-2 rounded-xl font-semibold hover:bg-fundex-forest/90 disabled:bg-stone-300 disabled:text-stone-500 transition"
+            className="w-full bg-fundex-forest text-white py-2  font-semibold hover:bg-fundex-forest/90 disabled:bg-stone-300 disabled:text-stone-500 transition"
           >
             {loading ? 'Creating account...' : 'Sign Up'}
           </button>

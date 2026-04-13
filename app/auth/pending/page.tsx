@@ -28,10 +28,10 @@ export default function Pending() {
       <div className="pointer-events-none fixed right-0 top-0 z-0 h-[700px] w-[800px]" style={{ background: 'radial-gradient(ellipse at 85% 15%, rgba(192,184,122,0.13) 0%, rgba(242,227,187,0.08) 40%, transparent 70%)' }} />
       <div className="pointer-events-none fixed bottom-0 left-0 z-0 h-[500px] w-[600px]" style={{ background: 'radial-gradient(ellipse at 15% 80%, rgba(192,184,122,0.06) 0%, transparent 60%)' }} />
       <div className="relative z-10 w-full max-w-md">
-        <FadeIn className="rounded-2xl border border-stone-100 bg-white shadow-sm p-8">
+        <FadeIn className=" border border-stone-100 bg-white shadow-sm p-8">
           {/* Icon */}
           <div className="flex justify-center mb-6">
-            <div className="p-4 bg-fundex-gold/10 rounded-full">
+            <div className="p-4 bg-fundex-gold/10 ">
               <Clock className="w-8 h-8 text-fundex-forest" />
             </div>
           </div>
@@ -47,7 +47,7 @@ export default function Pending() {
           </p>
 
           {/* Info Box */}
-          <div className="bg-stone-50 border border-stone-200 rounded-lg p-4 mb-6">
+          <div className="bg-stone-50 border border-stone-200  p-4 mb-6">
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-stone-600 flex-shrink-0 mt-0.5" />
               <div>
@@ -63,7 +63,7 @@ export default function Pending() {
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="bg-red-50 border border-red-200  p-4 mb-6">
               <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
@@ -72,7 +72,7 @@ export default function Pending() {
           <button
             onClick={handleLogout}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-fundex-forest to-fundex-green hover:from-fundex-green hover:to-fundex-forest disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200"
+            className="w-full bg-gradient-to-r from-fundex-forest to-fundex-green hover:from-fundex-green hover:to-fundex-forest disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2 px-4  transition-all duration-200"
           >
             {loading ? 'Logging out...' : 'Logout'}
           </button>

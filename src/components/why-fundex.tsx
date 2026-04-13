@@ -305,7 +305,7 @@ function StickyContext({ progress }: { progress: import("framer-motion").MotionV
       {/* CTA */}
       <a
         href="#book-demo-section"
-        className="inline-flex items-center gap-2.5 mt-10 px-8 py-3.5 bg-foreground text-background font-sans text-[15px] font-[500] no-underline rounded-full transition-all hover:opacity-90 hover:-translate-y-0.5 self-start"
+        className="inline-flex items-center gap-2.5 mt-10 px-8 py-3.5 bg-foreground text-background font-sans text-[15px] font-[500] no-underline  transition-all hover:opacity-90 hover:-translate-y-0.5 self-start"
       >
         Book a Demo
         <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />

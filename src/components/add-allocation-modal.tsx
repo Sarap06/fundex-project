@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { X, Search, Upload, FileText, Trash2 } from 'lucide-react';
 
@@ -365,15 +366,15 @@ export function AddAllocationModal({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-background rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white border border-stone-200 shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-background border-b border-border px-6 py-4 flex justify-between items-center">
-          <h2 className="text-2xl font-display font-bold text-foreground">New Allocation</h2>
+          <h2 className="text-2xl font-display font-normal text-stone-900">New Allocation</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-muted rounded-lg transition"
+            className="p-1 hover:bg-muted  transition"
           >
             <X size={24} className="text-muted-foreground" />
           </button>
@@ -384,14 +385,14 @@ export function AddAllocationModal({
             {/* Left Section - Form Fields */}
             <div className="lg:col-span-2 space-y-8">
               {/* Allocation Basics */}
-              <div className="bg-muted rounded-lg p-6">
-                <h3 className="text-lg font-display font-bold text-foreground mb-4">
+              <div className="bg-muted  p-6">
+                <h3 className="text-lg font-display font-normal text-stone-900 mb-4">
                   Allocation Basics
                 </h3>
                 <div className="space-y-4">
                   {/* Investor */}
                   <div className="relative">
-                    <label className="block text-sm font-semibold text-foreground mb-1">
+                    <label className="block text-sm font-normal text-stone-700 mb-1">
                       Investor <span className="text-red-600">*</span>
                     </label>
                     <div className="relative">
@@ -404,12 +405,12 @@ export function AddAllocationModal({
                           setShowInvestorDropdown(true);
                           setShowDealDropdown(false);
                         }}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
                     </div>
                     {showInvestorDropdown && filteredInvestors.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border  shadow-lg z-20 max-h-48 overflow-y-auto">
                         {filteredInvestors.map((inv) => (
                           <button
                             key={inv.id}
@@ -427,7 +428,7 @@ export function AddAllocationModal({
 
                   {/* Deal */}
                   <div className="relative">
-                    <label className="block text-sm font-semibold text-foreground mb-1">
+                    <label className="block text-sm font-normal text-stone-700 mb-1">
                       Deal <span className="text-red-600">*</span>
                     </label>
                     <div className="relative">
@@ -440,20 +441,20 @@ export function AddAllocationModal({
                           setShowDealDropdown(true);
                           setShowInvestorDropdown(false);
                         }}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
                     </div>
                     {selectedDeal && (
-                      <div className="mt-2 p-3 bg-cyan-50 border border-cyan-200 rounded-lg">
-                        <div className="font-semibold text-foreground">{selectedDeal.name}</div>
+                      <div className="mt-2 p-3 bg-cyan-50 border border-cyan-200 ">
+                        <div className="font-medium text-stone-900">{selectedDeal.name}</div>
                         <div className="text-sm text-muted-foreground">
                           ${(selectedDeal.raised_amount / 1000000).toFixed(2)}M raised of ${(selectedDeal.target_amount / 1000000).toFixed(2)}M
                         </div>
                       </div>
                     )}
                     {showDealDropdown && filteredDeals.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-30 max-h-48 overflow-y-auto">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border  shadow-lg z-30 max-h-48 overflow-y-auto">
                         {filteredDeals.map((deal) => (
                           <button
                             key={deal.id}
@@ -471,7 +472,7 @@ export function AddAllocationModal({
 
                   {/* Allocation Amount */}
                   <div>
-                    <label className="block text-sm font-semibold text-foreground mb-1">
+                    <label className="block text-sm font-normal text-stone-700 mb-1">
                       Allocation Amount <span className="text-red-600">*</span>
                     </label>
                     <div className="flex items-center">
@@ -482,11 +483,11 @@ export function AddAllocationModal({
                         value={formData.allocation_amount || ''}
                         onChange={handleInputChange}
                         placeholder="8000000"
-                        className="ml-2 flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="ml-2 flex-1 px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <div className="mt-2 text-sm">
-                      <div className="text-cyan-600 font-semibold">{calculateDealPercentage()} of deal</div>
+                      <div className="text-stone-900 font-medium">{calculateDealPercentage()} of deal</div>
                       <div className="text-muted-foreground">
                         ${selectedDeal ? ((selectedDeal.target_amount - (formData.allocation_amount || 0)) / 1000000).toFixed(2) : '0.00'} remaining
                       </div>
@@ -496,7 +497,7 @@ export function AddAllocationModal({
                   {/* Commit Date and Expected Funding Date */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-foreground mb-1">
+                      <label className="block text-sm font-normal text-stone-700 mb-1">
                         Commit Date <span className="text-red-600">*</span>
                       </label>
                       <input
@@ -504,11 +505,11 @@ export function AddAllocationModal({
                         name="commit_date"
                         value={formData.commit_date}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-foreground mb-1">
+                      <label className="block text-sm font-normal text-stone-700 mb-1">
                         Expected Funding Date <span className="text-red-600">*</span>
                       </label>
                       <input
@@ -516,7 +517,7 @@ export function AddAllocationModal({
                         name="expected_funding_date"
                         value={formData.expected_funding_date}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   </div>
@@ -524,13 +525,13 @@ export function AddAllocationModal({
               </div>
 
               {/* Terms */}
-              <div className="bg-muted rounded-lg p-6">
-                <h3 className="text-lg font-display font-bold text-foreground mb-4">Terms</h3>
+              <div className="bg-muted  p-6">
+                <h3 className="text-lg font-display font-normal text-stone-900 mb-4">Terms</h3>
                 <div className="space-y-4">
                   {/* Annual Rate and Term Length */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-foreground mb-1">
+                      <label className="block text-sm font-normal text-stone-700 mb-1">
                         Annual Rate (%) <span className="text-red-600">*</span>
                       </label>
                       <input
@@ -540,11 +541,11 @@ export function AddAllocationModal({
                         value={formData.annual_rate || ''}
                         onChange={handleInputChange}
                         placeholder="12.5"
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-foreground mb-1">
+                      <label className="block text-sm font-normal text-stone-700 mb-1">
                         Term Length <span className="text-red-600">*</span>
                       </label>
                       <div className="flex gap-2">
@@ -554,12 +555,12 @@ export function AddAllocationModal({
                           value={formData.term_length || ''}
                           onChange={handleInputChange}
                           placeholder="12"
-                          className="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <select
                           value="months"
                           disabled
-                          className="px-4 py-2 border border-border rounded-lg bg-muted"
+                          className="px-4 py-2 border border-border  bg-muted"
                         >
                           <option>months</option>
                         </select>
@@ -570,14 +571,14 @@ export function AddAllocationModal({
                   {/* Payment Frequency and Payment Start Date */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-foreground mb-1">
+                      <label className="block text-sm font-normal text-stone-700 mb-1">
                         Payment Frequency <span className="text-red-600">*</span>
                       </label>
                       <select
                         name="payment_frequency"
                         value={formData.payment_frequency}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="Monthly">Monthly</option>
                         <option value="Quarterly">Quarterly</option>
@@ -586,7 +587,7 @@ export function AddAllocationModal({
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-foreground mb-1">
+                      <label className="block text-sm font-normal text-stone-700 mb-1">
                         Payment Start Date <span className="text-red-600">*</span>
                       </label>
                       <input
@@ -594,7 +595,7 @@ export function AddAllocationModal({
                         name="payment_start_date"
                         value={formData.payment_start_date}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
                         First payout cycle begins from this date
@@ -605,19 +606,19 @@ export function AddAllocationModal({
               </div>
 
               {/* Internal Details */}
-              <div className="bg-muted rounded-lg p-6">
-                <h3 className="text-lg font-display font-bold text-foreground mb-4">Internal Details</h3>
+              <div className="bg-muted  p-6">
+                <h3 className="text-lg font-display font-normal text-stone-900 mb-4">Internal Details</h3>
                 <div className="space-y-4">
                   {/* Funding Status */}
                   <div>
-                    <label className="block text-sm font-semibold text-foreground mb-1">
+                    <label className="block text-sm font-normal text-stone-700 mb-1">
                       Funding Status <span className="text-red-600">*</span>
                     </label>
                     <select
                       name="funding_status"
                       value={formData.funding_status}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="Funded">Funded</option>
                       <option value="Pending">Pending</option>
@@ -627,19 +628,19 @@ export function AddAllocationModal({
 
                   {/* Sponsor */}
                   <div>
-                    <label className="block text-sm font-semibold text-foreground mb-1">
+                    <label className="block text-sm font-normal text-stone-700 mb-1">
                       Sponsor (optional)
                     </label>
                     <input
                       type="text"
                       placeholder="Search sponsors..."
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
                   {/* Notes */}
                   <div>
-                    <label className="block text-sm font-semibold text-foreground mb-1">
+                    <label className="block text-sm font-normal text-stone-700 mb-1">
                       Notes
                     </label>
                     <textarea
@@ -648,13 +649,13 @@ export function AddAllocationModal({
                       onChange={handleInputChange}
                       placeholder="Add internal notes..."
                       rows={4}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
                   {/* Attach Documents */}
                   <div>
-                    <label className="block text-sm font-semibold text-foreground mb-1">
+                    <label className="block text-sm font-normal text-stone-700 mb-1">
                       Attach Documents
                     </label>
                     <div
@@ -662,7 +663,7 @@ export function AddAllocationModal({
                       onDragLeave={handleDragLeave}
                       onDragOver={handleDragOver}
                       onDrop={handleDrop}
-                      className={`border-2 border-dashed rounded-lg p-6 text-center transition cursor-pointer ${
+                      className={`border-2 border-dashed  p-6 text-center transition cursor-pointer ${
                         isDragActive
                           ? 'border-cyan-600 bg-cyan-50'
                           : 'border-border hover:border-gray-400'
@@ -691,7 +692,7 @@ export function AddAllocationModal({
                         {uploadedFiles.map((fileData, index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between p-3 bg-muted rounded-lg border border-border"
+                            className="flex items-center justify-between p-3 bg-muted  border border-border"
                           >
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                               <FileText size={18} className="text-muted-foreground flex-shrink-0" />
@@ -722,15 +723,15 @@ export function AddAllocationModal({
 
             {/* Right Section - Allocation Summary */}
             <div className="lg:col-span-1">
-              <div className="bg-background border-2 border-border rounded-lg p-6 sticky top-20">
-                <h3 className="text-lg font-display font-bold text-foreground mb-6">Allocation Summary</h3>
+              <div className="bg-background border-2 border-border  p-6 sticky top-20">
+                <h3 className="text-lg font-display font-normal text-stone-900 mb-6">Allocation Summary</h3>
 
                 {/* Allocation Amount */}
                 <div className="mb-6">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase">
+                  <p className="text-xs font-medium text-stone-400 uppercase">
                     Allocation Amount
                   </p>
-                  <p className="text-3xl font-display font-bold text-foreground mt-2">
+                  <p className="text-3xl font-display font-normal text-stone-900 mt-2">
                     ${(formData.allocation_amount / 1000000).toFixed(2)}M
                   </p>
                 </div>
@@ -739,7 +740,7 @@ export function AddAllocationModal({
                 <div className="mb-6 pb-6 border-b border-border">
                   <p className="text-xs text-muted-foreground mb-1">% of Deal</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl font-display font-bold text-cyan-600">
+                    <span className="text-2xl font-display font-normal text-stone-900">
                       {calculateDealPercentage()}
                     </span>
                     {selectedDeal && (
@@ -752,23 +753,23 @@ export function AddAllocationModal({
 
                 {/* Monthly Interest */}
                 <div className="mb-6 pb-6 border-b border-border">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase">
+                  <p className="text-xs font-medium text-stone-400 uppercase">
                     Monthly Interest (Estimated)
                   </p>
-                  <p className="text-2xl font-display font-bold text-purple-600 mt-2">
+                  <p className="text-2xl font-display font-normal text-stone-900 mt-2">
                     ${calculateMonthlyInterest()}
                   </p>
                 </div>
 
                 {/* Status */}
                 <div className="mb-6">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">
+                  <p className="text-xs font-medium text-stone-400 uppercase mb-2">
                     Status
                   </p>
                   <span
-                    className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                    className={`inline-block px-3 py-1  text-xs font-semibold ${
                       formData.funding_status === 'Funded'
-                        ? 'bg-primary/10 text-primary'
+                        ? 'bg-fundex-gold/10 text-fundex-forest'
                         : formData.funding_status === 'Review'
                         ? 'bg-blue-100 text-blue-800'
                         : 'bg-amber-100 text-amber-800'
@@ -779,7 +780,7 @@ export function AddAllocationModal({
                 </div>
 
                 {/* Info Box */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 mb-6">
+                <div className="bg-blue-50 border border-blue-200  p-3 text-xs text-blue-800 mb-6">
                   <p>
                     <strong>Note:</strong> Values update in real-time as you fill in the form.
                     Review the summary before creating the allocation.
@@ -791,14 +792,14 @@ export function AddAllocationModal({
                   <button
                     type="submit"
                     disabled={loading || !selectedInvestor || !selectedDeal}
-                    className="w-full bg-primary text-white py-2 rounded-lg font-semibold hover:bg-primary/90 transition disabled:bg-muted-foreground disabled:cursor-not-allowed"
+                    className="w-full bg-fundex-gold text-fundex-forest py-2 font-medium hover:bg-fundex-gold/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Creating...' : 'Create Allocation'}
                   </button>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="w-full bg-muted text-foreground py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
+                    className="w-full bg-stone-100 text-stone-700 py-2 font-medium hover:bg-stone-200 transition"
                   >
                     Cancel
                   </button>
@@ -808,6 +809,7 @@ export function AddAllocationModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

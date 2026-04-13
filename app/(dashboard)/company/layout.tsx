@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { CompanyTopbar } from '@/components/company/topbar';
+import { DashboardTopbar } from '@/components/dashboard-topbar';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/lib/types';
 
@@ -42,20 +42,28 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
   // Shared page shell — white bg + warm gradient glow
   const pageShell = (content: React.ReactNode) => (
     <div className="relative min-h-screen bg-white font-sans">
-      {/* Warm radial glow — top-right area like reference */}
+      {/* Top-right warm bloom — gold fading into cream */}
       <div
-        className="pointer-events-none fixed right-0 top-0 z-0 h-[700px] w-[800px]"
+        className="pointer-events-none fixed right-0 top-0 z-0 h-[800px] w-[900px]"
         style={{
           background:
-            'radial-gradient(ellipse at 85% 15%, rgba(192,184,122,0.13) 0%, rgba(242,227,187,0.08) 40%, transparent 70%)',
+            'radial-gradient(ellipse at 90% 10%, rgba(192,184,122,0.12) 0%, rgba(242,227,187,0.07) 35%, transparent 65%)',
         }}
       />
-      {/* Secondary subtle glow — left side for balance */}
+      {/* Bottom-left whisper — subtle warmth for balance */}
       <div
-        className="pointer-events-none fixed bottom-0 left-0 z-0 h-[500px] w-[600px]"
+        className="pointer-events-none fixed bottom-0 left-0 z-0 h-[600px] w-[700px]"
         style={{
           background:
-            'radial-gradient(ellipse at 15% 80%, rgba(192,184,122,0.06) 0%, transparent 60%)',
+            'radial-gradient(ellipse at 10% 85%, rgba(242,227,187,0.09) 0%, rgba(192,184,122,0.04) 40%, transparent 65%)',
+        }}
+      />
+      {/* Mid-page accent — very faint gold wash behind chart area */}
+      <div
+        className="pointer-events-none fixed left-1/2 top-1/2 z-0 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/3"
+        style={{
+          background:
+            'radial-gradient(ellipse at 50% 50%, rgba(192,184,122,0.05) 0%, transparent 60%)',
         }}
       />
       {content}
@@ -69,7 +77,7 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
         <header className="sticky top-0 z-40 border-b border-stone-100 bg-transparent backdrop-blur-sm">
           <div className="mx-auto flex h-[60px] max-w-screen-2xl items-center justify-between px-5 md:px-8">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-fundex-gold font-display text-sm font-bold text-fundex-forest">
+              <div className="flex h-9 w-9 items-center justify-center  bg-fundex-gold font-display text-sm font-bold text-fundex-forest">
                 F
               </div>
               <Skeleton className="hidden h-5 w-16 sm:block" />
@@ -80,17 +88,17 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
               ))}
             </div>
             <div className="flex items-center gap-3">
-              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-8 w-8 " />
               <Skeleton className="hidden h-4 w-16 md:block" />
             </div>
           </div>
         </header>
-        <main className="relative z-10 mx-auto max-w-screen-2xl px-5 py-6 md:px-8 md:py-8">
+        <main className="relative mx-auto max-w-screen-2xl px-5 py-6 md:px-8 md:py-8">
           <Skeleton className="h-10 w-72" />
           <Skeleton className="mt-2 h-4 w-56" />
           <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="rounded-2xl border border-stone-100 bg-white/80 p-6">
+              <div key={i} className=" border border-stone-100 bg-white/80 p-6">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="mt-3 h-9 w-32" />
               </div>
@@ -103,8 +111,19 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
 
   return pageShell(
     <>
-      <CompanyTopbar userName={firstName} userInitials={initials} />
-      <main className="relative z-10 mx-auto max-w-screen-2xl px-5 py-6 md:px-8 md:py-8">
+      <DashboardTopbar
+        userName={firstName}
+        userInitials={initials}
+        basePath="/company"
+        navLinks={[
+          { label: 'Dashboard', href: '/company' },
+          { label: 'Deals', href: '/company/deals' },
+          { label: 'Investors', href: '/company/investors' },
+          { label: 'Documents', href: '/company/documents' },
+          { label: 'Broadcast', href: '/company/broadcast' },
+        ]}
+      />
+      <main className="relative mx-auto max-w-screen-2xl px-5 py-6 md:px-8 md:py-8">
         {children}
       </main>
     </>

@@ -559,7 +559,7 @@ export default function DealsPage() {
 
   return (
     <>
-      <main className="px-6 py-6 md:px-8 md:py-8">
+      <div>
       <PageHeader title="Deals" subtitle="Create and manage investment deals" />
 
       <StaggerContainer className="mt-6">
@@ -802,24 +802,24 @@ export default function DealsPage() {
           <table className="w-full">
             <thead>
               <tr className="fdx-table-header">
-                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Deal ID</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Name</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Location</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Type</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Target / Raised</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Progress</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Rate</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Investors</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Close Date</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-stone-500 uppercase">Milestone</th>
-                <th className="px-6 py-4 text-center text-xs font-semibold text-stone-500 uppercase">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-stone-500 uppercase">Deal ID</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-stone-500 uppercase">Name</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-stone-500 uppercase">Location</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-stone-500 uppercase">Type</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-stone-500 uppercase">Status</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-stone-500 uppercase">Target / Raised</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-stone-500 uppercase">Progress</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-stone-500 uppercase">Rate</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-stone-500 uppercase">Investors</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-stone-500 uppercase">Close Date</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-stone-500 uppercase">Milestone</th>
+                <th className="px-6 py-4 text-center text-xs font-medium text-stone-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredDeals.map((deal) => (
                 <tr key={deal.id} className="fdx-table-row">
-                  <td className="px-6 py-4 text-sm font-medium text-stone-900">{deal.deal_id}</td>
+                  <td className="px-6 py-4 text-sm font-normal text-stone-900">{deal.deal_id}</td>
                   <td className="px-6 py-4 text-sm text-stone-900">{deal.name}</td>
                   <td className="px-6 py-4 text-sm text-stone-500">{deal.location}</td>
                   <td className="px-6 py-4 text-sm text-stone-500">{deal.type}</td>
@@ -831,13 +831,13 @@ export default function DealsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-16 bg-stone-100 rounded-full h-2 overflow-hidden">
+                      <div className="w-16 bg-stone-100 h-2 overflow-hidden">
                         <div
-                          className="bg-fundex-gold h-2 rounded-full"
+                          className="bg-fundex-gold h-2"
                           style={{ width: `${Math.min(100, deal.progress)}%` }}
                         />
                       </div>
-                      <span className="text-sm font-medium text-stone-500">{deal.progress}%</span>
+                      <span className="text-sm font-normal text-stone-500">{deal.progress}%</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-stone-500">{deal.interest_rate}%</td>
@@ -857,14 +857,14 @@ export default function DealsPage() {
                           setEditingDeal(deal);
                           setIsDrawerOpen(true);
                         }}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-fundex-forest hover:text-fundex-green"
                         title="Edit deal"
                       >
                         <Edit className="size-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteDeal(deal.id)}
-                        className="fdx-btn-danger inline-flex p-1 rounded"
+                        className="fdx-btn-danger inline-flex p-1"
                         title="Delete deal"
                       >
                         <Trash2 className="size-4" />
@@ -886,7 +886,7 @@ export default function DealsPage() {
       </StaggerItem>
 
       </StaggerContainer>
-      </main>
+      </div>
     </>
   );
 }

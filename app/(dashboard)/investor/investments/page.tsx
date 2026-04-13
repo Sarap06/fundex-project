@@ -23,8 +23,8 @@ type SummaryCardProps = {
 
 function SummaryCard({ icon, title, value, sublabel }: SummaryCardProps) {
   return (
-    <div className="flex h-full min-w-0 flex-col rounded-xl border border-stone-100 bg-white p-5 shadow-sm">
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest">
+    <div className="flex h-full min-w-0 flex-col  border border-stone-100 bg-white p-5 shadow-sm">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center  bg-fundex-gold/10 text-fundex-forest">
         {icon}
       </div>
       <p className="text-sm font-medium text-stone-500">{title}</p>
@@ -45,9 +45,9 @@ type DetailCardProps = {
 function DetailCard({ title, children, className }: DetailCardProps) {
   return (
     <div
-      className={`rounded-xl border border-stone-100 bg-white p-5 shadow-sm md:p-6 ${className ?? ""}`}
+      className={` border border-stone-100 bg-white p-5 shadow-sm md:p-6 ${className ?? ""}`}
     >
-      <h3 className="text-sm font-semibold text-stone-900">{title}</h3>
+      <h3 className="text-sm font-medium text-stone-900">{title}</h3>
       <div className="mt-4">{children}</div>
     </div>
   );
@@ -61,7 +61,7 @@ type MetricMiniCardProps = {
 
 function MetricMiniCard({ label, value, subtext }: MetricMiniCardProps) {
   return (
-    <div className="rounded-xl border border-stone-100 bg-white/90 p-4 shadow-sm">
+    <div className=" border border-stone-100 bg-white/90 p-4 shadow-sm">
       <p className="text-xs font-medium text-stone-500">{label}</p>
       <p className="mt-2 text-lg font-semibold tabular-nums text-stone-900 md:text-xl">{value}</p>
       <p className="mt-1 text-xs text-stone-500">{subtext}</p>
@@ -79,17 +79,17 @@ type PaymentScheduleItemProps = {
 
 function PaymentScheduleItem({ icon, title, date, amount, status }: PaymentScheduleItemProps) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-stone-100 bg-fundex-gold/5 px-4 py-3 shadow-sm">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest">
+    <div className="flex items-center gap-3  border border-stone-100 bg-fundex-gold/5 px-4 py-3 shadow-sm">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center  bg-fundex-gold/10 text-fundex-forest">
         {icon}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-stone-900">{title}</p>
+        <p className="text-sm font-medium text-stone-900">{title}</p>
         <p className="text-xs text-stone-500">{date}</p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
         <span className="text-sm font-semibold tabular-nums text-stone-900">{amount}</span>
-        <span className="inline-flex rounded-full bg-fundex-gold/10 px-2.5 py-0.5 text-xs font-semibold text-fundex-forest">
+        <span className="inline-flex  bg-fundex-gold/10 px-2.5 py-0.5 text-xs font-medium text-fundex-forest">
           {status}
         </span>
       </div>
@@ -145,11 +145,11 @@ function InvestmentDetailsDrawer({ open, onClose }: InvestmentDetailsDrawerProps
               type="button"
               onClick={onClose}
               aria-label="Close panel"
-              className="absolute right-4 top-4 rounded-lg p-2 text-white/90 transition hover:bg-white/10 hover:text-white md:right-5 md:top-5"
+              className="absolute right-4 top-4  p-2 text-white/90 transition hover:bg-white/10 hover:text-white md:right-5 md:top-5"
             >
               <X className="h-5 w-5" />
             </button>
-            <h2 id="investment-drawer-title" className="pr-12 text-xl font-semibold tracking-tight md:text-2xl">
+            <h2 id="investment-drawer-title" className="pr-12 text-xl font-medium tracking-tight md:text-2xl">
               Downtown Commercial Plaza
             </h2>
             <p className="mt-1.5 text-sm font-medium text-white/80">Investment ID: INV-001</p>
@@ -159,17 +159,17 @@ function InvestmentDetailsDrawer({ open, onClose }: InvestmentDetailsDrawerProps
             <div className="space-y-6">
               <DetailCard title="Deal Overview">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <div className="rounded-xl border border-stone-100 bg-stone-50/60 p-4">
+                  <div className=" border border-stone-100 bg-stone-50/60 p-4">
                     <p className="text-xs font-medium text-stone-500">Contract Size</p>
                     <p className="mt-2 text-lg font-semibold tabular-nums text-stone-900">$500,000</p>
                     <p className="mt-1 text-xs text-stone-500">Total deal value</p>
                   </div>
-                  <div className="rounded-xl border border-stone-100 bg-stone-50/60 p-4">
+                  <div className=" border border-stone-100 bg-stone-50/60 p-4">
                     <p className="text-xs font-medium text-stone-500">Your Investment</p>
                     <p className="mt-2 text-lg font-semibold tabular-nums text-fundex-forest">$250,000</p>
                     <p className="mt-1 text-xs text-stone-500">Your allocated capital</p>
                   </div>
-                  <div className="rounded-xl border border-stone-100 bg-stone-50/60 p-4">
+                  <div className=" border border-stone-100 bg-stone-50/60 p-4">
                     <p className="text-xs font-medium text-stone-500">Your Ownership</p>
                     <p className="mt-2 text-lg font-semibold tabular-nums text-stone-900">50.0%</p>
                     <p className="mt-1 text-xs text-stone-500">Of total contract</p>
@@ -193,7 +193,7 @@ function InvestmentDetailsDrawer({ open, onClose }: InvestmentDetailsDrawerProps
                       <p className="mt-1 text-sm font-semibold tabular-nums text-stone-900">$666,667</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between rounded-xl border border-stone-100 bg-stone-50/60 px-4 py-3">
+                  <div className="flex items-center justify-between  border border-stone-100 bg-stone-50/60 px-4 py-3">
                     <div>
                       <p className="text-sm font-semibold text-stone-900">Loan-to-Value Ratio</p>
                       <p className="text-xs text-stone-500">LTV</p>
@@ -208,7 +208,7 @@ function InvestmentDetailsDrawer({ open, onClose }: InvestmentDetailsDrawerProps
                   <div className="flex justify-between gap-4 border-b border-stone-100 py-2 sm:block sm:border-0 sm:py-0">
                     <dt className="text-sm text-stone-500">Status</dt>
                     <dd className="text-sm font-semibold text-stone-900">
-                      <span className="inline-flex rounded-full bg-fundex-gold/10 px-2.5 py-0.5 text-xs font-semibold text-fundex-forest">
+                      <span className="inline-flex  bg-fundex-gold/10 px-2.5 py-0.5 text-xs font-medium text-fundex-forest">
                         Active
                       </span>
                     </dd>
@@ -228,8 +228,8 @@ function InvestmentDetailsDrawer({ open, onClose }: InvestmentDetailsDrawerProps
                 </dl>
               </DetailCard>
 
-              <div className="rounded-2xl border border-stone-100 bg-fundex-gold/5 p-5 shadow-sm md:p-6">
-                <h3 className="text-sm font-semibold text-stone-900">Financial Details</h3>
+              <div className=" border border-stone-100 bg-fundex-gold/5 p-5 shadow-sm md:p-6">
+                <h3 className="text-sm font-medium text-stone-900">Financial Details</h3>
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <MetricMiniCard label="Interest Rate" value="10%" subtext="Annual rate" />
                   <MetricMiniCard label="Monthly Interest" value="$2,083" subtext="Per month" />
@@ -237,16 +237,16 @@ function InvestmentDetailsDrawer({ open, onClose }: InvestmentDetailsDrawerProps
                   <MetricMiniCard label="Interest Earned to Date" value="$16,664" subtext="33% earned" />
                 </div>
 
-                <div className="mt-6 rounded-xl border border-stone-100 bg-white/70 p-4 shadow-sm">
+                <div className="mt-6  border border-stone-100 bg-white/70 p-4 shadow-sm">
                   <div className="mb-3 flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-stone-900">Payment Progress</p>
+                    <p className="text-sm font-medium text-stone-900">Payment Progress</p>
                     <p className="text-sm font-semibold tabular-nums text-stone-600">
                       {paymentsDone} / {paymentsTotal} payments
                     </p>
                   </div>
-                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-stone-200/80">
+                  <div className="h-2.5 w-full overflow-hidden  bg-stone-200/80">
                     <div
-                      className="h-full rounded-full bg-fundex-gold transition-all duration-300"
+                      className="h-full  bg-fundex-gold transition-all duration-300"
                       style={{ width: `${progressPct}%` }}
                     />
                   </div>
@@ -363,8 +363,8 @@ const INVESTMENT_ROWS: InvestmentRow[] = [
 
 function InvestmentsTable({ onViewClick }: { onViewClick: () => void }) {
   return (
-    <section className="rounded-xl border border-stone-100 bg-white p-6 shadow-sm md:p-7">
-      <h2 className="text-lg font-semibold text-stone-900">All Investments</h2>
+    <section className=" border border-stone-100 bg-white p-6 shadow-sm md:p-7">
+      <h2 className="text-lg font-medium text-stone-900">All Investments</h2>
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-sm">
@@ -372,13 +372,13 @@ function InvestmentsTable({ onViewClick }: { onViewClick: () => void }) {
           <input
             type="search"
             placeholder="Search by deal name..."
-            className="w-full rounded-lg border border-stone-200 bg-white py-2.5 pl-9 pr-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-sm outline-none focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest"
+            className="w-full  border border-stone-200 bg-white py-2.5 pl-9 pr-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-sm outline-none focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest"
           />
         </div>
         <div className="relative w-full sm:w-44">
           <select
             aria-label="Filter by status"
-            className="w-full appearance-none rounded-lg border border-stone-200 bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-stone-700 shadow-sm outline-none focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest"
+            className="w-full appearance-none  border border-stone-200 bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-stone-700 shadow-sm outline-none focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest"
             defaultValue="all"
           >
             <option value="all">All Status</option>
@@ -387,7 +387,7 @@ function InvestmentsTable({ onViewClick }: { onViewClick: () => void }) {
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-lg border border-stone-50">
+      <div className="mt-6 overflow-x-auto  border border-stone-50">
         <table className="w-full min-w-[920px] text-left text-sm">
           <thead>
             <tr className="border-b border-stone-50 bg-transparent text-xs font-semibold uppercase tracking-wide text-stone-400">
@@ -413,7 +413,7 @@ function InvestmentsTable({ onViewClick }: { onViewClick: () => void }) {
                 </td>
                 <td className="whitespace-nowrap px-4 py-4 tabular-nums text-stone-700">{row.ownershipPct}</td>
                 <td className="whitespace-nowrap px-4 py-4">
-                  <span className="inline-flex rounded-full bg-fundex-gold/10 px-2.5 py-0.5 text-xs font-semibold text-fundex-forest">
+                  <span className="inline-flex  bg-fundex-gold/10 px-2.5 py-0.5 text-xs font-medium text-fundex-forest">
                     {row.status}
                   </span>
                 </td>
@@ -425,7 +425,7 @@ function InvestmentsTable({ onViewClick }: { onViewClick: () => void }) {
                   <button
                     type="button"
                     onClick={onViewClick}
-                    className="rounded-lg bg-fundex-gold px-4 py-2 text-xs font-semibold text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90"
+                    className=" bg-fundex-gold px-4 py-2 text-xs font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90"
                   >
                     View
                   </button>
@@ -498,21 +498,21 @@ function MaturingTable() {
   }, [selectedMaturityFilter]);
 
   return (
-    <section className="rounded-xl border border-stone-100 bg-white p-6 shadow-sm md:p-7">
-      <h2 className="text-lg font-semibold text-stone-900">Maturing Positions — Action Required</h2>
+    <section className=" border border-stone-100 bg-white p-6 shadow-sm md:p-7">
+      <h2 className="text-lg font-medium text-stone-900">Maturing Positions — Action Required</h2>
 
       <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="grid w-full gap-4 sm:grid-cols-3 lg:max-w-3xl">
-          <div className="rounded-xl border border-stone-100 bg-fundex-gold/10 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-fundex-forest">Total Capital Maturing</p>
+          <div className=" border border-stone-100 bg-fundex-gold/10 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-fundex-forest">Total Capital Maturing</p>
             <p className="mt-2 text-xl font-semibold tabular-nums text-stone-900">$450,000</p>
           </div>
-          <div className="rounded-xl border border-stone-100 bg-fundex-gold/10 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-fundex-forest">Number of Positions</p>
+          <div className=" border border-stone-100 bg-fundex-gold/10 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-fundex-forest">Number of Positions</p>
             <p className="mt-2 text-xl font-semibold tabular-nums text-stone-900">3</p>
           </div>
-          <div className="rounded-xl border border-stone-100 bg-fundex-gold/10 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-fundex-forest">Next Maturity</p>
+          <div className=" border border-stone-100 bg-fundex-gold/10 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-fundex-forest">Next Maturity</p>
             <p className="mt-2 text-xl font-semibold tabular-nums text-stone-900">Aug 15, 2026</p>
           </div>
         </div>
@@ -524,7 +524,7 @@ function MaturingTable() {
               aria-label="Filter maturing positions by timeframe"
               value={selectedMaturityFilter}
               onChange={(e) => setSelectedMaturityFilter(e.target.value as MaturityFilterValue)}
-              className="w-full appearance-none rounded-lg border border-stone-200 bg-white py-2.5 pl-9 pr-9 text-sm font-medium text-stone-700 shadow-sm outline-none focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest"
+              className="w-full appearance-none  border border-stone-200 bg-white py-2.5 pl-9 pr-9 text-sm font-medium text-stone-700 shadow-sm outline-none focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest"
             >
               <option value="all">All</option>
               <option value="30">Next 30 Days</option>
@@ -535,20 +535,20 @@ function MaturingTable() {
           </div>
           <button
             type="button"
-            className="rounded-lg bg-fundex-forest px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-fundex-green"
+            className=" bg-fundex-forest px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-fundex-green"
           >
             Reinvest All
           </button>
           <button
             type="button"
-            className="rounded-lg border border-fundex-gold/30 bg-white px-5 py-2.5 text-sm font-semibold text-fundex-forest shadow-sm transition hover:bg-stone-50"
+            className=" border border-fundex-gold/30 bg-white px-5 py-2.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-stone-50"
           >
             Withdraw All
           </button>
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-lg border border-stone-50">
+      <div className="mt-6 overflow-x-auto  border border-stone-50">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead>
             <tr className="border-b border-stone-50 bg-transparent text-xs font-semibold uppercase tracking-wide text-stone-400">
@@ -571,7 +571,7 @@ function MaturingTable() {
                 </td>
                 <td className="whitespace-nowrap px-4 py-4 tabular-nums text-stone-700">{row.maturityDate}</td>
                 <td className="whitespace-nowrap px-4 py-4">
-                  <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                  <span className="inline-flex  bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-700">
                     {row.status}
                   </span>
                 </td>
@@ -579,13 +579,13 @@ function MaturingTable() {
                   <div className="flex flex-wrap justify-end gap-2">
                     <button
                       type="button"
-                      className="rounded-lg bg-fundex-forest px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-fundex-green"
+                      className=" bg-fundex-forest px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-fundex-green"
                     >
                       Reinvest
                     </button>
                     <button
                       type="button"
-                      className="rounded-lg border border-fundex-gold/30 bg-white px-3 py-1.5 text-xs font-semibold text-fundex-forest shadow-sm transition hover:bg-stone-50"
+                      className=" border border-fundex-gold/30 bg-white px-3 py-1.5 text-xs font-medium text-fundex-forest shadow-sm transition hover:bg-stone-50"
                     >
                       Withdraw
                     </button>
@@ -606,11 +606,9 @@ export default function MyInvestmentsPage() {
   return (
     <>
       <div className="mx-auto w-full max-w-screen-2xl space-y-8 pb-10">
-          <header className="rounded-xl border border-fundex-green/20 bg-gradient-to-br from-fundex-forest via-fundex-green to-fundex-forest px-7 py-8 text-white shadow-sm shadow-fundex-forest/15 md:px-9 md:py-9">
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">My Investments</h1>
-            <p className="mt-2 max-w-2xl text-base font-medium text-white/80">
-              Track and manage all your investment positions
-            </p>
+          <header>
+            <h1 className="font-display text-3xl font-normal tracking-tight text-stone-900 md:text-4xl">My Investments</h1>
+            <p className="mt-2 text-sm font-normal text-stone-400">Track and manage all your investment positions</p>
           </header>
 
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">

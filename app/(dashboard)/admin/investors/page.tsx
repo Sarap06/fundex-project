@@ -247,16 +247,16 @@ export default function InvestorsPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-2xl" />
+            <Skeleton key={i} className="h-24 " />
           ))}
         </div>
-        <Skeleton className="h-11 w-full rounded-xl" />
+        <Skeleton className="h-11 w-full " />
         <div className="flex gap-2">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-9 w-24 rounded-xl" />
+            <Skeleton key={i} className="h-9 w-24 " />
           ))}
         </div>
-        <Skeleton className="h-64 rounded-2xl" />
+        <Skeleton className="h-64 " />
       </div>
     );
   }
@@ -268,7 +268,7 @@ export default function InvestorsPage() {
 
   return (
     <>
-      <main className="px-6 py-6 md:px-8 md:py-8">
+      <div>
         <StaggerContainer className="space-y-6">
           <StaggerItem>
             <PageHeader title="Investors" subtitle="Manage your investor directory" />
@@ -282,15 +282,15 @@ export default function InvestorsPage() {
               </div>
               <div className="fdx-card p-5">
                 <p className="text-sm text-fundex-gold mb-1">Active</p>
-                <p className="text-3xl text-stone-900 font-display font-semibold">{stats.active}</p>
+                <p className="text-3xl text-stone-900 font-semibold">{stats.active}</p>
               </div>
               <div className="fdx-card p-5">
                 <p className="text-sm text-stone-500 mb-1">Onboarding</p>
-                <p className="text-3xl text-stone-900 font-display font-semibold">{stats.onboarding}</p>
+                <p className="text-3xl text-stone-900 font-semibold">{stats.onboarding}</p>
               </div>
               <div className="fdx-card p-5">
                 <p className="text-sm text-stone-500 mb-1">Pending</p>
-                <p className="text-3xl text-stone-900 font-display font-semibold">{stats.pending}</p>
+                <p className="text-3xl text-stone-900 font-semibold">{stats.pending}</p>
               </div>
             </div>
           </StaggerItem>
@@ -310,7 +310,7 @@ export default function InvestorsPage() {
 
               <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
                 {['all', 'active', 'onboarding', 'pending'].map((status) => (
-                  <button key={status} onClick={() => setStatusFilter(status)} className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${statusFilter === status ? 'fdx-btn-primary' : 'fdx-btn-secondary'}`}>
+                  <button key={status} onClick={() => setStatusFilter(status)} className={`px-4 py-2  text-sm font-medium whitespace-nowrap transition-colors ${statusFilter === status ? 'fdx-btn-primary' : 'fdx-btn-secondary'}`}>
                     {status.charAt(0).toUpperCase() + status.slice(1)}
                   </button>
                 ))}
@@ -342,10 +342,10 @@ export default function InvestorsPage() {
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-3">
                               <Avatar className="size-10">
-                                <AvatarFallback className="bg-fundex-gold/20 text-fundex-forest font-semibold">{getInitials(investor.full_name)}</AvatarFallback>
+                                <AvatarFallback className="bg-fundex-gold/20 text-fundex-forest font-medium">{getInitials(investor.full_name)}</AvatarFallback>
                               </Avatar>
                               <div>
-                                <p className="font-semibold text-stone-900">{investor.full_name}</p>
+                                <p className="font-medium text-stone-900">{investor.full_name}</p>
                                 <p className="text-sm text-stone-400">{investor.investor_id}</p>
                               </div>
                             </div>
@@ -356,13 +356,13 @@ export default function InvestorsPage() {
                               {investor.phone && <div className="flex items-center gap-2 text-sm text-stone-600"><Phone className="size-4" /><span>{investor.phone}</span></div>}
                             </div>
                           </td>
-                          <td className="py-4 px-4 text-stone-900 font-medium">{investor.sponsor || 'Internal'}</td>
+                          <td className="py-4 px-4 text-stone-900 font-normal">{investor.sponsor || 'Internal'}</td>
                           <td className="py-4 px-4">
                             <span className={`fdx-badge ${investor.status === 'Active' ? 'fdx-badge-active' : investor.status === 'Onboarding' ? 'fdx-badge-info' : 'fdx-badge-pending'}`}>{investor.status}</span>
                           </td>
-                          <td className="py-4 px-4 text-stone-900 font-medium">{investor.number_of_investments}</td>
-                          <td className="py-4 px-4 text-stone-900 font-semibold">${(investor.total_invested / 1000000).toFixed(1)}M</td>
-                          <td className="py-4 px-4"><span className={`font-semibold ${investor.average_return ? 'text-fundex-forest' : 'text-stone-400'}`}>{investor.average_return ? `${investor.average_return.toFixed(1)}%` : '-'}</span></td>
+                          <td className="py-4 px-4 text-stone-900 font-normal">{investor.number_of_investments}</td>
+                          <td className="py-4 px-4 text-stone-900 font-medium">${(investor.total_invested / 1000000).toFixed(1)}M</td>
+                          <td className="py-4 px-4"><span className={`font-medium ${investor.average_return ? 'text-fundex-forest' : 'text-stone-400'}`}>{investor.average_return ? `${investor.average_return.toFixed(1)}%` : '-'}</span></td>
                           <td className="py-4 px-4 text-sm text-stone-500">{investor.onboarded_date}</td>
                           <td className="py-4 px-4">
                             <div className="flex items-center justify-end gap-2">
@@ -385,7 +385,7 @@ export default function InvestorsPage() {
             </div>
           </StaggerItem>
         </StaggerContainer>
-      </main>
+      </div>
 
       {isAddInvestorDrawerOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden">
@@ -394,20 +394,20 @@ export default function InvestorsPage() {
             <div className="sticky top-0 border-b border-stone-100 bg-white p-6 z-10">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl fdx-section-title">Add Investor</h2>
-                <button onClick={() => setIsAddInvestorDrawerOpen(false)} className="p-2 hover:bg-stone-50 rounded-lg transition-colors"><X className="size-5 text-stone-500" /></button>
+                <button onClick={() => setIsAddInvestorDrawerOpen(false)} className="p-2 hover:bg-stone-50  transition-colors"><X className="size-5 text-stone-500" /></button>
               </div>
             </div>
 
             <form onSubmit={handleAddInvestor} className="p-6 space-y-6">
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wide">Basic Information</h3>
+                <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Basic Information</h3>
                 <div><Label htmlFor="fullName">Full Name *</Label><input id="fullName" placeholder="John Smith" required value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className="fdx-input mt-1.5" /></div>
                 <div><Label htmlFor="email">Email Address *</Label><input id="email" type="email" placeholder="john.smith@example.com" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="fdx-input mt-1.5" /></div>
                 <div><Label htmlFor="phone">Phone Number</Label><input id="phone" type="tel" placeholder="(555) 123-4567" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="fdx-input mt-1.5" /></div>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wide">Investor Status</h3>
+                <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Investor Status</h3>
                 <div>
                   <Label htmlFor="status">Status *</Label>
                   <Select value={selectedStatus} onValueChange={(value) => setSelectedStatus(value)}>
@@ -419,7 +419,7 @@ export default function InvestorsPage() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wide">Sponsor</h3>
+                <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Sponsor</h3>
                 <div>
                   <Label htmlFor="sponsor">Sponsor</Label>
                   <Select value={selectedSponsor} onValueChange={(value) => {setSelectedSponsor(value); setShowAddSponsorInput(value === 'add-new');}}>
@@ -432,7 +432,7 @@ export default function InvestorsPage() {
                   <p className="text-xs text-stone-400 mt-1.5">Defaults to &quot;Internal&quot; if not selected</p>
                 </div>
                 {showAddSponsorInput && (
-                  <div className="p-4 bg-fundex-cream/30 border border-fundex-gold/20 rounded-lg space-y-3">
+                  <div className="p-4 bg-fundex-cream/30 border border-fundex-gold/20  space-y-3">
                     <div><Label htmlFor="newSponsorName">Sponsor Name *</Label><input id="newSponsorName" placeholder="e.g., Derek" value={formData.newSponsorName} onChange={(e) => setFormData({...formData, newSponsorName: e.target.value})} className="fdx-input mt-1.5" required={showAddSponsorInput} /></div>
                     <div><Label htmlFor="newSponsorCompany">Company (optional)</Label><input id="newSponsorCompany" placeholder="e.g., 818 Consulting" value={formData.newSponsorCompany} onChange={(e) => setFormData({...formData, newSponsorCompany: e.target.value})} className="fdx-input mt-1.5" /></div>
                   </div>
@@ -440,17 +440,17 @@ export default function InvestorsPage() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wide">Investment Details (Optional)</h3>
+                <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Investment Details (Optional)</h3>
                 <div><Label htmlFor="initialInvestment">Initial Investment Amount ($)</Label><input id="initialInvestment" type="number" placeholder="0" value={formData.initialInvestment} onChange={(e) => setFormData({...formData, initialInvestment: e.target.value})} className="fdx-input mt-1.5" /></div>
                 <div><Label htmlFor="numInvestments">Number of Investments</Label><input id="numInvestments" type="number" placeholder="0" value={formData.numberOfInvestments} onChange={(e) => setFormData({...formData, numberOfInvestments: e.target.value})} className="fdx-input mt-1.5" /></div>
                 <div><Label htmlFor="notes">Notes</Label><Textarea id="notes" placeholder="Add any relevant notes about the investor..." rows={4} value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})} className="mt-1.5" /></div>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wide">Tags (Optional)</h3>
+                <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Tags (Optional)</h3>
                 <div className="flex flex-wrap gap-2">
                   {['VIP', 'High Net Worth', 'New Investor', 'Accredited', 'Institutional'].map((tag) => (
-                    <button key={tag} type="button" onClick={() => {if (selectedTags.includes(tag)) {setSelectedTags(selectedTags.filter(t => t !== tag));} else {setSelectedTags([...selectedTags, tag]);}}} className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${selectedTags.includes(tag) ? 'bg-fundex-gold/10 text-fundex-forest border-fundex-gold/30' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'}`}>
+                    <button key={tag} type="button" onClick={() => {if (selectedTags.includes(tag)) {setSelectedTags(selectedTags.filter(t => t !== tag));} else {setSelectedTags([...selectedTags, tag]);}}} className={`px-3 py-1.5 text-xs font-medium border transition-colors ${selectedTags.includes(tag) ? 'bg-fundex-gold/10 text-fundex-forest border-fundex-gold/30' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'}`}>
                       <Tag className="size-3 inline mr-1" />{tag}
                     </button>
                   ))}

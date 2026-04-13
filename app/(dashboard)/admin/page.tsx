@@ -446,7 +446,7 @@ export default function AdminDashboard() {
           value: `$${(totalAUMValue / 1000000).toFixed(2)}M`,
           subtext: '',
           trend: 12.5,
-          icon: <DollarSign size={32} />,
+          icon: <DollarSign size={16} />,
           color: '#10B981',
           bgColor: '#ECFDF5'
         },
@@ -455,7 +455,7 @@ export default function AdminDashboard() {
           value: investorCount,
           subtext: '',
           trend: 18,
-          icon: <Users size={32} />,
+          icon: <Users size={16} />,
           color: '#3B82F6',
           bgColor: '#EFF6FF'
         },
@@ -464,7 +464,7 @@ export default function AdminDashboard() {
           value: dealCount,
           subtext: '',
           trend: 5,
-          icon: <Briefcase size={32} />,
+          icon: <Briefcase size={16} />,
           color: '#A855F7',
           bgColor: '#F3E8FF'
         },
@@ -473,7 +473,7 @@ export default function AdminDashboard() {
           value: `$${(allocatedCapitalTotal / 1000000).toFixed(2)}M`,
           subtext: '',
           trend: 24.8,
-          icon: <TrendingUp size={32} />,
+          icon: <TrendingUp size={16} />,
           color: '#F59E0B',
           bgColor: '#FFFBEB'
         }
@@ -582,11 +582,15 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="px-6 py-6 md:px-8 md:py-8 space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-9 w-64" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="fdx-card p-5"><Skeleton className="h-4 w-20" /><Skeleton className="mt-3 h-8 w-28" /></div>
+            <div key={i} className=" border border-stone-100 bg-white p-5">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="mt-3 h-8 w-28" />
+              <Skeleton className="mt-2 h-4 w-full" />
+            </div>
           ))}
         </div>
       </div>
@@ -595,23 +599,32 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <main className="px-6 py-6 md:px-8 md:py-8">
         <PageHeader title="Dashboard" subtitle={`Welcome back, ${profile?.full_name?.split(' ')[0]}`} />
         {/* Main Dashboard */}
         <StaggerContainer className="space-y-6">
-            {/* Stats Grid */}
+            {/* Stats Grid — matches company dashboard card style */}
             <StaggerItem>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-              {Object.values(stats).map((stat) => (
-                <div key={stat.label} className="fdx-card relative overflow-hidden p-5">
-                  <div className="fdx-card-glow" />
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-stone-50 text-stone-500">
-                        {stat.icon}
+              {Object.values(stats).map((stat, i) => (
+                <div key={stat.label} className="relative flex flex-col overflow-hidden  border border-stone-100 bg-white p-5 font-sans shadow-sm">
+                  <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-fundex-cream/30 blur-2xl" />
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-normal text-stone-500">{stat.label}</p>
+                    <div className="flex h-8 w-8 items-center justify-center  bg-stone-50 text-stone-400">
+                      {stat.icon}
                     </div>
                   </div>
-                  <h3 className="fdx-label">{stat.label}</h3>
-                  <p className="fdx-value mt-2 font-display">{stat.value}</p>
+                  <p className="mt-3 text-2xl font-semibold tabular-nums tracking-tight text-stone-900">
+                    {stat.value}
+                  </p>
+                  {stat.trend && (
+                    <div className="mt-2 flex items-center justify-between">
+                      <p className="text-xs font-normal text-stone-400">Growth Rate</p>
+                      <span className="text-[13px] font-medium tabular-nums text-emerald-500">
+                        ↑ {stat.trend}%
+                      </span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -619,54 +632,51 @@ export default function AdminDashboard() {
 
             {/* Quick Actions */}
             <StaggerItem>
-            <div className="fdx-card p-6">
-              <h2 className="fdx-section-title mb-6">Quick Actions</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <button
                   onClick={() => handleQuickAction('add-investor')}
-                  className="fdx-card p-5 hover:shadow-md transition-shadow cursor-pointer text-left"
+                  className=" border border-stone-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer text-left"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest mb-4">
-                    <Users size={20} />
+                  <div className="flex h-9 w-9 items-center justify-center  bg-fundex-gold/10 text-fundex-forest mb-3">
+                    <Users size={16} />
                   </div>
-                  <h3 className="text-sm font-medium text-stone-900">Add Investor</h3>
+                  <h3 className="text-sm font-normal text-stone-900">Add Investor</h3>
                   <p className="text-xs text-stone-400 mt-1">Onboard new investor</p>
                 </button>
 
                 <button
                   onClick={() => handleQuickAction('create-deal')}
-                  className="fdx-card p-5 hover:shadow-md transition-shadow cursor-pointer text-left"
+                  className=" border border-stone-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer text-left"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest mb-4">
-                    <Briefcase size={20} />
+                  <div className="flex h-9 w-9 items-center justify-center  bg-fundex-gold/10 text-fundex-forest mb-3">
+                    <Briefcase size={16} />
                   </div>
-                  <h3 className="text-sm font-medium text-stone-900">Create Deal</h3>
+                  <h3 className="text-sm font-normal text-stone-900">Create Deal</h3>
                   <p className="text-xs text-stone-400 mt-1">Launch new offering</p>
                 </button>
 
                 <button
                   onClick={() => handleQuickAction('manage-allocations')}
-                  className="fdx-card p-5 hover:shadow-md transition-shadow cursor-pointer text-left"
+                  className=" border border-stone-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer text-left"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest mb-4">
-                    <DollarSign size={20} />
+                  <div className="flex h-9 w-9 items-center justify-center  bg-fundex-gold/10 text-fundex-forest mb-3">
+                    <DollarSign size={16} />
                   </div>
-                  <h3 className="text-sm font-medium text-stone-900">Manage Allocations</h3>
+                  <h3 className="text-sm font-normal text-stone-900">Manage Allocations</h3>
                   <p className="text-xs text-stone-400 mt-1">Review capital deployment</p>
                 </button>
 
                 <button
                   onClick={() => handleQuickAction('documents')}
-                  className="fdx-card p-5 hover:shadow-md transition-shadow cursor-pointer text-left"
+                  className=" border border-stone-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer text-left"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fundex-gold/10 text-fundex-forest mb-4">
-                    <FileText size={20} />
+                  <div className="flex h-9 w-9 items-center justify-center  bg-fundex-gold/10 text-fundex-forest mb-3">
+                    <FileText size={16} />
                   </div>
-                  <h3 className="text-sm font-medium text-stone-900">Documents</h3>
+                  <h3 className="text-sm font-normal text-stone-900">Documents</h3>
                   <p className="text-xs text-stone-400 mt-1">Upload or review files</p>
                 </button>
               </div>
-            </div>
             </StaggerItem>
 
             {/* Company Code and Invite Members Section */}
@@ -675,14 +685,14 @@ export default function AdminDashboard() {
               {/* Company Code Card */}
               <div className="fdx-card p-6">
                 <h2 className="fdx-section-title mb-4">Company Code</h2>
-                <div className="bg-stone-50 rounded-lg p-4 flex items-center justify-between">
+                <div className="bg-stone-50  p-4 flex items-center justify-between">
                   <div>
                     <p className="text-xs text-stone-500 mb-1">Share this code with team members</p>
-                    <p className="text-lg font-mono font-bold text-stone-900">{company?.company_code || 'N/A'}</p>
+                    <p className="text-lg font-mono font-semibold text-stone-900">{company?.company_code || 'N/A'}</p>
                   </div>
                   <button
                     onClick={handleCopyCompanyCode}
-                    className="fdx-btn-primary p-2 rounded-lg"
+                    className="fdx-btn-primary p-2"
                     title="Copy company code"
                   >
                     <Copy size={18} />
@@ -703,13 +713,13 @@ export default function AdminDashboard() {
                       placeholder="Enter email address"
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
-                      className="flex-1 px-4 py-2 fdx-input"
+                      className="min-w-0 flex-1 border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
                       disabled={invitingEmail.length > 0}
                     />
                     <select
                       value={inviteRole}
                       onChange={(e) => setInviteRole(e.target.value as 'investor' | 'partner')}
-                      className="px-3 py-2 fdx-input text-sm bg-background"
+                      className="w-36 shrink-0 border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
                       disabled={invitingEmail.length > 0}
                     >
                       <option value="investor">Investor</option>
@@ -718,7 +728,7 @@ export default function AdminDashboard() {
                     <button
                       onClick={handleSendInvite}
                       disabled={invitingEmail.length > 0}
-                      className="fdx-btn-primary px-4 py-2 rounded-lg disabled:bg-stone-50-foreground flex items-center gap-2"
+                      className="shrink-0 fdx-btn-primary px-5 py-2.5 disabled:opacity-50 gap-2"
                     >
                       <Mail size={16} />
                       Send
@@ -750,11 +760,11 @@ export default function AdminDashboard() {
                   <tbody>
                     {members.map((member) => (
                       <tr key={member.id} className="fdx-table-row">
-                        <td className="py-3 px-4 text-sm text-stone-900 font-medium">{member.full_name}</td>
+                        <td className="py-3 px-4 text-sm text-stone-900 font-normal">{member.full_name}</td>
                         <td className="py-3 px-4 text-sm text-stone-500">{member.email}</td>
                         <td className="py-3 px-4 text-sm">
                           <div className="flex items-center gap-2">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            <span className={`px-3 py-1 text-xs font-medium ${
                               member.role === 'admin'
                                 ? 'fdx-badge fdx-badge-role'
                                 : member.role === 'investor'
@@ -803,7 +813,7 @@ export default function AdminDashboard() {
                     <tbody>
                       {pendingRequests.map((request) => (
                         <tr key={request.id} className="fdx-table-row">
-                          <td className="py-3 px-4 text-sm text-stone-900 font-medium">{request.full_name}</td>
+                          <td className="py-3 px-4 text-sm text-stone-900 font-normal">{request.full_name}</td>
                           <td className="py-3 px-4 text-sm text-stone-500">{request.email}</td>
                           <td className="py-3 px-4 text-sm">
                             <select
@@ -820,13 +830,13 @@ export default function AdminDashboard() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleApproveRequest(request.id, selectedRoles[request.id])}
-                                className="fdx-btn-primary px-3 py-1 rounded text-xs"
+                                className="fdx-btn-primary px-3 py-1 text-xs"
                               >
                                 Approve
                               </button>
                               <button
                                 onClick={() => handleRejectRequest(request.id)}
-                                className="fdx-btn-danger px-3 py-1 rounded text-xs"
+                                className="fdx-btn-danger px-3 py-1 text-xs"
                               >
                                 Reject
                               </button>
@@ -849,7 +859,7 @@ export default function AdminDashboard() {
                 <div className="p-6 border-b border-stone-50">
                   <div className="flex justify-between items-center">
                     <h2 className="fdx-section-title">Recent Deals</h2>
-                    <button onClick={() => router.push('/admin/deals')} className="text-fundex-forest hover:text-fundex-forest text-sm font-semibold">
+                    <button onClick={() => router.push('/admin/deals')} className="text-fundex-forest hover:text-fundex-green text-sm font-normal">
                       View All
                     </button>
                   </div>
@@ -859,10 +869,10 @@ export default function AdminDashboard() {
                     <div key={deal.id} className="p-6 hover:bg-stone-50/50 transition">
                       <div className="flex justify-between items-start mb-3">
                         <div>
-                          <h3 className="font-semibold text-stone-900">{deal.name}</h3>
+                          <h3 className="font-medium text-stone-900">{deal.name}</h3>
                           <p className="text-xs text-stone-500 mt-1">{deal.id}</p>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        <span className={`px-3 py-1 text-xs font-medium ${
                           deal.status === 'Funding'
                             ? 'fdx-badge fdx-badge-info'
                             : 'fdx-badge fdx-badge-active'
@@ -873,12 +883,12 @@ export default function AdminDashboard() {
                       <div className="mb-3">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-xs text-stone-500">Progress</span>
-                          <span className="text-xs font-semibold text-stone-900">{deal.progress}%</span>
+                          <span className="text-xs font-medium text-stone-900">{deal.progress}%</span>
                         </div>
-                        <div className="w-full bg-stone-50 rounded-full h-2.5">
-                          <div 
-                            className={`h-2.5 rounded-full ${
-                              deal.status === 'Active' ? 'bg-secondary' : 'bg-blue-500'
+                        <div className="w-full bg-stone-50 h-2.5">
+                          <div
+                            className={`h-2.5 ${
+                              deal.status === 'Active' ? 'bg-fundex-gold' : 'bg-fundex-green'
                             }`}
                             style={{ width: `${deal.progress}%` }}
                           />
@@ -909,7 +919,7 @@ export default function AdminDashboard() {
                         />
                       ) : (
                         <div 
-                          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white font-semibold text-xs"
+                          className="w-8 h-8 flex items-center justify-center flex-shrink-0 text-white font-medium text-xs"
                           style={{ backgroundColor: activity.bgColor }}
                         >
                           {activity.initials}
@@ -917,10 +927,10 @@ export default function AdminDashboard() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-stone-900">
-                          <span className="font-semibold">{activity.investorName}</span>
+                          <span className="font-medium">{activity.investorName}</span>
                           <span className="text-stone-500"> {activity.description} </span>
                         </p>
-                        <p className="text-xs text-fundex-forest font-medium mt-0.5">{activity.dealName}</p>
+                        <p className="text-xs text-fundex-forest font-normal mt-0.5">{activity.dealName}</p>
                         <p className="text-xs text-stone-500 mt-1">{formatTimeAgo(activity.timestamp)}</p>
                       </div>
                     </div>
@@ -950,7 +960,7 @@ export default function AdminDashboard() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-stone-500 mb-2">Select New Role</label>
+                  <label className="block text-sm font-normal text-stone-500 mb-2">Select New Role</label>
                   <select
                     value={editingRole}
                     onChange={(e) => setEditingRole(e.target.value)}
@@ -967,13 +977,13 @@ export default function AdminDashboard() {
                       setEditingMemberId(null);
                       setEditingRole('');
                     }}
-                    className="flex-1 px-4 py-2 fdx-btn-secondary rounded-lg"
+                    className="flex-1 px-4 py-2 fdx-btn-secondary "
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => handleEditMemberRole(editingMemberId, editingRole)}
-                    className="flex-1 px-4 py-2 fdx-btn-primary rounded-lg"
+                    className="flex-1 px-4 py-2 fdx-btn-primary "
                   >
                     Update
                   </button>
@@ -983,7 +993,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-      </main>
     </>
   );
 }

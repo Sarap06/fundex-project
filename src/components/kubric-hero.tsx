@@ -109,7 +109,7 @@ export function KubricHero() {
 
           {/* Center Links — frosted glass container */}
           <motion.nav
-            className="hidden lg:flex items-center gap-10 px-8 py-3 rounded-md bg-white/[0.06] backdrop-blur-[14px] border border-white/[0.1] shadow-[0_2px_20px_rgba(0,0,0,0.1)]"
+            className="hidden lg:flex items-center gap-10 px-8 py-3  bg-white/[0.06] backdrop-blur-[14px] border border-white/[0.1] shadow-[0_2px_20px_rgba(0,0,0,0.1)]"
             aria-label="Main navigation"
             variants={staggerContainer(0.08, 0.2)}
             initial="hidden"
@@ -303,7 +303,7 @@ export function KubricHero() {
                   portfolio growth and maximize investor returns.
                 </p>
                 <div
-                  className="w-8 h-0.5 mt-1 rounded-sm"
+                  className="w-8 h-0.5 mt-1 "
                   style={{ background: "linear-gradient(90deg, #1a1a1a, transparent)" }}
                 />
               </div>

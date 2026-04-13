@@ -77,20 +77,20 @@ export default function BroadcastPage() {
 
   if (loading) {
     return (
-      <main className="px-6 py-6 md:px-8 md:py-8">
+      <div>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <Skeleton className="h-8 w-40" />
             <Skeleton className="mt-2 h-4 w-64" />
           </div>
         </div>
-        <Skeleton className="mt-6 h-64 w-full rounded-lg" />
-      </main>
+        <Skeleton className="mt-6 h-64 w-full " />
+      </div>
     );
   }
 
   return (
-    <main className="px-6 py-6 md:px-8 md:py-8">
+    <div>
       <StaggerContainer className="space-y-6">
         <StaggerItem>
           <PageHeader title="Broadcast" subtitle="Manage announcements and communications" />
@@ -105,6 +105,6 @@ export default function BroadcastPage() {
           />
         </StaggerItem>
       </StaggerContainer>
-    </main>
+    </div>
   );
 }

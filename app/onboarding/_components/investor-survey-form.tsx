@@ -84,7 +84,7 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
         Just a few details to get you started
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-8 rounded-2xl border border-stone-100 bg-white p-6 shadow-sm space-y-5">
+      <form onSubmit={handleSubmit} className="mt-8  border border-stone-100 bg-white p-6 shadow-sm space-y-5">
         {/* Email — auto-filled, read-only */}
         <div>
           <label htmlFor="investor-email" className="block text-sm font-medium text-stone-700">
@@ -95,7 +95,7 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
             type="email"
             value={email}
             readOnly
-            className="mt-1.5 w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-sm text-stone-600 shadow-sm outline-none cursor-not-allowed"
+            className="mt-1.5 w-full  border border-stone-200 bg-stone-50 px-4 py-2.5 text-sm text-stone-600 shadow-sm outline-none cursor-not-allowed"
           />
         </div>
 
@@ -108,7 +108,7 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
             <select
               value={countryCode}
               onChange={(e) => setCountryCode(e.target.value)}
-              className="w-20 rounded-xl border border-stone-200 bg-white px-2 py-2.5 text-sm text-stone-700 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
+              className="w-20  border border-stone-200 bg-white px-2 py-2.5 text-sm text-stone-700 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
             >
               <option value="+1">+1</option>
               <option value="+44">+44</option>
@@ -122,7 +122,7 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="(555) 000-0000"
-              className="flex-1 rounded-xl border border-stone-200 px-4 py-2.5 text-sm text-stone-900 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
+              className="flex-1  border border-stone-200 px-4 py-2.5 text-sm text-stone-900 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
             />
           </div>
         </div>
@@ -136,7 +136,7 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
             id="investor-region"
             value={region}
             onChange={(e) => setRegion(e.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-700 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
+            className="mt-1.5 w-full  border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-700 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
           >
             <option value="">Select your region</option>
             {REGIONS.map((r) => (
@@ -154,7 +154,7 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
             <select
               value={secondCountryCode}
               onChange={(e) => setSecondCountryCode(e.target.value)}
-              className="w-20 rounded-xl border border-stone-200 bg-white px-2 py-2.5 text-sm text-stone-700 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
+              className="w-20  border border-stone-200 bg-white px-2 py-2.5 text-sm text-stone-700 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
             >
               <option value="+1">+1</option>
               <option value="+44">+44</option>
@@ -168,7 +168,7 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
               value={secondPhoneNumber}
               onChange={(e) => setSecondPhoneNumber(e.target.value)}
               placeholder="(555) 000-0000"
-              className="flex-1 rounded-xl border border-stone-200 px-4 py-2.5 text-sm text-stone-900 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
+              className="flex-1  border border-stone-200 px-4 py-2.5 text-sm text-stone-900 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
             />
           </div>
         </div>
@@ -180,7 +180,7 @@ export function InvestorSurveyForm({ email, fullName, onBack, onComplete }: Inve
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-xl bg-fundex-forest py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-fundex-green disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full  bg-fundex-forest py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-fundex-green disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? 'Submitting...' : 'Continue'}
         </button>

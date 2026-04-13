@@ -70,7 +70,7 @@ const Gallery6 = ({
               variant="outline"
               onClick={() => carouselApi?.scrollPrev()}
               disabled={!canScrollPrev}
-              className="disabled:pointer-events-auto rounded-full"
+              className="disabled:pointer-events-auto "
             >
               <ArrowLeft className="size-5" />
             </Button>
@@ -79,7 +79,7 @@ const Gallery6 = ({
               variant="outline"
               onClick={() => carouselApi?.scrollNext()}
               disabled={!canScrollNext}
-              className="disabled:pointer-events-auto rounded-full"
+              className="disabled:pointer-events-auto "
             >
               <ArrowRight className="size-5" />
             </Button>
@@ -96,7 +96,7 @@ const Gallery6 = ({
               <CarouselItem key={item.id} className="pl-[20px] md:max-w-[452px]">
                 <a href={item.url} className="group flex flex-col justify-between">
                   <div>
-                    <div className="flex aspect-[3/2] overflow-clip rounded-xl border border-border">
+                    <div className="flex aspect-[3/2] overflow-clip  border border-border">
                       <div className="flex-1 transition-all duration-300 group-hover:scale-105">
                         <img
                           src={item.image}

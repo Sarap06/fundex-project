@@ -101,7 +101,7 @@ export function StickyFeatureSection({ heading, subheading, features }: StickyFe
               style={{ zIndex: index + 1 }}
             >
               <div
-                className="rounded-2xl overflow-hidden clean-border grid grid-cols-1 md:grid-cols-2 gap-0"
+                className=" overflow-hidden clean-border grid grid-cols-1 md:grid-cols-2 gap-0"
                 style={{
                   backgroundColor: index % 2 === 0 ? 'var(--background)' : 'rgba(40, 105, 75, 0.05)',
                   boxShadow: '0 10px 40px rgba(0,0,0,0.08)',

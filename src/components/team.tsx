@@ -267,7 +267,7 @@ export function Team() {
           </p>
           <a
             href="#book-demo-section"
-            className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-foreground text-background font-sans text-[15px] font-[500] no-underline rounded-full transition-all hover:opacity-90 hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-foreground text-background font-sans text-[15px] font-[500] no-underline  transition-all hover:opacity-90 hover:-translate-y-0.5"
           >
             Get in Touch
             <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />

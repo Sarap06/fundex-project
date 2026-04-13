@@ -27,17 +27,17 @@ function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
 
   return (
-    <div className="rounded-xl border border-stone-200/80 bg-white px-4 py-3 shadow-xl shadow-stone-200/40">
+    <div className=" border border-stone-200/80 bg-white px-4 py-3 shadow-xl shadow-stone-200/40">
       <p className="mb-2.5 text-xs font-medium text-stone-400">{label}</p>
       {payload.map((entry: any) => {
         const isInflow = entry.dataKey === 'inflows';
         return (
           <div key={entry.dataKey} className="flex items-center gap-2.5 py-0.5">
             <span
-              className="h-2.5 w-2.5 rounded-sm"
+              className="h-2.5 w-2.5 "
               style={{ backgroundColor: isInflow ? '#C0B87A' : '#292524' }}
             />
-            <span className="text-xs font-semibold tabular-nums text-stone-800">
+            <span className="text-xs font-medium tabular-nums text-stone-800">
               {formatCurrency(Math.abs(entry.value))}
             </span>
             <span className={`ml-1 text-xs font-medium ${isInflow ? 'text-emerald-500' : 'text-red-400'}`}>
@@ -61,26 +61,26 @@ export function CapitalFlowChart({ data }: CapitalFlowChartProps) {
   const hasData = totalInflows > 0 || totalOutflows > 0;
 
   return (
-    <div className="rounded-2xl border border-stone-100 bg-white p-6 font-sans shadow-sm md:p-7">
+    <div className=" border border-stone-100 bg-white p-6 font-sans shadow-sm md:p-7">
       {/* Header row */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <h3 className="text-base font-semibold text-stone-900">
+        <h3 className="text-base font-medium text-stone-900">
           Monthly Capital Flow
         </h3>
         <div className="flex items-center gap-5">
           {/* Legend */}
           <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-fundex-gold" />
+            <span className="h-2.5 w-2.5  bg-fundex-gold" />
             <span className="text-xs text-stone-500">Capital Inflow</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-stone-800" />
+            <span className="h-2.5 w-2.5  bg-stone-800" />
             <span className="text-xs text-stone-500">Distributions</span>
           </div>
           {/* Date range dropdown */}
           <button
             type="button"
-            className="flex items-center gap-1.5 rounded-full border border-stone-200 px-3 py-1.5 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-50"
+            className="flex items-center gap-1.5 border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-50"
           >
             Last 6 Months
             <ChevronDown className="h-3 w-3 text-stone-400" />
@@ -90,17 +90,20 @@ export function CapitalFlowChart({ data }: CapitalFlowChartProps) {
 
       {/* Total metric */}
       <div className="mt-3 flex items-baseline gap-3">
-        <p className="text-3xl font-bold tabular-nums tracking-tight text-stone-900">
+        <p className="text-3xl font-semibold tabular-nums tracking-tight text-stone-900">
           {formatCurrency(totalInflows)}
         </p>
         {totalInflows > 0 && (
-          <span className="text-sm font-semibold text-emerald-500">+18% from last month</span>
+          <span className="text-sm">
+            <span className="font-medium text-emerald-500">+18%</span>
+            <span className="ml-1 text-stone-400">from last month</span>
+          </span>
         )}
       </div>
 
       {/* Chart */}
       {!hasData ? (
-        <div className="mt-6 flex h-[280px] flex-col items-center justify-center rounded-xl border border-dashed border-stone-200 bg-stone-50/50">
+        <div className="mt-6 flex h-[280px] flex-col items-center justify-center  border border-dashed border-stone-200 bg-stone-50/50">
           <p className="text-sm font-medium text-stone-400">No capital flow data yet</p>
           <p className="mt-1 text-xs text-stone-300">Allocations will appear here as they are funded</p>
         </div>

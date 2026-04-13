@@ -37,9 +37,9 @@ export function InvestorSidebar() {
         {/* Logo */}
         <Link
           href="/investor"
-          className="flex items-center gap-3 rounded-xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-fundex-gold"
+          className="flex items-center gap-3  outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-fundex-gold"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-fundex-gold font-display text-sm font-bold text-fundex-forest shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center  bg-fundex-gold font-display text-sm font-bold text-fundex-forest shadow-sm">
             F
           </div>
           <div className="min-w-0">
@@ -61,7 +61,7 @@ export function InvestorSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-normal transition-colors duration-200 ${
+                className={`flex w-full items-center gap-3  px-3 py-2.5 text-left text-sm font-normal transition-colors duration-200 ${
                   isActive
                     ? "bg-fundex-gold/10 text-fundex-forest border-l-2 border-fundex-gold -ml-px"
                     : "text-stone-500 hover:bg-stone-50 hover:text-stone-700"
@@ -76,8 +76,8 @@ export function InvestorSidebar() {
       </div>
 
       {/* User card */}
-      <div className="flex items-center gap-3 rounded-xl border border-stone-100 bg-stone-50/50 p-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-fundex-gold/20 text-xs font-semibold text-fundex-forest">
+      <div className="flex items-center gap-3  border border-stone-100 bg-stone-50/50 p-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center  bg-fundex-gold/20 text-xs font-semibold text-fundex-forest">
           JD
         </div>
         <div className="min-w-0 flex-1">
@@ -88,7 +88,7 @@ export function InvestorSidebar() {
           aria-label="Logout"
           type="button"
           onClick={handleLogout}
-          className="shrink-0 rounded-lg p-1.5 text-stone-300 transition hover:bg-red-50 hover:text-red-500"
+          className="shrink-0  p-1.5 text-stone-300 transition hover:bg-red-50 hover:text-red-500"
         >
           <LogOut className="h-4 w-4" />
         </button>

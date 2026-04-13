@@ -151,7 +151,7 @@ function CustomCalendar({
               {day}
               {isTodayDate && !isSelected && (
                 <div
-                  className="absolute bottom-1 w-1 h-1 rounded-full"
+                  className="absolute bottom-1 w-1 h-1 "
                   style={{ background: "var(--primary)" }}
                 />
               )}
@@ -348,8 +348,8 @@ export function BookDemo() {
               className={cn(
                 "inline-flex items-center gap-2.5 px-8 py-3.5 font-sans text-[15px] font-[500] border-none transition-all duration-300 cursor-pointer",
                 selectedDate
-                  ? "bg-foreground text-background hover:opacity-90 rounded-full"
-                  : "bg-muted text-muted-foreground cursor-default rounded-full"
+                  ? "bg-foreground text-background hover:opacity-90 "
+                  : "bg-muted text-muted-foreground cursor-default "
               )}
             >
               Confirm

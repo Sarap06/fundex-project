@@ -83,7 +83,7 @@ export function AnimatedFooter({
 
             <a
               href="#book-demo-section"
-              className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-white text-fundex-forest font-sans text-[15px] font-[500] no-underline rounded-full transition-all hover:bg-fundex-cream hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-white text-fundex-forest font-sans text-[15px] font-[500] no-underline  transition-all hover:bg-fundex-cream hover:-translate-y-0.5"
             >
               Book a Demo
               <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />

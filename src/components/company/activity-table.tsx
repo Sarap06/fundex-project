@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Search, SlidersHorizontal, DollarSign, FileText, TrendingUp, Users, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DUMMY_TRANSACTIONS } from '@/components/company/dummy-data';
 
 interface Activity {
   id: string;
@@ -13,6 +14,8 @@ interface Activity {
   dealName?: string;
   investorName?: string;
   timestamp: string;
+  amount?: number;
+  category?: string;
 }
 
 interface ActivityTableProps {
@@ -20,10 +23,10 @@ interface ActivityTableProps {
 }
 
 const TYPE_CONFIG: Record<string, { icon: typeof DollarSign; bg: string; text: string; label: string }> = {
-  allocation_created: { icon: DollarSign, bg: 'bg-fundex-gold/15', text: 'text-fundex-forest', label: 'Allocation' },
-  deal_created: { icon: TrendingUp, bg: 'bg-emerald-50', text: 'text-emerald-600', label: 'Deal' },
+  allocation_created: { icon: DollarSign, bg: 'bg-fundex-gold/15', text: 'text-fundex-gold-dark', label: 'Allocation' },
+  deal_created: { icon: TrendingUp, bg: 'bg-emerald-50', text: 'text-emerald-600', label: 'Funding' },
   investor_created: { icon: Users, bg: 'bg-blue-50', text: 'text-blue-600', label: 'Investor' },
-  document_uploaded: { icon: FileText, bg: 'bg-violet-50', text: 'text-violet-600', label: 'Document' },
+  document_uploaded: { icon: FileText, bg: 'bg-violet-50', text: 'text-violet-600', label: 'Distribution' },
 };
 
 function getTypeConfig(type: string) {
@@ -36,6 +39,13 @@ function formatDate(timestamp: string): string {
     day: 'numeric',
     year: 'numeric',
   });
+}
+
+function formatAmount(amount?: number): { text: string; color: string } {
+  if (amount == null) return { text: '—', color: 'text-stone-400' };
+  const isPositive = amount >= 0;
+  const formatted = `${isPositive ? '+' : '-'}$${Math.abs(amount).toLocaleString('en-US')}`;
+  return { text: formatted, color: isPositive ? 'text-stone-900' : 'text-stone-900' };
 }
 
 export function ActivityTable({ companyId }: ActivityTableProps) {
@@ -55,9 +65,11 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
             : {},
         });
         const json = await res.json();
-        setActivities(json.activities || []);
+        const fetched = json.activities || [];
+        // Use dummy data as fallback when no real activities exist
+        setActivities(fetched.length > 0 ? fetched : DUMMY_TRANSACTIONS);
       } catch {
-        setActivities([]);
+        setActivities(DUMMY_TRANSACTIONS);
       } finally {
         setLoading(false);
       }
@@ -72,26 +84,26 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
   );
 
   return (
-    <div className="rounded-2xl border border-stone-100 bg-white font-sans shadow-sm">
-      {/* Header — matches reference: title left, search + filter right */}
+    <div className=" border border-stone-100 bg-white font-sans shadow-sm">
+      {/* Header */}
       <div className="flex flex-col gap-3 border-b border-stone-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-base font-semibold text-stone-900">
-          Recent Activity
+        <h3 className="text-base font-medium text-stone-900">
+          Transaction History
         </h3>
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
             <input
               type="search"
-              placeholder="Search by Name or Deal..."
+              placeholder="Search by Name or Amount..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-9 w-full rounded-lg border border-stone-200 bg-white pl-9 pr-3 text-sm text-stone-700 outline-none placeholder:text-stone-400 focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30 sm:w-60"
+              className="h-9 w-full  border border-stone-200 bg-white pl-9 pr-3 text-sm text-stone-700 outline-none placeholder:text-stone-400 focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30 sm:w-60"
             />
           </div>
           <button
             type="button"
-            className="flex h-9 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50"
+            className="flex h-9 items-center gap-1.5  border border-stone-200 bg-white px-3 text-sm font-normal text-stone-600 transition-colors hover:bg-stone-50"
           >
             <SlidersHorizontal className="h-3.5 w-3.5" />
             Filter
@@ -99,36 +111,37 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
         </div>
       </div>
 
-      {/* Table — matches reference columns: checkbox, Activity, Category, Date, Amount, menu */}
+      {/* Table */}
       <div className="overflow-x-auto">
         {loading ? (
           <div className="space-y-0 px-6">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4 border-b border-stone-50 py-4">
-                <Skeleton className="h-4 w-4 rounded" />
-                <Skeleton className="h-8 w-8 rounded-lg" />
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-8 w-8 " />
                 <div className="flex-1 space-y-1.5">
                   <Skeleton className="h-4 w-48" />
                 </div>
-                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-5 w-16 " />
                 <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-20" />
                 <Skeleton className="h-4 w-4" />
               </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="px-6 py-14 text-center text-sm text-stone-400">
-            No recent activity
+            No transactions found
           </div>
         ) : (
           <table className="w-full">
             <thead>
               <tr className="border-b border-stone-100">
                 <th className="w-10 py-3 pl-6 pr-2">
-                  <input type="checkbox" disabled className="h-4 w-4 rounded border-stone-300 opacity-40" />
+                  <input type="checkbox" disabled className="h-4 w-4 border-stone-300 opacity-40" />
                 </th>
                 <th className="py-3 pl-2 pr-4 text-left text-xs font-medium text-stone-400">
-                  Activity
+                  Transaction
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-stone-400">
                   Categories
@@ -137,7 +150,7 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
                   Date
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-stone-400">
-                  Deal
+                  Amount
                 </th>
                 <th className="w-10 py-3 pl-4 pr-6" />
               </tr>
@@ -146,6 +159,7 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
               {filtered.map((activity) => {
                 const config = getTypeConfig(activity.type);
                 const Icon = config.icon;
+                const amount = formatAmount(activity.amount);
                 return (
                   <tr
                     key={activity.id}
@@ -153,15 +167,15 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
                   >
                     {/* Checkbox */}
                     <td className="py-3.5 pl-6 pr-2">
-                      <input type="checkbox" className="h-4 w-4 rounded border-stone-300 text-fundex-gold focus:ring-fundex-gold/30" />
+                      <input type="checkbox" className="h-4 w-4 border-stone-300 text-fundex-gold focus:ring-fundex-gold/30" />
                     </td>
-                    {/* Activity: icon + description */}
+                    {/* Transaction: icon + description */}
                     <td className="py-3.5 pl-2 pr-4">
                       <div className="flex items-center gap-3">
-                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${config.bg}`}>
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center  ${config.bg}`}>
                           <Icon className={`h-4 w-4 ${config.text}`} />
                         </div>
-                        <span className="max-w-[200px] truncate text-sm font-medium text-stone-800">
+                        <span className="max-w-[200px] truncate text-sm font-normal text-stone-800">
                           {activity.description}
                         </span>
                       </div>
@@ -172,22 +186,22 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
                         variant="outline"
                         className="border-stone-200 text-xs font-medium text-stone-600"
                       >
-                        {config.label}
+                        {activity.category || config.label}
                       </Badge>
                     </td>
                     {/* Date */}
                     <td className="px-4 py-3.5 text-sm tabular-nums text-stone-500">
                       {formatDate(activity.timestamp)}
                     </td>
-                    {/* Deal name */}
-                    <td className="max-w-[140px] truncate px-4 py-3.5 text-sm text-stone-500">
-                      {activity.dealName || '—'}
+                    {/* Amount */}
+                    <td className={`px-4 py-3.5 text-sm font-normal tabular-nums ${amount.color}`}>
+                      {amount.text}
                     </td>
                     {/* Menu */}
                     <td className="py-3.5 pl-4 pr-6">
                       <button
                         type="button"
-                        className="rounded-md p-1 text-stone-300 transition-colors hover:bg-stone-100 hover:text-stone-500"
+                        className="p-1 text-stone-300 transition-colors hover:bg-stone-100 hover:text-stone-500"
                       >
                         <MoreHorizontal className="h-4 w-4" />
                       </button>

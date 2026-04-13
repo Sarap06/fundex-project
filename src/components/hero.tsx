@@ -87,7 +87,7 @@ export function Hero() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => document.getElementById('book-demo-section')?.scrollIntoView({ behavior: 'smooth' })}
-                className={`font-sans font-semibold px-5 py-2 rounded-md hover:opacity-90 gentle-animation cursor-pointer text-sm ${isScrolled ? 'bg-primary text-white' : 'bg-primary text-white'}`}
+                className={`font-sans font-semibold px-5 py-2  hover:opacity-90 gentle-animation cursor-pointer text-sm ${isScrolled ? 'bg-primary text-white' : 'bg-primary text-white'}`}
                 style={{ backgroundColor: 'var(--primary)' }}>
                 Book Demo
               </motion.button>
@@ -95,7 +95,7 @@ export function Hero() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 href="/auth/login"
-                className={`font-sans font-semibold px-5 py-2 rounded-md hover:opacity-90 gentle-animation cursor-pointer text-sm border ${isScrolled ? 'text-foreground border-foreground/30 hover:border-foreground/60' : 'text-white border-white/30 hover:border-white/60'}`}
+                className={`font-sans font-semibold px-5 py-2  hover:opacity-90 gentle-animation cursor-pointer text-sm border ${isScrolled ? 'text-foreground border-foreground/30 hover:border-foreground/60' : 'text-white border-white/30 hover:border-white/60'}`}
               >
                 Login
               </motion.a>
@@ -103,7 +103,7 @@ export function Hero() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 href="/auth/signup"
-                className={`font-sans font-semibold px-5 py-2 rounded-md hover:opacity-90 gentle-animation cursor-pointer text-sm border ${isScrolled ? 'text-foreground border-foreground/30 hover:border-foreground/60' : 'text-white border-white/30 hover:border-white/60'}`}
+                className={`font-sans font-semibold px-5 py-2  hover:opacity-90 gentle-animation cursor-pointer text-sm border ${isScrolled ? 'text-foreground border-foreground/30 hover:border-foreground/60' : 'text-white border-white/30 hover:border-white/60'}`}
               >
                 Sign Up
               </motion.a>
@@ -114,7 +114,7 @@ export function Hero() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => document.getElementById('book-demo-section')?.scrollIntoView({ behavior: 'smooth' })}
-                className={`font-sans font-semibold px-4 py-2 rounded-md hover:opacity-90 gentle-animation cursor-pointer text-sm ${isScrolled ? 'bg-primary text-white' : 'bg-primary text-white'}`}
+                className={`font-sans font-semibold px-4 py-2  hover:opacity-90 gentle-animation cursor-pointer text-sm ${isScrolled ? 'bg-primary text-white' : 'bg-primary text-white'}`}
                 style={{ backgroundColor: 'var(--primary)' }}>
                 Demo
               </motion.button>
@@ -122,7 +122,7 @@ export function Hero() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 href="/auth/login"
-                className={`font-sans font-semibold px-4 py-2 rounded-md hover:opacity-90 gentle-animation cursor-pointer text-sm border ${isScrolled ? 'text-foreground border-foreground/30 hover:border-foreground/60' : 'text-white border-white/30 hover:border-white/60'}`}
+                className={`font-sans font-semibold px-4 py-2  hover:opacity-90 gentle-animation cursor-pointer text-sm border ${isScrolled ? 'text-foreground border-foreground/30 hover:border-foreground/60' : 'text-white border-white/30 hover:border-white/60'}`}
               >
                 Login
               </motion.a>
@@ -130,7 +130,7 @@ export function Hero() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 href="/auth/signup"
-                className={`font-sans font-semibold px-4 py-2 rounded-md hover:opacity-90 gentle-animation cursor-pointer text-sm border ${isScrolled ? 'text-foreground border-foreground/30 hover:border-foreground/60' : 'text-white border-white/30 hover:border-white/60'}`}
+                className={`font-sans font-semibold px-4 py-2  hover:opacity-90 gentle-animation cursor-pointer text-sm border ${isScrolled ? 'text-foreground border-foreground/30 hover:border-foreground/60' : 'text-white border-white/30 hover:border-white/60'}`}
               >
                 Sign Up
               </motion.a>
@@ -139,7 +139,7 @@ export function Hero() {
             <div className="flex items-center space-x-3 flex-shrink-0">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden glass-effect p-3 rounded-full text-white hover:bg-white/20 gentle-animation cursor-pointer z-[120] relative">
+                className="md:hidden glass-effect p-3  text-white hover:bg-white/20 gentle-animation cursor-pointer z-[120] relative">
                 {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
@@ -163,14 +163,14 @@ export function Hero() {
         className="md:hidden fixed top-0 right-0 h-full w-72 max-w-[85vw] bg-white/95 backdrop-blur-xl border-l border-border z-[90]">
         <div className="flex flex-col h-full">
           <div className="flex justify-end p-4">
-            <button onClick={() => setIsMobileMenuOpen(false)} className="p-3 rounded-full text-foreground hover:bg-muted gentle-animation cursor-pointer">
+            <button onClick={() => setIsMobileMenuOpen(false)} className="p-3  text-foreground hover:bg-muted gentle-animation cursor-pointer">
               <X className="w-5 h-5" />
             </button>
           </div>
           <div className="flex flex-col px-6 pb-6 h-full">
             <div className="flex flex-col space-y-4 text-foreground">
               {navLinks.map((link) => (
-                <a key={link.href} href={link.href} className="px-4 py-3 hover:bg-muted rounded-lg gentle-animation font-sans font-medium text-lg" onClick={() => setIsMobileMenuOpen(false)}>
+                <a key={link.href} href={link.href} className="px-4 py-3 hover:bg-muted  gentle-animation font-sans font-medium text-lg" onClick={() => setIsMobileMenuOpen(false)}>
                   {link.label}
                 </a>
               ))}
@@ -180,7 +180,7 @@ export function Hero() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => { document.getElementById('book-demo-section')?.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); }}
-                className="text-white font-sans font-semibold px-6 py-3 rounded-lg gentle-animation cursor-pointer"
+                className="text-white font-sans font-semibold px-6 py-3  gentle-animation cursor-pointer"
                 style={{ backgroundColor: 'var(--primary)' }}>
                 Book Demo
               </motion.button>
@@ -189,7 +189,7 @@ export function Hero() {
                 whileTap={{ scale: 0.95 }}
                 href="/auth/login"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="text-center text-white font-sans font-semibold px-6 py-3 rounded-lg gentle-animation cursor-pointer border border-foreground/20"
+                className="text-center text-white font-sans font-semibold px-6 py-3  gentle-animation cursor-pointer border border-foreground/20"
               >
                 Login
               </motion.a>
@@ -198,7 +198,7 @@ export function Hero() {
                 whileTap={{ scale: 0.95 }}
                 href="/auth/signup"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="text-center text-white font-sans font-semibold px-6 py-3 rounded-lg gentle-animation cursor-pointer border border-foreground/20"
+                className="text-center text-white font-sans font-semibold px-6 py-3  gentle-animation cursor-pointer border border-foreground/20"
               >
                 Sign Up
               </motion.a>

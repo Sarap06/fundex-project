@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Download, ChevronDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
+import { StaggerContainer } from '@/components/motion-wrapper';
 import { CompanyStatCard } from '@/components/company/stat-card';
 import { CapitalFlowChart } from '@/components/company/capital-flow-chart';
 import { CompanyOverview } from '@/components/company/company-overview';
 import { ActivityTable } from '@/components/company/activity-table';
 import { BroadcastPreview } from '@/components/company/broadcast-preview';
-import { formatCurrency } from '@/services/allocation-service';
+import { DUMMY_STATS, DUMMY_FLOW_DATA, DUMMY_GROWTH } from '@/components/company/dummy-data';
 import type { Company } from '@/lib/types';
 
 interface DashboardStats {
@@ -41,16 +41,26 @@ function getGreeting(): string {
   return 'Good Evening';
 }
 
-function getTodayString(): string {
-  return new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+function getOrdinalSuffix(day: number): string {
+  if (day >= 11 && day <= 13) return 'th';
+  switch (day % 10) {
+    case 1: return 'st';
+    case 2: return 'nd';
+    case 3: return 'rd';
+    default: return 'th';
+  }
 }
 
-/** Full comma-separated display: $210,550 — not compact $0.21M */
+function getTodayString(): string {
+  const now = new Date();
+  const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
+  const month = now.toLocaleDateString('en-US', { month: 'long' });
+  const day = now.getDate();
+  const year = now.getFullYear();
+  return `${weekday}, ${month} ${day}${getOrdinalSuffix(day)}, ${year}`;
+}
+
+/** Full comma-separated display: $210,550 */
 function displayCurrency(value: number): string {
   return '$' + value.toLocaleString('en-US', { maximumFractionDigits: 0 });
 }
@@ -117,6 +127,13 @@ export default function CompanyDashboard() {
     })();
   }, []);
 
+  // Fallback to dummy data when real data is empty/zeros
+  const isDummy = !stats || stats.totalAUM === 0;
+  const displayStats = isDummy ? DUMMY_STATS : stats;
+  const displayFlow = flowData && flowData.some(d => d.inflows > 0 || d.outflows > 0)
+    ? flowData
+    : DUMMY_FLOW_DATA;
+
   return (
     <StaggerContainer className="space-y-7 pb-12">
 
@@ -130,7 +147,7 @@ export default function CompanyDashboard() {
             </>
           ) : (
             <>
-              <h1 className="font-display text-[1.75rem] font-bold tracking-tight text-stone-900 md:text-[2rem]">
+              <h1 className="text-[1.75rem] font-normal tracking-tight text-stone-900 md:text-[2rem]">
                 {getGreeting()}, {firstName}!
               </h1>
               <p className="mt-1 text-sm text-stone-400">
@@ -142,14 +159,14 @@ export default function CompanyDashboard() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            className="flex items-center gap-1.5 rounded-full border border-stone-200 px-4 py-2 text-sm font-normal text-stone-600 transition-colors hover:bg-stone-50"
+            className="flex items-center gap-1.5  border border-stone-200 bg-white px-4 py-2 text-sm font-normal text-stone-600 transition-colors hover:bg-stone-50"
           >
             Last Month
             <ChevronDown className="h-3.5 w-3.5 text-stone-400" />
           </button>
           <button
             type="button"
-            className="flex items-center gap-1.5 rounded-full bg-fundex-gold px-5 py-2 text-sm font-semibold text-fundex-forest shadow-sm transition-colors hover:bg-fundex-gold/85"
+            className="flex items-center gap-1.5  bg-fundex-gold px-5 py-2 text-sm font-medium text-fundex-forest shadow-sm transition-colors hover:bg-fundex-gold/85"
           >
             <Download className="h-4 w-4" />
             Export
@@ -159,7 +176,7 @@ export default function CompanyDashboard() {
 
       {/* ── Row 2: KPI Stats ── */}
       <div>
-      {loading || !stats ? (
+      {loading ? (
         <div className="grid grid-cols-1 items-end gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <div className="py-2">
             <Skeleton className="h-4 w-20" />
@@ -167,7 +184,7 @@ export default function CompanyDashboard() {
             <Skeleton className="mt-2 h-4 w-32" />
           </div>
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-2xl border border-stone-100 bg-white p-5 shadow-sm">
+            <div key={i} className=" border border-stone-100 bg-white p-5 shadow-sm">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="mt-3 h-8 w-28" />
               <Skeleton className="mt-2 h-4 w-full" />
@@ -178,111 +195,73 @@ export default function CompanyDashboard() {
         <div className="grid grid-cols-1 items-end gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <CompanyStatCard
             label="Total AUM"
-            value={displayCurrency(stats.totalAUM)}
-            change={stats.totalAUM > 0 ? `+${((stats.fundedAllocations / Math.max(stats.fundedAllocations + stats.pendingAllocations, 1)) * 100).toFixed(1)}%` : undefined}
+            value={displayCurrency(displayStats.totalAUM)}
+            change={isDummy ? DUMMY_GROWTH.totalAUM : `+${((displayStats.fundedAllocations / Math.max(displayStats.fundedAllocations + displayStats.pendingAllocations, 1)) * 100).toFixed(1)}%`}
             changeLabel="from last month"
             featured
           />
           <CompanyStatCard
-            label="Active Deals"
-            value={String(stats.activeDeals)}
+            label="Allocated Capital"
+            value={displayCurrency(displayStats.allocatedCapital)}
             sublabel="Growth Rate"
-            change={stats.activeDeals > 0 ? `+${((stats.activeDeals / Math.max(stats.totalDeals, 1)) * 100).toFixed(1)}%` : undefined}
+            change={isDummy ? DUMMY_GROWTH.allocatedCapital : `+${((displayStats.activeDeals / Math.max(displayStats.totalDeals, 1)) * 100).toFixed(1)}%`}
           />
           <CompanyStatCard
             label="Active Investors"
-            value={String(stats.activeInvestors)}
+            value={String(displayStats.activeInvestors)}
             sublabel="Growth Rate"
-            change={stats.activeInvestors > 0 ? `+${((stats.activeInvestors / Math.max(stats.totalInvestors, 1)) * 100).toFixed(1)}%` : undefined}
+            change={isDummy ? DUMMY_GROWTH.activeInvestors : `+${((displayStats.activeInvestors / Math.max(displayStats.totalInvestors, 1)) * 100).toFixed(1)}%`}
           />
           <CompanyStatCard
-            label="Allocated Capital"
-            value={displayCurrency(stats.allocatedCapital)}
+            label="Monthly Returns"
+            value={displayCurrency(displayStats.monthlyInterest)}
             sublabel="Growth Rate"
-            change={stats.allocatedCapital > 0 ? `+${((stats.monthlyInterest / Math.max(stats.allocatedCapital, 1)) * 100).toFixed(1)}%` : undefined}
+            change={isDummy ? DUMMY_GROWTH.monthlyReturns : `+${((displayStats.monthlyInterest / Math.max(displayStats.allocatedCapital, 1)) * 100).toFixed(1)}%`}
           />
         </div>
       )}
       </div>
 
-      {/* ── Row 3: Chart + Company Overview ── */}
+      {/* ── Row 3: Chart + Financial Overview ── */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_380px]">
-        {loading || !flowData ? (
-          <div className="rounded-2xl border border-stone-100 bg-white p-7 shadow-sm">
+        {loading ? (
+          <div className=" border border-stone-100 bg-white p-7 shadow-sm">
             <Skeleton className="h-5 w-48" />
             <Skeleton className="mt-4 h-9 w-36" />
-            <Skeleton className="mt-6 h-[280px] w-full rounded-lg" />
+            <Skeleton className="mt-6 h-[280px] w-full " />
           </div>
         ) : (
-          <CapitalFlowChart data={flowData} />
+          <CapitalFlowChart data={displayFlow} />
         )}
 
-        {loading || !company || !stats ? (
-          <div className="rounded-2xl border border-stone-100 bg-white shadow-sm">
+        {loading ? (
+          <div className=" border border-stone-100 bg-white shadow-sm">
             <div className="p-6">
               <Skeleton className="h-5 w-24" />
-              <Skeleton className="mt-4 h-14 w-full rounded-xl" />
-              <Skeleton className="mx-auto mt-6 h-[160px] w-[180px] rounded-full" />
+              <Skeleton className="mt-4 h-14 w-full " />
+              <Skeleton className="mx-auto mt-6 h-[160px] w-[180px] " />
             </div>
             <div className="border-t border-stone-100 p-6">
               <div className="grid grid-cols-2 gap-4">
-                <Skeleton className="h-14 w-full rounded-lg" />
-                <Skeleton className="h-14 w-full rounded-lg" />
+                <Skeleton className="h-14 w-full " />
+                <Skeleton className="h-14 w-full " />
               </div>
             </div>
           </div>
         ) : (
           <CompanyOverview
-            company={company}
-            stats={stats}
-            memberCount={memberCount}
+            company={company || { id: '', name: 'Demo Company', company_code: 'DEMO01', admin_id: '', created_at: '' }}
+            stats={displayStats}
+            memberCount={memberCount || 3}
           />
         )}
       </div>
 
-      {/* ── Row 4: Activity Table + Broadcasts ── */}
+      {/* ── Row 4: Transaction History + Broadcasts ── */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_380px]">
-        {company ? (
-          <ActivityTable companyId={company.id} />
-        ) : (
-          <div className="rounded-2xl border border-stone-100 bg-white shadow-sm">
-            <div className="border-b border-stone-100 px-6 py-5">
-              <Skeleton className="h-5 w-36" />
-            </div>
-            <div className="space-y-0 px-6">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 border-b border-stone-50 py-4">
-                  <Skeleton className="h-4 w-4 rounded" />
-                  <Skeleton className="h-9 w-9 rounded-lg" />
-                  <Skeleton className="h-4 flex-1" />
-                  <Skeleton className="h-5 w-16 rounded-full" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <ActivityTable companyId={company?.id || 'demo'} />
 
-        {company ? (
-          <BroadcastPreview companyId={company.id} />
-        ) : (
-          <div className="rounded-2xl border border-stone-100 bg-white shadow-sm">
-            <div className="border-b border-stone-100 px-6 py-5">
-              <Skeleton className="h-5 w-28" />
-            </div>
-            <div className="space-y-1 px-6 py-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-start gap-3 py-3">
-                  <Skeleton className="h-9 w-9 rounded-lg" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-1/2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <BroadcastPreview companyId={company?.id || 'demo'} />
       </div>
     </StaggerContainer>
   );

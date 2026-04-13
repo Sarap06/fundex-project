@@ -140,37 +140,37 @@ export default function AllocationsPage() {
           totalAllocations: {
             label: 'Total Allocations',
             value: '$0.00M',
-            icon: <DollarSign className="text-blue-600" size={24} />,
+            icon: <DollarSign className="text-stone-400" size={24} />,
           },
           capitalReceived: {
             label: 'Capital Received',
             value: '$0.00M',
             subtext: 'Funds in bank',
-            color: 'text-primary',
-            icon: <CheckCircle2 className="text-primary" size={24} />,
+            color: 'text-stone-900',
+            icon: <CheckCircle2 className="text-stone-400" size={24} />,
           },
           pendingFunding: {
             label: 'Pending Funding',
             value: '$0.00M',
-            color: 'text-amber-600',
-            icon: <Clock className="text-amber-600" size={24} />,
+            color: 'text-stone-900',
+            icon: <Clock className="text-stone-400" size={24} />,
           },
           inReview: {
             label: 'In Review',
             value: '$0.00M',
-            color: 'text-blue-600',
-            icon: <AlertCircle className="text-blue-600" size={24} />,
+            color: 'text-stone-900',
+            icon: <AlertCircle className="text-stone-400" size={24} />,
           },
           monthlyInterest: {
             label: 'Monthly Interest Owed',
             value: '$0.00K',
-            color: 'text-purple-600',
-            icon: <TrendingUp className="text-purple-600" size={24} />,
+            color: 'text-stone-900',
+            icon: <TrendingUp className="text-stone-400" size={24} />,
           },
           nextPayout: {
             label: 'Next Payout Date',
             value: '-',
-            icon: <Calendar className="text-blue-600" size={24} />,
+            icon: <Calendar className="text-stone-400" size={24} />,
           },
         });
         return;
@@ -222,37 +222,37 @@ export default function AllocationsPage() {
         totalAllocations: {
           label: 'Total Allocations',
           value: `$${(totalAllocations / 1000000).toFixed(2)}M`,
-          icon: <DollarSign className="text-blue-600" size={24} />,
+          icon: <DollarSign className="text-stone-400" size={24} />,
         },
         capitalReceived: {
           label: 'Capital Received',
           value: `$${(capitalReceived / 1000000).toFixed(2)}M`,
           subtext: 'Funds in bank',
-          color: 'text-primary',
-          icon: <CheckCircle2 className="text-primary" size={24} />,
+          color: 'text-stone-900',
+          icon: <CheckCircle2 className="text-stone-400" size={24} />,
         },
         pendingFunding: {
           label: 'Pending Funding',
           value: `$${(pendingFunding / 1000000).toFixed(2)}M`,
-          color: 'text-amber-600',
-          icon: <Clock className="text-amber-600" size={24} />,
+          color: 'text-stone-900',
+          icon: <Clock className="text-stone-400" size={24} />,
         },
         inReview: {
           label: 'In Review',
           value: `$${(inReview / 1000000).toFixed(2)}M`,
-          color: 'text-blue-600',
-          icon: <AlertCircle className="text-blue-600" size={24} />,
+          color: 'text-stone-900',
+          icon: <AlertCircle className="text-stone-400" size={24} />,
         },
         monthlyInterest: {
           label: 'Monthly Interest Owed',
           value: `$${(monthlyInterest / 1000).toFixed(1)}K`,
-          color: 'text-purple-600',
-          icon: <TrendingUp className="text-purple-600" size={24} />,
+          color: 'text-stone-900',
+          icon: <TrendingUp className="text-stone-400" size={24} />,
         },
         nextPayout: {
           label: 'Next Payout Date',
           value: 'Aug 1, 2026',
-          icon: <Calendar className="text-blue-600" size={24} />,
+          icon: <Calendar className="text-stone-400" size={24} />,
         },
       });
     } catch (error) {
@@ -264,11 +264,11 @@ export default function AllocationsPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'Funded':
-        return <CheckCircle2 className="size-4 text-primary" />;
+        return <CheckCircle2 className="size-4 text-stone-500" />;
       case 'Pending':
-        return <Clock className="size-4 text-amber-600" />;
+        return <Clock className="size-4 text-stone-500" />;
       case 'Review':
-        return <AlertCircle className="size-4 text-blue-600" />;
+        return <AlertCircle className="size-4 text-stone-500" />;
       default:
         return null;
     }
@@ -405,7 +405,7 @@ export default function AllocationsPage() {
 
   return (
     <>
-      <main className="px-6 py-6 md:px-8 md:py-8">
+      <div>
         <StaggerContainer className="space-y-6">
           {/* Page Header */}
           <StaggerItem>
@@ -415,7 +415,7 @@ export default function AllocationsPage() {
               actions={
                 <button
                   onClick={() => setIsAddAllocationOpen(true)}
-                  className="fdx-btn-primary flex items-center gap-2 px-4 py-2 rounded-lg font-medium"
+                  className="fdx-btn-primary flex items-center gap-2 px-4 py-2  font-medium"
                 >
                   <Plus size={18} />
                   Add Allocation
@@ -432,13 +432,13 @@ export default function AllocationsPage() {
                   <div className="fdx-card-glow" />
                   <div className="flex items-start justify-between relative">
                     <div>
-                      <p className="text-xs font-semibold text-stone-500 uppercase">{stat.label}</p>
-                      <p className={`text-xl md:text-2xl font-display font-semibold mt-2 ${stat.color || 'text-stone-900'}`}>
+                      <p className="text-xs font-medium text-stone-500 uppercase">{stat.label}</p>
+                      <p className={`text-xl md:text-2xl font-semibold mt-2 ${stat.color || 'text-stone-900'}`}>
                         {stat.value}
                       </p>
                       {stat.subtext && <p className="text-xs text-stone-500 mt-1">{stat.subtext}</p>}
                     </div>
-                    <div className="p-2 bg-stone-50/50 rounded-lg">{stat.icon}</div>
+                    <div className="p-2 bg-stone-50/50 ">{stat.icon}</div>
                   </div>
                 </div>
               ))}
@@ -483,45 +483,45 @@ export default function AllocationsPage() {
                 <table className="w-full text-sm">
                   <thead className="fdx-table-header">
                     <tr>
-                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Allocation ID</th>
-                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Investor</th>
-                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Deal</th>
-                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Amount</th>
-                      <th className="px-6 py-3 text-left font-semibold text-stone-900">% of Deal</th>
-                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Monthly Interest</th>
-                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Payment Progress</th>
-                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Status</th>
-                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Commit Date</th>
-                      <th className="px-6 py-3 text-left font-semibold text-stone-900">Funded Date</th>
+                      <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Allocation ID</th>
+                      <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Investor</th>
+                      <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Deal</th>
+                      <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Amount</th>
+                      <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">% of Deal</th>
+                      <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Monthly Interest</th>
+                      <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Payment Progress</th>
+                      <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Status</th>
+                      <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Commit Date</th>
+                      <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Funded Date</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100">
                     {filteredAllocations.map((allocation) => (
                       <tr key={allocation.id} className="fdx-table-row">
                         <td className="px-6 py-4">
-                          <span className="text-stone-500 font-medium">{allocation.id}</span>
+                          <span className="text-stone-500 font-normal">{allocation.id}</span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="font-medium text-stone-900">{allocation.investor_name}</span>
+                          <span className="font-normal text-stone-900">{allocation.investor_name}</span>
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-stone-900">{allocation.deal_name}</span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="font-semibold text-stone-900">${(allocation.amount / 1000000).toFixed(2)}M</span>
+                          <span className="font-medium text-stone-900">${(allocation.amount / 1000000).toFixed(2)}M</span>
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-stone-500">{allocation.percentage.toFixed(1)}%</span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="font-semibold text-purple-600">${(allocation.monthly_interest / 1000).toFixed(1)}K</span>
+                          <span className="font-medium text-stone-900">${(allocation.monthly_interest / 1000).toFixed(1)}K</span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="space-y-1 min-w-[120px]">
-                            <div className="text-sm font-semibold text-stone-900">
+                            <div className="text-sm font-medium text-stone-900">
                               {allocation.payments_completed} / {allocation.total_payments}
                             </div>
-                            <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+                            <div className="w-full h-2 bg-stone-100 overflow-hidden">
                               <div
                                 className={`h-full transition-all ${getPaymentProgressColor(allocation.payment_status)}`}
                                 style={{ width: `${(allocation.payments_completed / allocation.total_payments) * 100}%` }}
@@ -532,7 +532,7 @@ export default function AllocationsPage() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             {getStatusIcon(allocation.status)}
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeStyles(allocation.status)}`}>
+                            <span className={`px-3 py-1 text-xs font-medium ${getStatusBadgeStyles(allocation.status)}`}>
                               {allocation.status.charAt(0).toUpperCase() + allocation.status.slice(1)}
                             </span>
                           </div>
@@ -557,7 +557,7 @@ export default function AllocationsPage() {
             </div>
           </StaggerItem>
         </StaggerContainer>
-      </main>
+      </div>
 
       <AddAllocationModal
         isOpen={isAddAllocationOpen}

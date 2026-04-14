@@ -462,13 +462,17 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
   const canProceedToNext = () => {
     switch (currentStep) {
       case 1:
-        return formData.name && formData.type && formData.borrowerName && formData.propertyAddress && formData.city && formData.state;
+        // Keep creation unblocked: only require a deal name to proceed.
+        return !!formData.name;
       case 2:
-        return formData.selectedInvestors.length > 0;
+        // Investor selection is optional; allocations can be added later.
+        return true;
       case 3:
-        return formData.targetAmount && formData.minimumInvestment && formData.interestRate && formData.termLengthMonths;
+        // Financial terms are optional at creation time.
+        return true;
       case 4:
-        return formData.collateralType && formData.collateralAddress && formData.estimatedPropertyValue;
+        // Collateral details are optional at creation time.
+        return true;
       case 5:
         return true;
       case 6:

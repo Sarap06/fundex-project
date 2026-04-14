@@ -43,6 +43,8 @@ interface Sponsor {
 export default function InvestorsPage() {
   const router = useRouter();
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [companyCode, setCompanyCode] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [isAddInvestorDrawerOpen, setIsAddInvestorDrawerOpen] = useState(false);
   const [selectedSponsor, setSelectedSponsor] = useState<string>('internal');
@@ -55,6 +57,7 @@ export default function InvestorsPage() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sendInviteEmail, setSendInviteEmail] = useState(true);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -76,6 +79,21 @@ export default function InvestorsPage() {
         // Load company ID
         const cId = await getCurrentUserCompanyId();
         setCompanyId(cId);
+
+        if (cId) {
+          const { data: companyData, error: companyError } = await supabase
+            .from('companies')
+            .select('company_code, name')
+            .eq('id', cId)
+            .single();
+
+          if (companyError) {
+            console.error('Error fetching company:', companyError);
+          } else {
+            setCompanyCode(companyData?.company_code ?? null);
+            setCompanyName(companyData?.name ?? null);
+          }
+        }
 
         const { data: sponsorsData } = await supabase.from('sponsors').select('*');
         setSponsors(sponsorsData || []);
@@ -206,6 +224,42 @@ export default function InvestorsPage() {
           });
         } catch (err) {
           console.error('Error logging investor creation activity:', err);
+        }
+
+        if (sendInviteEmail) {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (!session) {
+              alert('Investor saved, but your session expired before sending the invitation email. Please login again and resend.');
+            } else if (!companyId || !companyCode) {
+              alert('Investor saved, but company details were unavailable to send the invitation email.');
+            } else {
+              const response = await fetch('/api/invites/send', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                  email: newInvestor.email,
+                  companyId,
+                  companyCode,
+                  companyName: companyName ?? 'Your Company',
+                  role: 'investor',
+                }),
+              });
+
+              if (!response.ok) {
+                const result = await response.json().catch(() => null);
+                const message = result?.error || 'Failed to send invitation email.';
+                alert(`Investor saved, but invitation email failed: ${message}`);
+              }
+            }
+          } catch (err) {
+            console.error('Error sending invitation email:', err);
+            alert('Investor saved, but invitation email failed to send.');
+          }
         }
       }
 
@@ -406,6 +460,23 @@ export default function InvestorsPage() {
                 <div><Label htmlFor="phone">Phone Number</Label><input id="phone" type="tel" placeholder="(555) 123-4567" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="fdx-input mt-1.5" /></div>
               </div>
 
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Invitation Email</h3>
+                <label className="flex items-start gap-3 text-sm text-stone-700">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 size-4 border-stone-300"
+                    checked={sendInviteEmail}
+                    onChange={(e) => setSendInviteEmail(e.target.checked)}
+                    disabled={isSubmitting}
+                  />
+                  <span>
+                    Send invitation email so they can complete signup.
+                    <span className="block text-xs text-stone-400 mt-1">This uses the same email template as the team invite flow.</span>
+                  </span>
+                </label>
+              </div>
+
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Investor Status</h3>
                 <div>
@@ -456,16 +527,23 @@ export default function InvestorsPage() {
                   ))}
                 </div>
               </div>
-            </form>
 
-            <div className="sticky bottom-0 bg-white border-t border-stone-100 p-6">
-              <div className="flex gap-3">
-                <button className="fdx-btn-secondary flex-1" onClick={() => setIsAddInvestorDrawerOpen(false)}>Cancel</button>
-                <button className="fdx-btn-primary flex-1" onClick={handleAddInvestor} disabled={isSubmitting}>
-                  {isSubmitting ? <><Loader className="size-4 mr-2 animate-spin" />Creating...</> : <><Plus className="size-4 mr-2" />Create Investor</>}
-                </button>
+              <div className="sticky bottom-0 bg-white border-t border-stone-100 p-6 -mx-6">
+                <div className="flex gap-3 px-6">
+                  <button
+                    type="button"
+                    className="fdx-btn-secondary flex-1"
+                    onClick={() => setIsAddInvestorDrawerOpen(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="fdx-btn-primary flex-1" disabled={isSubmitting}>
+                    {isSubmitting ? <><Loader className="size-4 mr-2 animate-spin" />Creating...</> : <><Plus className="size-4 mr-2" />Create Investor</>}
+                  </button>
+                </div>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}

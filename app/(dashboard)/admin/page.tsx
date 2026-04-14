@@ -59,7 +59,7 @@ export default function AdminDashboard() {
   const [pendingRequests, setPendingRequests] = useState<Array<{ id: string; full_name: string; email: string; status: string; user_id: string }>>([]);
   const [selectedRoles, setSelectedRoles] = useState<Record<string, string>>({});
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'investor' | 'partner'>('investor');
+  const [inviteRole, setInviteRole] = useState<'investor' | 'partner'>('partner');
   const [invitingEmail, setInvitingEmail] = useState('');
   const [inviteMessage, setInviteMessage] = useState('');
   const [codeMessage, setCodeMessage] = useState('');
@@ -261,6 +261,11 @@ export default function AdminDashboard() {
   const handleSendInvite = async () => {
     if (!inviteEmail.trim()) {
       setInviteMessage('Please enter an email address');
+      return;
+    }
+
+    if (inviteRole === 'investor') {
+      setInviteMessage('Investor invitations are sent from the Investors page.');
       return;
     }
 
@@ -722,7 +727,6 @@ export default function AdminDashboard() {
                       className="w-36 shrink-0 border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
                       disabled={invitingEmail.length > 0}
                     >
-                      <option value="investor">Investor</option>
                       <option value="partner">Team Member</option>
                     </select>
                     <button

@@ -14,6 +14,7 @@ const ADMIN_NAV_LINKS = [
   { label: 'Allocations', href: '/admin/allocations' },
   { label: 'Documents', href: '/admin/documents' },
   { label: 'Broadcast', href: '/admin/broadcast' },
+  { label: 'Performance', href: '/admin/performance' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

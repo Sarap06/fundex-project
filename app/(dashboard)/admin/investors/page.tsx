@@ -30,6 +30,7 @@ interface Investor {
   average_return?: number;
   number_of_investments: number;
   onboarded_date: string;
+  onboarded_date_raw: string;
   tags?: string[];
   notes?: string;
 }
@@ -58,6 +59,33 @@ export default function InvestorsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sendInviteEmail, setSendInviteEmail] = useState(true);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    sortBy: 'newest',
+    sponsors: [] as string[],
+    investmentActivity: [] as string[],
+    avgReturnMin: '', avgReturnMax: '', avgReturnQuick: '',
+    totalInvestedMin: '', totalInvestedMax: '', totalInvestedQuick: '',
+    onboardedPreset: '', onboardedFrom: '', onboardedTo: '',
+    needsAttention: [] as string[],
+  });
+
+  const setFilter = <K extends keyof typeof filters>(key: K, val: typeof filters[K]) =>
+    setFilters(prev => ({ ...prev, [key]: val }));
+
+  const toggleArr = (key: 'sponsors' | 'investmentActivity' | 'needsAttention', val: string) =>
+    setFilters(prev => {
+      const arr = prev[key] as string[];
+      return { ...prev, [key]: arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val] };
+    });
+
+  const clearFilters = () => setFilters({
+    sortBy: 'newest', sponsors: [], investmentActivity: [],
+    avgReturnMin: '', avgReturnMax: '', avgReturnQuick: '',
+    totalInvestedMin: '', totalInvestedMax: '', totalInvestedQuick: '',
+    onboardedPreset: '', onboardedFrom: '', onboardedTo: '',
+    needsAttention: [],
+  });
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -122,6 +150,7 @@ export default function InvestorsPage() {
             average_return: inv.average_return,
             number_of_investments: inv.number_of_investments || 0,
             onboarded_date: new Date(inv.onboarded_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+            onboarded_date_raw: inv.onboarded_date ? inv.onboarded_date.slice(0, 10) : '',
             tags: inv.tags || [],
             notes: inv.notes,
           }));
@@ -199,6 +228,7 @@ export default function InvestorsPage() {
           average_return: newInvestor.average_return,
           number_of_investments: newInvestor.number_of_investments || 0,
           onboarded_date: new Date(newInvestor.onboarded_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+          onboarded_date_raw: newInvestor.onboarded_date ? String(newInvestor.onboarded_date).slice(0, 10) : '',
           tags: newInvestor.tags || [],
           notes: newInvestor.notes,
         };
@@ -277,11 +307,97 @@ export default function InvestorsPage() {
     }
   };
 
-  const filteredInvestors = investors.filter(inv => {
-    const matchesStatus = statusFilter === 'all' || inv.status.toLowerCase() === statusFilter.toLowerCase();
-    const matchesSearch = inv.full_name.toLowerCase().includes(searchQuery.toLowerCase()) || inv.email.toLowerCase().includes(searchQuery.toLowerCase()) || inv.investor_id.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
+  const activeFilterCount =
+    (filters.sortBy !== 'newest' ? 1 : 0) +
+    filters.sponsors.length +
+    filters.investmentActivity.length +
+    (filters.avgReturnMin || filters.avgReturnMax || filters.avgReturnQuick ? 1 : 0) +
+    (filters.totalInvestedMin || filters.totalInvestedMax || filters.totalInvestedQuick ? 1 : 0) +
+    (filters.onboardedPreset || filters.onboardedFrom || filters.onboardedTo ? 1 : 0) +
+    filters.needsAttention.length;
+
+  const uniqueSponsors = [...new Set(investors.map(i => i.sponsor).filter(Boolean))] as string[];
+
+  const filteredInvestors = (() => {
+    let result = investors.filter(inv => {
+      const matchesStatus = statusFilter === 'all' || inv.status.toLowerCase() === statusFilter.toLowerCase();
+      const matchesSearch =
+        inv.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        inv.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        inv.investor_id.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSponsor =
+        filters.sponsors.length === 0 ||
+        filters.sponsors.some(s => s === '__internal__' ? !inv.sponsor : inv.sponsor === s);
+      const matchesActivity =
+        filters.investmentActivity.length === 0 ||
+        filters.investmentActivity.some(a => {
+          if (a === 'none') return inv.number_of_investments === 0;
+          if (a === '1-3') return inv.number_of_investments >= 1 && inv.number_of_investments <= 3;
+          if (a === '4-7') return inv.number_of_investments >= 4 && inv.number_of_investments <= 7;
+          if (a === '8+') return inv.number_of_investments >= 8;
+          return false;
+        });
+
+      let matchesReturn = true;
+      if (filters.avgReturnQuick) {
+        const r = inv.average_return ?? 0;
+        if (filters.avgReturnQuick === 'under8') matchesReturn = r < 8;
+        if (filters.avgReturnQuick === '8-12') matchesReturn = r >= 8 && r <= 12;
+        if (filters.avgReturnQuick === '12-15') matchesReturn = r > 12 && r <= 15;
+        if (filters.avgReturnQuick === '15+') matchesReturn = r > 15;
+      } else {
+        if (filters.avgReturnMin) matchesReturn = (inv.average_return ?? 0) >= parseFloat(filters.avgReturnMin);
+        if (filters.avgReturnMax) matchesReturn = matchesReturn && (inv.average_return ?? 0) <= parseFloat(filters.avgReturnMax);
+      }
+
+      let matchesInvested = true;
+      if (filters.totalInvestedQuick) {
+        const t = inv.total_invested;
+        if (filters.totalInvestedQuick === 'under100k') matchesInvested = t < 100000;
+        if (filters.totalInvestedQuick === '100k-500k') matchesInvested = t >= 100000 && t <= 500000;
+        if (filters.totalInvestedQuick === '500k-1m') matchesInvested = t >= 500000 && t <= 1000000;
+        if (filters.totalInvestedQuick === '1m+') matchesInvested = t > 1000000;
+      } else {
+        if (filters.totalInvestedMin) matchesInvested = inv.total_invested >= parseFloat(filters.totalInvestedMin);
+        if (filters.totalInvestedMax) matchesInvested = matchesInvested && inv.total_invested <= parseFloat(filters.totalInvestedMax);
+      }
+
+      let matchesDate = true;
+      const today = new Date().toISOString().slice(0, 10);
+      if (filters.onboardedPreset === 'last30') {
+        const d = new Date(); d.setDate(d.getDate() - 30);
+        matchesDate = (inv.onboarded_date_raw ?? '') >= d.toISOString().slice(0, 10);
+      } else if (filters.onboardedPreset === 'last90') {
+        const d = new Date(); d.setDate(d.getDate() - 90);
+        matchesDate = (inv.onboarded_date_raw ?? '') >= d.toISOString().slice(0, 10);
+      } else if (filters.onboardedPreset === 'thisyear') {
+        matchesDate = (inv.onboarded_date_raw ?? '').startsWith(new Date().getFullYear().toString());
+      } else {
+        if (filters.onboardedFrom) matchesDate = (inv.onboarded_date_raw ?? '') >= filters.onboardedFrom;
+        if (filters.onboardedTo) matchesDate = matchesDate && (inv.onboarded_date_raw ?? '') <= filters.onboardedTo;
+      }
+
+      let matchesAttention = true;
+      if (filters.needsAttention.length > 0) {
+        matchesAttention = filters.needsAttention.some(a => {
+          if (a === 'onboarding_incomplete') return inv.status === 'Onboarding' || inv.status === 'Pending';
+          if (a === 'no_investments') return inv.number_of_investments === 0;
+          return false;
+        });
+      }
+
+      return matchesStatus && matchesSearch && matchesSponsor && matchesActivity &&
+             matchesReturn && matchesInvested && matchesDate && matchesAttention;
+    });
+
+    if (filters.sortBy === 'highest_invested') result = [...result].sort((a, b) => b.total_invested - a.total_invested);
+    else if (filters.sortBy === 'lowest_invested') result = [...result].sort((a, b) => a.total_invested - b.total_invested);
+    else if (filters.sortBy === 'name_az') result = [...result].sort((a, b) => a.full_name.localeCompare(b.full_name));
+    else if (filters.sortBy === 'name_za') result = [...result].sort((a, b) => b.full_name.localeCompare(a.full_name));
+    else if (filters.sortBy === 'oldest') result = [...result].sort((a, b) => (a.onboarded_date_raw ?? '').localeCompare(b.onboarded_date_raw ?? ''));
+
+    return result;
+  })();
 
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('');
 
@@ -357,7 +473,18 @@ export default function InvestorsPage() {
                   <input placeholder="Search investors by name or email..." className="fdx-input pl-10 h-11" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                 </div>
                 <div className="flex gap-2">
-                  <button className="fdx-btn-secondary gap-2"><Filter className="size-4" />Filter</button>
+                  <button
+                    className={`fdx-btn-secondary gap-2 relative ${isFilterDrawerOpen ? 'bg-fundex-gold/10 border-fundex-gold/40 text-fundex-forest' : ''}`}
+                    onClick={() => setIsFilterDrawerOpen(true)}
+                  >
+                    <Filter className="size-4" />
+                    Filter
+                    {activeFilterCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-fundex-forest text-white text-[10px] font-bold rounded-full size-4 flex items-center justify-center">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </button>
                   <button className="fdx-btn-primary gap-2" onClick={() => setIsAddInvestorDrawerOpen(true)}><Plus className="size-4" />Add Investor</button>
                 </div>
               </div>
@@ -428,7 +555,7 @@ export default function InvestorsPage() {
                       )) : (
                         <tr>
                           <td colSpan={9} className="py-8 text-center">
-                            <p className="text-stone-500">No investors found. {searchQuery ? 'Try adjusting your search.' : 'Add your first investor to get started.'}</p>
+                            <p className="text-stone-500">No investors found. {(searchQuery || activeFilterCount > 0) ? 'Try adjusting your search or filters.' : 'Add your first investor to get started.'}</p>
                           </td>
                         </tr>
                       )}
@@ -544,6 +671,275 @@ export default function InvestorsPage() {
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isFilterDrawerOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setIsFilterDrawerOpen(false)} />
+          <div className="absolute right-0 top-0 bottom-0 w-full max-w-[420px] bg-white shadow-xl flex flex-col">
+            {/* Header */}
+            <div className="sticky top-0 border-b border-stone-100 bg-white px-6 py-5 z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-xl fdx-section-title">Filter Investors</h2>
+                  {activeFilterCount > 0 && (
+                    <span className="bg-fundex-forest text-white text-xs font-bold rounded-full px-2 py-0.5">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </div>
+                <button onClick={() => setIsFilterDrawerOpen(false)} className="p-2 hover:bg-stone-50 transition-colors">
+                  <X className="size-5 text-stone-500" />
+                </button>
+              </div>
+              <p className="text-sm text-stone-400 mt-1">Refine your investor list</p>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+
+              {/* Sort By */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Sort By</h3>
+                <Select value={filters.sortBy} onValueChange={v => setFilter('sortBy', v)}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="oldest">Oldest First</SelectItem>
+                    <SelectItem value="highest_invested">Highest Invested</SelectItem>
+                    <SelectItem value="lowest_invested">Lowest Invested</SelectItem>
+                    <SelectItem value="name_az">Name A → Z</SelectItem>
+                    <SelectItem value="name_za">Name Z → A</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Sponsor / Source */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Sponsor / Source</h3>
+                <div className="space-y-2">
+                  {[...uniqueSponsors, '__internal__'].map(sponsor => {
+                    const label = sponsor === '__internal__' ? 'Internal' : sponsor;
+                    return (
+                      <label key={sponsor} className="flex items-center gap-2.5 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          className="size-4 border-stone-300 text-fundex-forest"
+                          checked={filters.sponsors.includes(sponsor)}
+                          onChange={() => toggleArr('sponsors', sponsor)}
+                        />
+                        <span className="text-sm text-stone-700 group-hover:text-stone-900">{label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Investment Activity */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Investment Activity</h3>
+                <div className="space-y-2">
+                  {[
+                    { val: 'none', label: 'No investments' },
+                    { val: '1-3', label: '1–3 investments' },
+                    { val: '4-7', label: '4–7 investments' },
+                    { val: '8+', label: '8+ investments' },
+                  ].map(({ val, label }) => (
+                    <label key={val} className="flex items-center gap-2.5 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        className="size-4 border-stone-300 text-fundex-forest"
+                        checked={filters.investmentActivity.includes(val)}
+                        onChange={() => toggleArr('investmentActivity', val)}
+                      />
+                      <span className="text-sm text-stone-700 group-hover:text-stone-900">{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Average Return */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Average Return</h3>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      placeholder="Min %"
+                      value={filters.avgReturnMin}
+                      onChange={e => { setFilter('avgReturnMin', e.target.value); setFilter('avgReturnQuick', ''); }}
+                      className="fdx-input text-sm"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      placeholder="Max %"
+                      value={filters.avgReturnMax}
+                      onChange={e => { setFilter('avgReturnMax', e.target.value); setFilter('avgReturnQuick', ''); }}
+                      className="fdx-input text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {[
+                    { val: 'under8', label: 'Under 8%' },
+                    { val: '8-12', label: '8%–12%' },
+                    { val: '12-15', label: '12%–15%' },
+                    { val: '15+', label: '15%+' },
+                  ].map(({ val, label }) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => {
+                        setFilter('avgReturnMin', '');
+                        setFilter('avgReturnMax', '');
+                        setFilter('avgReturnQuick', filters.avgReturnQuick === val ? '' : val);
+                      }}
+                      className={`px-3 py-1 text-xs font-medium border transition-colors ${filters.avgReturnQuick === val ? 'bg-fundex-gold/10 text-fundex-forest border-fundex-gold/40' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Total Invested */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Total Invested</h3>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      placeholder="Min $"
+                      value={filters.totalInvestedMin}
+                      onChange={e => { setFilter('totalInvestedMin', e.target.value); setFilter('totalInvestedQuick', ''); }}
+                      className="fdx-input text-sm"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      placeholder="Max $"
+                      value={filters.totalInvestedMax}
+                      onChange={e => { setFilter('totalInvestedMax', e.target.value); setFilter('totalInvestedQuick', ''); }}
+                      className="fdx-input text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {[
+                    { val: 'under100k', label: 'Under $100K' },
+                    { val: '100k-500k', label: '$100K–$500K' },
+                    { val: '500k-1m', label: '$500K–$1M' },
+                    { val: '1m+', label: '$1M+' },
+                  ].map(({ val, label }) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => {
+                        setFilter('totalInvestedMin', '');
+                        setFilter('totalInvestedMax', '');
+                        setFilter('totalInvestedQuick', filters.totalInvestedQuick === val ? '' : val);
+                      }}
+                      className={`px-3 py-1 text-xs font-medium border transition-colors ${filters.totalInvestedQuick === val ? 'bg-fundex-gold/10 text-fundex-forest border-fundex-gold/40' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Onboarded Date */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Onboarded Date</h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { val: 'last30', label: 'Last 30 days' },
+                    { val: 'last90', label: 'Last 90 days' },
+                    { val: 'thisyear', label: 'This year' },
+                  ].map(({ val, label }) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => {
+                        setFilter('onboardedFrom', '');
+                        setFilter('onboardedTo', '');
+                        setFilter('onboardedPreset', filters.onboardedPreset === val ? '' : val);
+                      }}
+                      className={`px-3 py-1 text-xs font-medium border transition-colors ${filters.onboardedPreset === val ? 'bg-fundex-gold/10 text-fundex-forest border-fundex-gold/40' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <div className="flex-1">
+                    <Label className="text-xs text-stone-500">From</Label>
+                    <input
+                      type="date"
+                      value={filters.onboardedFrom}
+                      onChange={e => { setFilter('onboardedFrom', e.target.value); setFilter('onboardedPreset', ''); }}
+                      className="fdx-input text-sm mt-1"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-xs text-stone-500">To</Label>
+                    <input
+                      type="date"
+                      value={filters.onboardedTo}
+                      onChange={e => { setFilter('onboardedTo', e.target.value); setFilter('onboardedPreset', ''); }}
+                      className="fdx-input text-sm mt-1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Needs Attention */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Needs Attention</h3>
+                <div className="space-y-2">
+                  {[
+                    { val: 'onboarding_incomplete', label: 'Onboarding incomplete' },
+                    { val: 'no_investments', label: 'No investments' },
+                  ].map(({ val, label }) => (
+                    <label key={val} className="flex items-center gap-2.5 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        className="size-4 border-stone-300 text-fundex-forest"
+                        checked={filters.needsAttention.includes(val)}
+                        onChange={() => toggleArr('needsAttention', val)}
+                      />
+                      <span className="text-sm text-stone-700 group-hover:text-stone-900">{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="sticky bottom-0 bg-white border-t border-stone-100 px-6 py-4">
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  className="fdx-btn-secondary flex-1"
+                  onClick={() => { clearFilters(); }}
+                >
+                  Clear All
+                  {activeFilterCount > 0 && <span className="ml-1 text-xs text-stone-400">({activeFilterCount})</span>}
+                </button>
+                <button
+                  type="button"
+                  className="fdx-btn-primary flex-1"
+                  onClick={() => setIsFilterDrawerOpen(false)}
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

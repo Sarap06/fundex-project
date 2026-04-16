@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import {
   Send,
@@ -15,7 +15,290 @@ import {
   Search,
   Upload,
   X,
+  MessageCircle,
 } from 'lucide-react';
+
+// ── Admin Inbox (WhatsApp-style 1-to-1 threads) ────────────────────────────
+
+interface InboxThread {
+  investorId: string;
+  investorSource: string;
+  investorName: string;
+  latestMessage: { content: string; sender_role: string; created_at: string } | null;
+  unreadCount: number;
+}
+
+interface InboxMessage {
+  id: string;
+  sender_id: string;
+  sender_role: string;
+  sender_name: string | null;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+function AdminInboxPanel({ companyId, currentUserId }: { companyId: string; currentUserId: string }) {
+  const [threads, setThreads] = useState<InboxThread[]>([]);
+  const [selectedThread, setSelectedThread] = useState<InboxThread | null>(null);
+  const [messages, setMessages] = useState<InboxMessage[]>([]);
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [loadingThreads, setLoadingThreads] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [threadSearch, setThreadSearch] = useState('');
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const getToken = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  }, []);
+
+  const loadThreads = useCallback(async () => {
+    const token = await getToken();
+    if (!token) return;
+    try {
+      const res = await fetch('/api/inbox', { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      const json = await res.json();
+      setThreads(json.threads ?? []);
+    } catch (e) {
+      console.error('[AdminInbox] loadThreads', e);
+    } finally {
+      setLoadingThreads(false);
+    }
+  }, [getToken]);
+
+  const loadMessages = useCallback(async (investorId: string) => {
+    const token = await getToken();
+    if (!token) return;
+    setLoadingMessages(true);
+    try {
+      const res = await fetch(`/api/inbox/${investorId}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      const json = await res.json();
+      setMessages(json.messages ?? []);
+      // Mark thread as read locally
+      setThreads(prev => prev.map(t => t.investorId === investorId ? { ...t, unreadCount: 0 } : t));
+    } catch (e) {
+      console.error('[AdminInbox] loadMessages', e);
+    } finally {
+      setLoadingMessages(false);
+    }
+  }, [getToken]);
+
+  // Poll for new messages every 10s when a thread is selected
+  useEffect(() => {
+    loadThreads();
+    const pollThreads = setInterval(loadThreads, 10000);
+    return () => clearInterval(pollThreads);
+  }, [loadThreads]);
+
+  useEffect(() => {
+    if (!selectedThread) return;
+    const poll = setInterval(() => loadMessages(selectedThread.investorId), 10000);
+    return () => clearInterval(poll);
+  }, [selectedThread, loadMessages]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSelectThread = (thread: InboxThread) => {
+    setSelectedThread(thread);
+    loadMessages(thread.investorId);
+  };
+
+  const handleSend = async () => {
+    if (!text.trim() || sending || !selectedThread) return;
+    const token = await getToken();
+    if (!token) return;
+    setSending(true);
+    const optimistic: InboxMessage = {
+      id: `opt-${Date.now()}`,
+      sender_id: currentUserId,
+      sender_role: 'admin',
+      sender_name: null,
+      content: text.trim(),
+      is_read: false,
+      created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, optimistic]);
+    setText('');
+    try {
+      const res = await fetch(`/api/inbox/${selectedThread.investorId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ content: optimistic.content }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setMessages(prev => prev.map(m => m.id === optimistic.id ? json.message : m));
+        // Refresh thread list to update latest message
+        loadThreads();
+      }
+    } catch (e) {
+      console.error('[AdminInbox] send error', e);
+      setMessages(prev => prev.filter(m => m.id !== optimistic.id));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const filteredThreads = threads.filter(t =>
+    t.investorName.toLowerCase().includes(threadSearch.toLowerCase())
+  );
+
+  const fmtTime = (iso: string) => {
+    const d = new Date(iso);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+    if (diffDays === 0) return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    if (diffDays === 1) return 'Yesterday';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const getInitials = (name: string) => name.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('');
+
+  if (loadingThreads) {
+    return (
+      <div className="flex items-center justify-center py-20 text-stone-400 text-sm">
+        Loading conversations...
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-[600px] border border-stone-100 mt-4">
+      {/* Thread list */}
+      <div className={`flex flex-col border-r border-stone-100 ${selectedThread ? 'hidden md:flex w-72' : 'flex w-full md:w-72'}`}>
+        <div className="p-3 border-b border-stone-100">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 text-stone-400" size={14} />
+            <input
+              placeholder="Search investors..."
+              value={threadSearch}
+              onChange={e => setThreadSearch(e.target.value)}
+              className="w-full pl-8 pr-3 py-2 text-sm border border-stone-100 bg-stone-50 focus:outline-none focus:bg-white focus:border-fundex-gold/50"
+            />
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {filteredThreads.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-stone-400 text-sm gap-2 py-12">
+              <MessageCircle size={28} className="text-stone-300" />
+              <p>{threads.length === 0 ? 'No conversations yet' : 'No results'}</p>
+            </div>
+          ) : (
+            filteredThreads.map(thread => (
+              <button
+                key={thread.investorId}
+                onClick={() => handleSelectThread(thread)}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-stone-50 transition border-b border-stone-50 ${selectedThread?.investorId === thread.investorId ? 'bg-fundex-gold/5 border-l-2 border-l-fundex-gold' : ''}`}
+              >
+                <div className="size-9 shrink-0 flex items-center justify-center bg-fundex-gold/20 text-fundex-forest text-xs font-semibold">
+                  {getInitials(thread.investorName)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-stone-900 truncate">{thread.investorName}</p>
+                    {thread.latestMessage && (
+                      <span className="text-[10px] text-stone-400 shrink-0 ml-2">{fmtTime(thread.latestMessage.created_at)}</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-stone-400 truncate mt-0.5">
+                    {thread.latestMessage
+                      ? `${thread.latestMessage.sender_role === 'investor' ? '' : 'You: '}${thread.latestMessage.content}`
+                      : 'No messages yet'}
+                  </p>
+                </div>
+                {thread.unreadCount > 0 && (
+                  <span className="shrink-0 size-4 bg-fundex-forest text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {thread.unreadCount}
+                  </span>
+                )}
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Message thread */}
+      {selectedThread ? (
+        <div className="flex flex-col flex-1 min-w-0">
+          {/* Thread header */}
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-stone-100 bg-white">
+            <button
+              onClick={() => setSelectedThread(null)}
+              className="md:hidden p-1 text-stone-400 hover:text-stone-600"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div className="size-8 flex items-center justify-center bg-fundex-gold/20 text-fundex-forest text-xs font-semibold">
+              {getInitials(selectedThread.investorName)}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-stone-900">{selectedThread.investorName}</p>
+              <p className="text-xs text-stone-400">Investor</p>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-stone-50/30">
+            {loadingMessages ? (
+              <div className="text-center text-sm text-stone-400 py-8">Loading...</div>
+            ) : messages.length === 0 ? (
+              <div className="text-center text-sm text-stone-400 py-8">No messages yet. Start the conversation.</div>
+            ) : (
+              messages.map(msg => {
+                const isAdmin = msg.sender_role === 'admin' || msg.sender_role === 'partner';
+                return (
+                  <div key={msg.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[72%] rounded-lg px-3.5 py-2.5 text-sm shadow-sm ${
+                      isAdmin
+                        ? 'bg-fundex-forest text-white'
+                        : 'bg-white border border-stone-100 text-stone-900'
+                    }`}>
+                      <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      <p className={`text-[10px] mt-1 text-right ${isAdmin ? 'text-white/60' : 'text-stone-400'}`}>
+                        {fmtTime(msg.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Send box */}
+          <div className="p-3 border-t border-stone-100 bg-white flex gap-2">
+            <input
+              className="flex-1 px-3 py-2 text-sm border border-stone-100 focus:outline-none focus:border-fundex-gold/50 bg-stone-50"
+              placeholder={`Message ${selectedThread.investorName}...`}
+              value={text}
+              onChange={e => setText(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              disabled={sending}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!text.trim() || sending}
+              className="px-3 py-2 bg-fundex-forest text-white disabled:opacity-40 hover:bg-fundex-forest/90 transition"
+            >
+              <Send size={16} />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="hidden md:flex flex-1 items-center justify-center text-stone-400 text-sm flex-col gap-2">
+          <MessageCircle size={32} className="text-stone-300" />
+          <p>Select a conversation</p>
+        </div>
+      )}
+    </div>
+  );
+}
 import { BroadcastAcknowledgmentStatus } from './broadcast-acknowledgment-status';
 import type { Deal, BroadcastUpdate, BroadcastCommunicationTimeline, BroadcastDocument } from '@/lib/types';
 
@@ -395,12 +678,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
             )}
           </div>
         ) : (
-          <div className="space-y-3 pt-6">
-            <div className="text-center py-12 bg-stone-50  border border-stone-100">
-              <AlertCircle className="mx-auto text-stone-500 mb-2" size={40} />
-              <p className="text-stone-500">Investor inbox coming soon</p>
-            </div>
-          </div>
+          <AdminInboxPanel companyId={companyId} currentUserId={userId ?? ''} />
         )}
       </div>
     );

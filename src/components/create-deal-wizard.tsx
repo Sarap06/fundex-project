@@ -623,14 +623,64 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                     </div>
                     <div>
                       <Label>State *</Label>
-                      <Input
-                        placeholder="State"
-                        name="state"
-                        value={formData.state}
-                        onChange={handleInputChange}
-                        maxLength={2}
-                        required
-                      />
+                      <Select value={formData.state} onValueChange={(value) => handleSelectChange('state', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select state" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="AL">AL — Alabama</SelectItem>
+                          <SelectItem value="AK">AK — Alaska</SelectItem>
+                          <SelectItem value="AZ">AZ — Arizona</SelectItem>
+                          <SelectItem value="AR">AR — Arkansas</SelectItem>
+                          <SelectItem value="CA">CA — California</SelectItem>
+                          <SelectItem value="CO">CO — Colorado</SelectItem>
+                          <SelectItem value="CT">CT — Connecticut</SelectItem>
+                          <SelectItem value="DE">DE — Delaware</SelectItem>
+                          <SelectItem value="DC">DC — District of Columbia</SelectItem>
+                          <SelectItem value="FL">FL — Florida</SelectItem>
+                          <SelectItem value="GA">GA — Georgia</SelectItem>
+                          <SelectItem value="HI">HI — Hawaii</SelectItem>
+                          <SelectItem value="ID">ID — Idaho</SelectItem>
+                          <SelectItem value="IL">IL — Illinois</SelectItem>
+                          <SelectItem value="IN">IN — Indiana</SelectItem>
+                          <SelectItem value="IA">IA — Iowa</SelectItem>
+                          <SelectItem value="KS">KS — Kansas</SelectItem>
+                          <SelectItem value="KY">KY — Kentucky</SelectItem>
+                          <SelectItem value="LA">LA — Louisiana</SelectItem>
+                          <SelectItem value="ME">ME — Maine</SelectItem>
+                          <SelectItem value="MD">MD — Maryland</SelectItem>
+                          <SelectItem value="MA">MA — Massachusetts</SelectItem>
+                          <SelectItem value="MI">MI — Michigan</SelectItem>
+                          <SelectItem value="MN">MN — Minnesota</SelectItem>
+                          <SelectItem value="MS">MS — Mississippi</SelectItem>
+                          <SelectItem value="MO">MO — Missouri</SelectItem>
+                          <SelectItem value="MT">MT — Montana</SelectItem>
+                          <SelectItem value="NE">NE — Nebraska</SelectItem>
+                          <SelectItem value="NV">NV — Nevada</SelectItem>
+                          <SelectItem value="NH">NH — New Hampshire</SelectItem>
+                          <SelectItem value="NJ">NJ — New Jersey</SelectItem>
+                          <SelectItem value="NM">NM — New Mexico</SelectItem>
+                          <SelectItem value="NY">NY — New York</SelectItem>
+                          <SelectItem value="NC">NC — North Carolina</SelectItem>
+                          <SelectItem value="ND">ND — North Dakota</SelectItem>
+                          <SelectItem value="OH">OH — Ohio</SelectItem>
+                          <SelectItem value="OK">OK — Oklahoma</SelectItem>
+                          <SelectItem value="OR">OR — Oregon</SelectItem>
+                          <SelectItem value="PA">PA — Pennsylvania</SelectItem>
+                          <SelectItem value="RI">RI — Rhode Island</SelectItem>
+                          <SelectItem value="SC">SC — South Carolina</SelectItem>
+                          <SelectItem value="SD">SD — South Dakota</SelectItem>
+                          <SelectItem value="TN">TN — Tennessee</SelectItem>
+                          <SelectItem value="TX">TX — Texas</SelectItem>
+                          <SelectItem value="UT">UT — Utah</SelectItem>
+                          <SelectItem value="VT">VT — Vermont</SelectItem>
+                          <SelectItem value="VA">VA — Virginia</SelectItem>
+                          <SelectItem value="WA">WA — Washington</SelectItem>
+                          <SelectItem value="WV">WV — West Virginia</SelectItem>
+                          <SelectItem value="WI">WI — Wisconsin</SelectItem>
+                          <SelectItem value="WY">WY — Wyoming</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
@@ -929,7 +979,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                 <div className="space-y-4">
                   <div>
                     <Label>Collateral Type *</Label>
-                    <Select value={formData.collateralType} onValueChange={(value) => handleSelectChange('collateralType', value)}>
+                    <Select value={formData.collateralType || undefined} onValueChange={(value) => handleSelectChange('collateralType', value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select collateral type" />
                       </SelectTrigger>
@@ -1074,7 +1124,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                 <div className="space-y-6">
                   <div>
                     <Label className="text-sm font-semibold text-foreground">Default Investor Audience</Label>
-                    <Select value={formData.defaultInvestorAudience} onValueChange={(value) => handleSelectChange('defaultInvestorAudience', value)}>
+                    <Select value={formData.defaultInvestorAudience || undefined} onValueChange={(value) => handleSelectChange('defaultInvestorAudience', value)}>
                       <SelectTrigger className="mt-2">
                         <SelectValue placeholder="Select default audience" />
                       </SelectTrigger>

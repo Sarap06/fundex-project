@@ -1,0 +1,397 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer,
+} from 'recharts';
+import {
+  DollarSign, TrendingUp, AlertTriangle, CheckCircle2,
+  Clock, Calendar, ArrowUpRight, FileWarning, Download,
+} from 'lucide-react';
+import { getSupabaseClient } from '@/lib/supabase';
+import { PageHeader } from '@/components/page-header';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function fmtM(n: number) {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
+  return `$${n.toFixed(0)}`;
+}
+
+function fmtDate(dateStr: string | null) {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// ── Types ──────────────────────────────────────────────────────────────────
+
+interface PerformanceData {
+  kpis: {
+    totalActivePrincipal: number;
+    availableCash: number;
+    monthlyInterestDue: number;
+    netSpread: number;
+    contractsAtRisk: number;
+    totalPaidYTD: number;
+    avgRate: number;
+  };
+  paymentOps: {
+    paidThisCycle: number;
+    pending: number;
+    overdue: number;
+    upcomingThisWeek: number;
+    nextPayoutDate: string | null;
+    nextPayoutAmount: number;
+    activeInvestors: number;
+  };
+  capitalFlow: { month: string; capitalIn: number; interestOut: number; principalReturned: number }[];
+  risk: { latePayments: number; missingDocuments: number; contractsNearingMaturity: number };
+  contractPerformance: {
+    id: string; dealId: string; name: string;
+    principalDeployed: number; interestRate: number; monthlyInterest: number;
+    paymentsCompleted: number; totalPayments: number;
+    nextPaymentDate: string | null; outstandingBalance: number;
+    status: string; riskLevel: string;
+  }[];
+  distributions: {
+    totalPaidYTD: number; nextDistributionDate: string | null;
+    nextDistributionAmount: number; activeInvestors: number;
+    avgPayment: number; onTimeRate: number;
+  };
+}
+
+// ── Sub-components ─────────────────────────────────────────────────────────
+
+function KpiCard({ icon, label, value, sub, highlight }: {
+  icon: React.ReactNode; label: string; value: string; sub: string; highlight?: boolean;
+}) {
+  return (
+    <div className={`fdx-card p-5 flex flex-col gap-3 ${highlight ? 'border-red-200 bg-red-50/30' : ''}`}>
+      <div className={`size-10 flex items-center justify-center ${highlight ? 'bg-red-100 text-red-600' : 'bg-fundex-gold/10 text-fundex-forest'}`}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm text-stone-500">{label}</p>
+        <p className={`text-2xl font-semibold tabular-nums mt-0.5 ${highlight ? 'text-red-600' : 'text-stone-900'}`}>{value}</p>
+        <p className="text-xs text-stone-400 mt-1">{sub}</p>
+      </div>
+    </div>
+  );
+}
+
+function PayCard({ label, count, sub, variant }: {
+  label: string; count: number; sub: string;
+  variant: 'green' | 'yellow' | 'red' | 'blue';
+}) {
+  const colors = {
+    green: 'bg-emerald-50 border-emerald-100 text-emerald-700',
+    yellow: 'bg-amber-50 border-amber-100 text-amber-700',
+    red: 'bg-red-50 border-red-100 text-red-700',
+    blue: 'bg-blue-50 border-blue-100 text-blue-700',
+  };
+  return (
+    <div className={`border p-5 flex flex-col gap-1 ${colors[variant]}`}>
+      <p className="text-sm font-medium">{label}</p>
+      <p className="text-3xl font-bold tabular-nums">{count}</p>
+      <p className="text-xs opacity-70">{sub}</p>
+    </div>
+  );
+}
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white border border-stone-100 shadow-lg p-3 text-sm">
+      <p className="font-medium text-stone-700 mb-2">{label}</p>
+      {payload.map((entry: any) => (
+        <p key={entry.name} style={{ color: entry.color }} className="tabular-nums">
+          {entry.name}: ${entry.value}M
+        </p>
+      ))}
+    </div>
+  );
+};
+
+// ── Page ───────────────────────────────────────────────────────────────────
+
+export default function PerformancePage() {
+  const [data, setData] = useState<PerformanceData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const supabase = getSupabaseClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch('/api/admin/performance', {
+          headers: session ? { Authorization: `Bearer ${session.access_token}` } : {},
+        });
+        if (!res.ok) throw new Error('Failed to load performance data');
+        setData(await res.json());
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6 px-6 py-6 md:px-8 md:py-8">
+        <Skeleton className="h-8 w-56" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-32" />)}
+        </div>
+        <Skeleton className="h-48" />
+        <Skeleton className="h-72" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="px-6 py-6 md:px-8 md:py-8">
+        <PageHeader title="Performance" subtitle="Financial command center for portfolio operations" />
+        <div className="mt-8 fdx-card p-8 text-center">
+          <AlertTriangle className="size-8 text-amber-400 mx-auto mb-3" />
+          <p className="text-stone-500">{error ?? 'No data available'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { kpis, paymentOps, capitalFlow, risk, contractPerformance, distributions } = data;
+
+  return (
+    <StaggerContainer className="space-y-8 px-6 py-6 md:px-8 md:py-8">
+
+      {/* Header */}
+      <StaggerItem>
+        <div className="flex items-center justify-between">
+          <PageHeader title="Performance" subtitle="Financial command center for portfolio operations" />
+          <button className="fdx-btn-secondary gap-2 text-sm hidden md:flex">
+            <Download className="size-4" />
+            Export Report
+          </button>
+        </div>
+      </StaggerItem>
+
+      {/* KPI Row */}
+      <StaggerItem>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <KpiCard icon={<DollarSign className="size-5" />} label="Total Active Principal" value={fmtM(kpis.totalActivePrincipal)} sub="Currently deployed" />
+          <KpiCard icon={<TrendingUp className="size-5" />} label="Available Cash" value={fmtM(kpis.availableCash)} sub="Pending capital" />
+          <KpiCard icon={<Calendar className="size-5" />} label="Monthly Interest Due" value={fmtM(kpis.monthlyInterestDue)} sub="This cycle" />
+          <KpiCard icon={<ArrowUpRight className="size-5" />} label="Net Spread" value={fmtM(kpis.netSpread)} sub={`${kpis.avgRate.toFixed(1)}% avg rate`} />
+          <KpiCard icon={<AlertTriangle className="size-5" />} label="Contracts at Risk" value={String(kpis.contractsAtRisk)} sub="Requires action" highlight={kpis.contractsAtRisk > 0} />
+          <KpiCard icon={<CheckCircle2 className="size-5" />} label="Total Paid Out YTD" value={fmtM(kpis.totalPaidYTD)} sub="To investors" />
+        </div>
+      </StaggerItem>
+
+      {/* Payment Operations + Next Payout side-by-side */}
+      <StaggerItem>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Payment Ops */}
+          <div className="lg:col-span-2 fdx-card p-6">
+            <h2 className="fdx-section-title text-base mb-1">Payment Operations</h2>
+            <p className="text-sm text-stone-400 mb-5">Current cycle payment tracking</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <PayCard label="Paid This Cycle" count={paymentOps.paidThisCycle} sub="Funded allocations" variant="green" />
+              <PayCard label="Pending" count={paymentOps.pending} sub="Awaiting funding" variant="yellow" />
+              <PayCard label="Overdue" count={paymentOps.overdue} sub="Action required" variant="red" />
+              <PayCard label="Upcoming" count={paymentOps.upcomingThisWeek} sub="Next 7 days" variant="blue" />
+            </div>
+          </div>
+
+          {/* Next Payout Batch */}
+          <div className="fdx-card p-6 flex flex-col gap-4">
+            <div>
+              <h2 className="fdx-section-title text-base mb-1">Next Payout Batch</h2>
+              <p className="text-sm text-stone-400">Scheduled investor distribution</p>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Next Payout Date</span>
+                <span className="font-medium text-stone-900">{fmtDate(paymentOps.nextPayoutDate)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Total Payout Amount</span>
+                <span className="font-medium text-stone-900">{fmtM(paymentOps.nextPayoutAmount)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Number of Investors</span>
+                <span className="font-medium text-stone-900">{paymentOps.activeInvestors}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Status</span>
+                <Badge className="bg-emerald-100 text-emerald-700 border-0 text-xs">Ready</Badge>
+              </div>
+            </div>
+            <button className="fdx-btn-primary w-full mt-auto gap-2 text-sm">
+              <CheckCircle2 className="size-4" />
+              Execute Payout Batch
+            </button>
+          </div>
+        </div>
+      </StaggerItem>
+
+      {/* Capital Flow Chart */}
+      <StaggerItem>
+        <div className="fdx-card p-6">
+          <h2 className="fdx-section-title text-base mb-1">Capital Flow</h2>
+          <p className="text-sm text-stone-400 mb-6">Monthly capital movement (in millions)</p>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={capitalFlow} barGap={4} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f4" />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#78716c' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#78716c' }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}M`} width={48} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 12, color: '#78716c' }} />
+                <Bar dataKey="capitalIn" name="Capital In (new allocations)" fill="#427A43" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="interestOut" name="Interest Out (payouts)" fill="#C0B87A" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="principalReturned" name="Principal Returned" fill="#d6d3d1" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </StaggerItem>
+
+      {/* Risk + Distributions side-by-side */}
+      <StaggerItem>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* Portfolio Risk */}
+          <div className="fdx-card p-6">
+            <h2 className="fdx-section-title text-base mb-1">Portfolio Risk & Exceptions</h2>
+            <p className="text-sm text-stone-400 mb-5">Active alerts and operational issues</p>
+            <div className="space-y-3">
+              {[
+                { label: 'Late Payments', desc: 'Requires immediate action', count: risk.latePayments, color: 'text-red-600 bg-red-50' },
+                { label: 'Missing Documents', desc: 'Follow up required', count: risk.missingDocuments, color: 'text-amber-600 bg-amber-50' },
+                { label: 'Contracts Nearing Maturity', desc: 'Within 90 days', count: risk.contractsNearingMaturity, color: 'text-blue-600 bg-blue-50' },
+              ].map(({ label, desc, count, color }) => (
+                <div key={label} className="flex items-center justify-between p-3 border border-stone-100">
+                  <div className="flex items-center gap-3">
+                    <FileWarning className="size-4 text-stone-400" />
+                    <div>
+                      <p className="text-sm font-medium text-stone-900">{label}</p>
+                      <p className="text-xs text-stone-400">{desc}</p>
+                    </div>
+                  </div>
+                  <span className={`text-lg font-bold tabular-nums px-2.5 py-0.5 ${color}`}>{count}</span>
+                </div>
+              ))}
+            </div>
+            <button className="mt-4 w-full fdx-btn-secondary text-sm">View All Alerts</button>
+          </div>
+
+          {/* Investor Distributions */}
+          <div className="fdx-card p-6">
+            <h2 className="fdx-section-title text-base mb-1">Investor Distributions</h2>
+            <p className="text-sm text-stone-400 mb-5">Payment tracking and schedules</p>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="p-4 bg-fundex-cream/30 border border-fundex-gold/20">
+                <p className="text-xs text-stone-500">Total Paid to Investors (YTD)</p>
+                <p className="text-xl font-bold text-stone-900 mt-1">{fmtM(distributions.totalPaidYTD)}</p>
+              </div>
+              <div className="p-4 bg-fundex-cream/30 border border-fundex-gold/20">
+                <p className="text-xs text-stone-500">Next Distribution</p>
+                <p className="text-base font-semibold text-stone-900 mt-1">{fmtDate(distributions.nextDistributionDate)}</p>
+                <p className="text-xs text-stone-400">{distributions.activeInvestors} investors · {fmtM(distributions.nextDistributionAmount)}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center p-3 border border-stone-100">
+                <p className="text-xs text-stone-500">Avg Payment</p>
+                <p className="text-lg font-bold text-stone-900">{fmtM(distributions.avgPayment)}</p>
+              </div>
+              <div className="text-center p-3 border border-stone-100">
+                <p className="text-xs text-stone-500">On-Time Rate</p>
+                <p className="text-lg font-bold text-fundex-forest">{distributions.onTimeRate}%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </StaggerItem>
+
+      {/* Contract Performance Table */}
+      <StaggerItem>
+        <div className="fdx-card">
+          <div className="p-6 border-b border-stone-100 flex items-center justify-between">
+            <div>
+              <h2 className="fdx-section-title text-base mb-1">Contract Performance</h2>
+              <p className="text-sm text-stone-400">Active lending contract operational details</p>
+            </div>
+            <button className="fdx-btn-secondary text-sm gap-2 hidden md:flex">
+              <Download className="size-4" />
+              Export
+            </button>
+          </div>
+          {contractPerformance.length === 0 ? (
+            <div className="py-12 text-center text-stone-400 text-sm">No active contracts yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr>
+                    {['Contract / Deal', 'Principal Deployed', 'Rate', 'Monthly Interest', 'Payments', 'Next Payment', 'Outstanding', 'Status', 'Risk'].map(h => (
+                      <th key={h} className="fdx-table-header">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {contractPerformance.map(c => (
+                    <tr key={c.id} className="fdx-table-row">
+                      <td className="py-3 px-4">
+                        <p className="font-medium text-stone-900 text-sm">{c.name}</p>
+                        <p className="text-xs text-stone-400">{c.dealId}</p>
+                      </td>
+                      <td className="py-3 px-4 font-medium text-stone-900 tabular-nums text-sm">{fmtM(c.principalDeployed)}</td>
+                      <td className="py-3 px-4 text-stone-700 tabular-nums text-sm">{c.interestRate.toFixed(1)}%</td>
+                      <td className="py-3 px-4 text-stone-700 tabular-nums text-sm">
+                        {fmtM(c.monthlyInterest)}<span className="text-xs text-stone-400">/mo</span>
+                      </td>
+                      <td className="py-3 px-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-stone-100 min-w-[60px]">
+                            <div
+                              className="h-full bg-fundex-forest"
+                              style={{ width: `${Math.min(100, (c.paymentsCompleted / c.totalPayments) * 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-stone-500 tabular-nums whitespace-nowrap">
+                            {c.paymentsCompleted} / {c.totalPayments}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-sm text-stone-600 whitespace-nowrap">{fmtDate(c.nextPaymentDate)}</td>
+                      <td className="py-3 px-4 text-sm text-stone-700 tabular-nums">{fmtM(c.outstandingBalance)}</td>
+                      <td className="py-3 px-4">
+                        <span className={`fdx-badge ${c.status === 'Active' ? 'fdx-badge-active' : 'fdx-badge-pending'}`}>{c.status}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`text-xs font-medium px-2 py-0.5 ${c.riskLevel === 'On Schedule' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                          {c.riskLevel}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </StaggerItem>
+
+    </StaggerContainer>
+  );
+}

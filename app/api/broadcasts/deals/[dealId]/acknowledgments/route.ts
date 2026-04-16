@@ -192,3 +192,74 @@ export async function GET(
     );
   }
 }
+
+/**
+ * POST /api/broadcasts/deals/[dealId]/acknowledgments
+ * Investor marks their own update as acknowledged.
+ * Body: { updateId: string }
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ dealId: string }> }
+) {
+  try {
+    const { dealId } = await params;
+    const authHeader = request.headers.get('Authorization') || '';
+    const token = authHeader.replace('Bearer ', '');
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { updateId } = await request.json();
+    if (!updateId) {
+      return NextResponse.json({ error: 'updateId is required' }, { status: 400 });
+    }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    // Verify the token and get the user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify the update belongs to this deal
+    const { data: update, error: updateError } = await supabase
+      .from('broadcast_updates')
+      .select('id, require_acknowledgment')
+      .eq('id', updateId)
+      .eq('deal_id', dealId)
+      .eq('is_sent', true)
+      .single();
+
+    if (updateError || !update) {
+      return NextResponse.json({ error: 'Update not found' }, { status: 404 });
+    }
+
+    // Update the recipient record for this investor
+    const { error: updateRecipientError } = await supabase
+      .from('broadcast_update_recipients')
+      .update({
+        acknowledged_at: new Date().toISOString(),
+        delivery_status: 'acknowledged',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('broadcast_update_id', updateId)
+      .eq('investor_id', user.id)
+      .eq('investor_source', 'user_profiles');
+
+    if (updateRecipientError) {
+      console.error('[ACK_API] Error updating recipient:', updateRecipientError);
+      return NextResponse.json({ error: 'Failed to acknowledge' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('[ACK_API] Error in post acknowledgment:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

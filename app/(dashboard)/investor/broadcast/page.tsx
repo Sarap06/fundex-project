@@ -1,7 +1,8 @@
 "use client";
 
-import { ChevronRight, Search, Send, X } from "lucide-react";
-import { useState } from "react";
+import { ChevronRight, CheckCircle2, Loader2, Search, Send, X } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { getSupabaseClient } from "@/lib/supabase";
 
 
 type BroadcastDeal = {
@@ -14,6 +15,8 @@ type BroadcastDeal = {
   preview: string;
   newCount: number;
   actionRequired: boolean;
+  acknowledged: boolean;
+  latestUpdateId: string;
   activatedBadge: string;
   messageTitle: string;
   messageBody: string;
@@ -32,66 +35,72 @@ type BroadcastDeal = {
   maturityShort: string;
 };
 
-const SAMPLE_DEALS: BroadcastDeal[] = [
-  {
-    id: "1",
-    dealId: "DEAL-MT-2024-014",
-    initials: "MO",
-    name: "Midtown Office Complex",
-    metrics: "$2.2M • 11.8% • Matures Apr 2027",
-    updateType: "System Update",
-    preview:
-      "Your participation in this deal is now fully recorded. Review the activation notice and confirm acknowledgment for compliance.",
-    newCount: 1,
-    actionRequired: true,
-    activatedBadge: "Deal Activated • April 1, 2026",
-    messageTitle: "Contract Fully Funded and Activated 🎉",
-    messageBody:
-      "The Midtown Office Complex contract has been fully funded and officially activated. Interest begins accruing as of April 1, 2026. Your first payout will occur on May 1, 2026.",
-    messageTime: "1 day ago",
-    signedDate: "Mar 18, 2026",
-    firstPayout: "May 1, 2026",
-    collateralAddress: "450 W 42nd St, New York, NY",
-    collateralValue: "$3.4M appraised",
-    loanAmount: "$2,200,000",
-    rateApr: "11.8% APR",
-    term: "36 months",
-    maturityDate: "Apr 30, 2027",
-    investorCommunity: "176 investors participating in this deal",
-    totalAmount: "$2.2M",
-    rateDisplay: "11.8%",
-    maturityShort: "Apr 2027",
-  },
-  {
-    id: "2",
-    dealId: "DEAL-SB-2025-008",
-    initials: "SB",
-    name: "Salamanca Bridge Loan",
-    metrics: "$4.1M • 10.2% • Matures Dec 2028",
-    updateType: "Official Update",
-    preview:
-      "Quarterly distribution schedule posted. No action needed unless you elect to reinvest proceeds.",
-    newCount: 0,
-    actionRequired: false,
-    activatedBadge: "Distribution Scheduled • March 28, 2026",
-    messageTitle: "Q1 distribution timeline",
-    messageBody:
-      "We have published the Q1 distribution calendar for the Salamanca Bridge Loan. Distributions will process on the dates shown in your investor statement. Contact admin if you need to update wire instructions before the next cycle.",
-    messageTime: "3 days ago",
-    signedDate: "Jan 8, 2025",
-    firstPayout: "Apr 1, 2025",
-    collateralAddress: "Industrial parcel, Salamanca, ES",
-    collateralValue: "€5.2M equivalent",
-    loanAmount: "$4,100,000",
-    rateApr: "10.2% APR",
-    term: "48 months",
-    maturityDate: "Dec 15, 2028",
-    investorCommunity: "243 investors participating in this deal",
-    totalAmount: "$4.1M",
-    rateDisplay: "10.2%",
-    maturityShort: "Dec 2028",
-  },
-];
+function fmtDate(iso: string | null | undefined, short = false): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", short
+    ? { month: "short", year: "numeric" }
+    : { month: "short", day: "numeric", year: "numeric" }
+  );
+}
+
+function fmtCurrency(val: number | null | undefined): string {
+  if (!val) return "$0";
+  if (val >= 1_000_000) return `$${(val / 1_000_000).toFixed(1)}M`;
+  if (val >= 1_000) return `$${(val / 1_000).toFixed(0)}K`;
+  return `$${val.toLocaleString()}`;
+}
+
+function relativeTime(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function getInitials(name: string): string {
+  return name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
+}
+
+function mapApiDeal(d: any): BroadcastDeal {
+  const u = d.latestUpdate;
+  const amount = fmtCurrency(d.targetAmount);
+  const rate = d.interestRate ? `${d.interestRate}%` : "—";
+  const maturity = fmtDate(d.closeDate, true);
+  return {
+    id: d.id,
+    dealId: d.id,
+    initials: getInitials(d.name),
+    name: d.name,
+    metrics: `${amount} • ${rate} • Matures ${maturity}`,
+    updateType: u?.updateType === "manual" ? "Official Update" : "System Update",
+    preview: u?.message?.slice(0, 160) ?? "",
+    newCount: d.newCount ?? 0,
+    actionRequired: !!d.actionRequired,
+    acknowledged: !!u?.acknowledged,
+    latestUpdateId: u?.id ?? "",
+    activatedBadge: `${u?.updateType === "manual" ? "Official Update" : "System Update"} • ${fmtDate(u?.sentAt)}`,
+    messageTitle: u?.title ?? "",
+    messageBody: u?.message ?? "",
+    messageTime: relativeTime(u?.sentAt),
+    signedDate: fmtDate(d.fundingCloseDate || d.closeDate),
+    firstPayout: fmtDate(d.firstPayoutDate),
+    collateralAddress: d.collateralAddress || `${d.locationCity ?? ""}${d.locationState ? ", " + d.locationState : ""}`,
+    collateralValue: d.estimatedPropertyValue ? `${fmtCurrency(d.estimatedPropertyValue)} appraised` : "—",
+    loanAmount: d.targetAmount ? `$${Number(d.targetAmount).toLocaleString()}` : "—",
+    rateApr: d.interestRate ? `${d.interestRate}% APR` : "—",
+    term: d.termMonths ? `${d.termMonths} months` : "—",
+    maturityDate: fmtDate(d.closeDate),
+    investorCommunity: "",
+    totalAmount: amount,
+    rateDisplay: rate,
+    maturityShort: maturity,
+  };
+}
 
 type MainTab = "channels" | "inbox";
 type FilterPill = "all" | "unread" | "ack";
@@ -227,12 +236,16 @@ function DealChannelChatModal({
   open,
   onClose,
   onOpenContractFacts,
+  onAcknowledge,
 }: {
   deal: BroadcastDeal | null;
   open: boolean;
   onClose: () => void;
   onOpenContractFacts: () => void;
+  onAcknowledge: (dealId: string, updateId: string) => Promise<void>;
 }) {
+  const [acknowledging, setAcknowledging] = useState(false);
+
   if (!open || !deal) return null;
 
   return (
@@ -304,15 +317,31 @@ function DealChannelChatModal({
             <ContractFactsPanel deal={deal} />
           </div>
 
-          <div className="mt-6  border border-stone-200 bg-stone-50 px-4 py-4 text-sm leading-relaxed text-stone-600 md:px-5">
-            Please review the contract details and confirm your acknowledgment. This is required for compliance.
-          </div>
-          <button
-            type="button"
-            className="mt-4 w-full  bg-fundex-gold py-3.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90"
-          >
-            Acknowledge Contract
-          </button>
+          {deal.actionRequired && !deal.acknowledged && (
+            <>
+              <div className="mt-6  border border-stone-200 bg-stone-50 px-4 py-4 text-sm leading-relaxed text-stone-600 md:px-5">
+                Please review the contract details and confirm your acknowledgment. This is required for compliance.
+              </div>
+              <button
+                type="button"
+                disabled={acknowledging}
+                onClick={async () => {
+                  setAcknowledging(true);
+                  await onAcknowledge(deal.id, deal.latestUpdateId);
+                  setAcknowledging(false);
+                }}
+                className="mt-4 w-full  bg-fundex-gold py-3.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {acknowledging ? <><Loader2 className="h-4 w-4 animate-spin" />Acknowledging...</> : "Acknowledge Contract"}
+              </button>
+            </>
+          )}
+          {deal.acknowledged && (
+            <div className="mt-6 flex items-center gap-2  border border-fundex-forest/20 bg-fundex-forest/5 px-4 py-4 text-sm font-medium text-fundex-forest">
+              <CheckCircle2 className="h-5 w-5 shrink-0" />
+              You have acknowledged this contract update.
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -422,169 +451,138 @@ function ContractFactsDrawer({
   );
 }
 
-type InboxPeerId = "derek-a" | "support" | "derek-b";
+type InboxMessage = {
+  id: string;
+  sender_id: string;
+  sender_role: string;
+  sender_name: string | null;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+};
 
-const INBOX_CONVERSATIONS: {
-  id: InboxPeerId;
-  initials: string;
-  name: string;
-  preview: string;
-  time: string;
-  unread?: number;
-}[] = [
-  {
-    id: "derek-a",
-    initials: "DA",
-    name: "Derek Admin",
-    preview: "Let me know if you want us to review the reinvestment options.",
-    time: "1h",
-    unread: 1,
-  },
-  {
-    id: "support",
-    initials: "FS",
-    name: "Fundex Support",
-    preview: "Your document request has been received.",
-    time: "Yesterday",
-  },
-  {
-    id: "derek-b",
-    initials: "DA",
-    name: "Derek Admin",
-    preview: "We can walk you through the maturity options anytime.",
-    time: "Mon",
-  },
-];
+function fmtMsgTime(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+  if (diffDays === 0) return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return d.toLocaleDateString("en-US", { weekday: "short" });
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
-function InvestorInboxPanel() {
-  const [activeId, setActiveId] = useState<InboxPeerId>("derek-a");
+function InvestorInboxPanel({ currentUserId }: { currentUserId: string }) {
+  const [messages, setMessages] = useState<InboxMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const bottomRef = useCallback((el: HTMLDivElement | null) => { el?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const active = INBOX_CONVERSATIONS.find((c) => c.id === activeId)!;
+  useEffect(() => {
+    if (!currentUserId) return;
+    const load = async () => {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/inbox/${currentUserId}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) return;
+      const json = await res.json();
+      setMessages(json.messages ?? []);
+    };
+    load();
+    // Poll every 10 seconds for new messages
+    const interval = setInterval(load, 10000);
+    return () => clearInterval(interval);
+  }, [currentUserId]);
+
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text || sending || !currentUserId) return;
+    setSending(true);
+    setInput("");
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/inbox/${currentUserId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ content: text }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setMessages(prev => [...prev, json.message]);
+      }
+    } catch (err) {
+      console.error("[InvestorInboxPanel] send error:", err);
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <div className="overflow-hidden  border border-stone-100 bg-white shadow-sm">
-      <div className="flex min-h-[min(70vh,640px)] flex-col md:min-h-[520px] md:flex-row">
-        <div className="flex w-full flex-col border-b border-stone-200 bg-stone-50/40 md:w-[32%] md:shrink-0 md:border-b-0 md:border-r md:border-stone-200/90">
-          <div className="shrink-0 border-b border-stone-200/80 p-3 md:p-4">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-              <input
-                type="search"
-                placeholder="Search messages"
-                className="w-full  border border-stone-200/90 bg-white py-2.5 pl-9 pr-3 text-sm text-stone-900 shadow-sm placeholder:text-stone-400 outline-none focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest"
-              />
-            </div>
+      <div className="flex min-h-[min(70vh,640px)] flex-col md:min-h-[520px]">
+        {/* Header */}
+        <div className="flex shrink-0 items-center gap-3 border-b border-stone-100 px-4 py-3.5 md:px-5">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center  bg-gradient-to-br from-fundex-forest to-fundex-green text-xs font-semibold text-white">
+            FX
+            <span className="absolute bottom-0 right-0 h-2.5 w-2.5  border-2 border-white bg-fundex-green" aria-hidden />
           </div>
-          <div className="min-h-0 flex-1 divide-y divide-stone-100 overflow-y-auto md:max-h-none">
-            {INBOX_CONVERSATIONS.map((c) => {
-              const isActive = c.id === activeId;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setActiveId(c.id)}
-                  className={`flex w-full gap-3 px-3 py-3.5 text-left transition md:px-4 ${
-                    isActive ? "bg-stone-100" : "hover:bg-white/80"
-                  }`}
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center  bg-gradient-to-br from-stone-600 to-stone-800 text-xs font-semibold text-white">
-                    {c.initials}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="truncate text-sm font-medium text-stone-900">{c.name}</p>
-                      <span className="shrink-0 text-xs text-stone-400">{c.time}</span>
-                    </div>
-                    <div className="mt-0.5 flex items-center gap-2">
-                      <p className="line-clamp-2 min-w-0 flex-1 text-xs leading-snug text-stone-500">{c.preview}</p>
-                      {c.unread ? (
-                        <span className="flex h-5 min-w-5 shrink-0 items-center justify-center  bg-fundex-gold px-1.5 text-[0.625rem] font-medium text-fundex-forest">
-                          {c.unread}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+          <div className="min-w-0">
+            <p className="font-medium text-stone-900">Fundex Admin</p>
+            <p className="text-xs text-stone-500">Your company representative</p>
           </div>
         </div>
 
-        <div className="flex min-h-[320px] min-w-0 flex-1 flex-col bg-white md:w-[68%]">
-          <div className="flex shrink-0 items-center gap-3 border-b border-stone-100 px-4 py-3.5 md:px-5">
-            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center  bg-gradient-to-br from-stone-600 to-stone-800 text-xs font-semibold text-white">
-              {active.initials}
-              <span
-                className="absolute bottom-0 right-0 h-2.5 w-2.5  border-2 border-white bg-fundex-green"
-                aria-hidden
-              />
+        {/* Messages */}
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto bg-stone-50/40 px-4 py-5 md:px-6">
+          {messages.length === 0 ? (
+            <div className="flex flex-1 items-center justify-center py-16 text-sm text-stone-400">
+              No messages yet. Start the conversation below.
             </div>
-            <div className="min-w-0">
-              <p className="font-medium text-stone-900">{active.name}</p>
-              <p className="text-xs text-stone-500">{active.name.includes("Support") ? "Support" : "Admin"}</p>
-            </div>
-          </div>
+          ) : (
+            messages.map((msg) => {
+              const isMine = msg.sender_role === "investor";
+              return (
+                <div key={msg.id} className={`flex max-w-[90%] flex-col gap-1 md:max-w-[78%] ${isMine ? "self-end" : "self-start"}`}>
+                  <div className={`px-4 py-3 text-sm leading-relaxed text-stone-800 shadow-sm ${isMine ? " border border-fundex-gold/20 bg-fundex-gold/5" : " border border-stone-100 bg-white"}`}>
+                    {msg.content}
+                  </div>
+                  <span className={`text-xs text-stone-400 ${isMine ? "pr-1 text-right" : "pl-1"}`}>
+                    {fmtMsgTime(msg.created_at)}
+                  </span>
+                </div>
+              );
+            })
+          )}
+          <div ref={bottomRef} />
+        </div>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto bg-stone-50/40 px-4 py-5 md:px-6">
-            {activeId === "derek-a" ? (
-              <>
-                <div className="flex max-w-[90%] flex-col gap-1 self-start md:max-w-[78%]">
-                  <div className=" border border-stone-100 bg-white px-4 py-3 text-sm leading-relaxed text-stone-800 shadow-sm">
-                    Hi Nigel, just checking in. Let me know if you&apos;d like us to go over your current maturity options.
-                  </div>
-                  <span className="pl-1 text-xs text-stone-400">10:12 AM</span>
-                </div>
-                <div className="flex max-w-[90%] flex-col gap-1 self-end md:max-w-[78%]">
-                  <div className=" border border-fundex-gold/20 bg-fundex-gold/5 px-4 py-3 text-sm leading-relaxed text-stone-800 shadow-sm">
-                    Yes, I&apos;d like to understand whether reinvesting would be better for the Midtown deal.
-                  </div>
-                  <span className="pr-1 text-right text-xs text-stone-400">10:18 AM</span>
-                </div>
-                <div className="flex max-w-[90%] flex-col gap-1 self-start md:max-w-[78%]">
-                  <div className=" border border-stone-100 bg-white px-4 py-3 text-sm leading-relaxed text-stone-800 shadow-sm">
-                    Absolutely. I can walk you through the available options and expected payout timing.
-                  </div>
-                  <span className="pl-1 text-xs text-stone-400">10:19 AM</span>
-                </div>
-                <div className="flex max-w-[90%] flex-col gap-1 self-start md:max-w-[78%]">
-                  <div className=" border border-stone-100 bg-white px-4 py-3 text-sm leading-relaxed text-stone-800 shadow-sm">
-                    Also, if you want, I can have the admin team prepare a simple summary for you.
-                  </div>
-                  <span className="pl-1 text-xs text-stone-400">10:20 AM</span>
-                </div>
-              </>
-            ) : activeId === "support" ? (
-              <div className="flex max-w-[90%] flex-col gap-1 self-start md:max-w-[78%]">
-                <div className=" border border-stone-100 bg-white px-4 py-3 text-sm leading-relaxed text-stone-800 shadow-sm">
-                  Your document request has been received. We&apos;ll follow up if we need anything else from you.
-                </div>
-                <span className="pl-1 text-xs text-stone-400">Yesterday · 4:02 PM</span>
-              </div>
-            ) : (
-              <div className="flex max-w-[90%] flex-col gap-1 self-start md:max-w-[78%]">
-                <div className=" border border-stone-100 bg-white px-4 py-3 text-sm leading-relaxed text-stone-800 shadow-sm">
-                  We can walk you through the maturity options anytime — just say the word and we&apos;ll set up a quick call.
-                </div>
-                <span className="pl-1 text-xs text-stone-400">Mon · 9:41 AM</span>
-              </div>
-            )}
-          </div>
-
-          <div className="shrink-0 border-t border-stone-100 bg-white p-3 md:p-4">
-            <div className="flex items-center gap-2  border border-stone-200/90 bg-stone-50/50 px-1 py-1 pl-4 shadow-sm">
-              <input
-                type="text"
-                placeholder="Type a message..."
-                className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm text-stone-900 placeholder:text-stone-400 outline-none"
-              />
-              <button
-                type="button"
-                aria-label="Send message"
-                className="flex h-10 w-10 shrink-0 items-center justify-center  bg-fundex-gold text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90"
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </div>
+        {/* Input */}
+        <div className="shrink-0 border-t border-stone-100 bg-white p-3 md:p-4">
+          <div className="flex items-center gap-2  border border-stone-200/90 bg-stone-50/50 px-1 py-1 pl-4 shadow-sm">
+            <input
+              type="text"
+              placeholder="Type a message..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm text-stone-900 placeholder:text-stone-400 outline-none"
+            />
+            <button
+              type="button"
+              aria-label="Send message"
+              onClick={handleSend}
+              disabled={sending || !input.trim()}
+              className="flex h-10 w-10 shrink-0 items-center justify-center  bg-fundex-gold text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 disabled:opacity-50"
+            >
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </button>
           </div>
         </div>
       </div>
@@ -598,6 +596,64 @@ export default function BroadcastPage() {
   const [selectedDealChannel, setSelectedDealChannel] = useState<BroadcastDeal | null>(null);
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
   const [isContractFactsOpen, setIsContractFactsOpen] = useState(false);
+  const [deals, setDeals] = useState<BroadcastDeal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
+
+  const fetchDeals = useCallback(async () => {
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch("/api/investor/broadcasts", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) return;
+      const json = await res.json();
+      setDeals((json.deals ?? []).map(mapApiDeal));
+    } catch (err) {
+      console.error("[BroadcastPage] fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const init = async () => {
+      const supabase = getSupabaseClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setCurrentUserId(user.id);
+    };
+    init();
+    fetchDeals();
+  }, [fetchDeals]);
+
+  const handleAcknowledge = async (dealId: string, updateId: string) => {
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      await fetch(`/api/broadcasts/deals/${dealId}/acknowledgments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ updateId }),
+      });
+      // Update local state optimistically
+      setDeals(prev => prev.map(d => d.id === dealId
+        ? { ...d, actionRequired: false, acknowledged: true, newCount: Math.max(0, d.newCount - 1) }
+        : d
+      ));
+      setSelectedDealChannel(prev => prev?.id === dealId
+        ? { ...prev, actionRequired: false, acknowledged: true }
+        : prev
+      );
+    } catch (err) {
+      console.error("[BroadcastPage] acknowledge error:", err);
+    }
+  };
 
   const openChannel = (deal: BroadcastDeal) => {
     setSelectedDealChannel(deal);
@@ -614,7 +670,7 @@ export default function BroadcastPage() {
   const openContractFacts = () => setIsContractFactsOpen(true);
   const closeContractFacts = () => setIsContractFactsOpen(false);
 
-  const filteredDeals = SAMPLE_DEALS.filter((d) => {
+  const filteredDeals = deals.filter((d) => {
     if (filterPill === "unread") return d.newCount > 0;
     if (filterPill === "ack") return d.actionRequired;
     return true;
@@ -627,6 +683,7 @@ export default function BroadcastPage() {
         open={isChannelModalOpen}
         onClose={closeChannelModal}
         onOpenContractFacts={openContractFacts}
+        onAcknowledge={handleAcknowledge}
       />
       <ContractFactsDrawer
         deal={selectedDealChannel}
@@ -712,18 +769,22 @@ export default function BroadcastPage() {
               </div>
 
               <div className="space-y-4 pb-12">
-                {filteredDeals.map((deal) => (
+                {loading ? (
+                  <div className="flex items-center justify-center py-16 text-sm text-stone-400">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading your deal channels…
+                  </div>
+                ) : filteredDeals.length > 0 ? filteredDeals.map((deal) => (
                   <DealCard key={deal.id} deal={deal} onOpen={openChannel} />
-                ))}
-                {filteredDeals.length === 0 ? (
+                )) : (
                   <p className=" border border-dashed border-stone-200 bg-white py-12 text-center text-sm text-stone-500">
-                    No deals match this filter.
+                    {deals.length === 0 ? "No active deal channels yet." : "No deals match this filter."}
                   </p>
-                ) : null}
+                )}
               </div>
             </>
           ) : (
-            <InvestorInboxPanel />
+            <InvestorInboxPanel currentUserId={currentUserId} />
           )}
         </div>
     </>

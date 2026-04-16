@@ -59,6 +59,7 @@ export async function GET(request: NextRequest) {
         { count: 'exact' }
       )
       .eq('enable_broadcast_channel', true)
+      .eq('company_id', companyId)
       .order('created_at', { ascending: false });
 
     if (status) {

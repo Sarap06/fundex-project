@@ -568,7 +568,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[9999]">
                           <SelectItem value="Bridge Loan">Bridge Loan</SelectItem>
                           <SelectItem value="Construction">Construction</SelectItem>
                           <SelectItem value="Acquisition">Acquisition</SelectItem>
@@ -627,7 +627,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                         <SelectTrigger>
                           <SelectValue placeholder="Select state" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[9999]">
                           <SelectItem value="AL">AL — Alabama</SelectItem>
                           <SelectItem value="AK">AK — Alaska</SelectItem>
                           <SelectItem value="AZ">AZ — Arizona</SelectItem>
@@ -700,7 +700,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                       <SelectTrigger>
                         <SelectValue placeholder="Select funding status" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[9999]">
                         <SelectItem value="Active">Active</SelectItem>
                         <SelectItem value="Funding">Funding</SelectItem>
                         <SelectItem value="Due Diligence">Due Diligence</SelectItem>
@@ -983,7 +983,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                       <SelectTrigger>
                         <SelectValue placeholder="Select collateral type" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[9999]">
                         <SelectItem value="Real Estate">Real Estate</SelectItem>
                         <SelectItem value="Commercial Property">Commercial Property</SelectItem>
                         <SelectItem value="Residential">Residential</SelectItem>
@@ -1128,7 +1128,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                       <SelectTrigger className="mt-2">
                         <SelectValue placeholder="Select default audience" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[9999]">
                         <SelectItem value="all">All Investors</SelectItem>
                         <SelectItem value="accredited">Accredited Investors</SelectItem>
                         <SelectItem value="qualified">Qualified Investors</SelectItem>
@@ -1256,7 +1256,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[9999]">
                         <SelectItem value="normal">Normal</SelectItem>
                         <SelectItem value="attention">Needs Attention</SelectItem>
                         <SelectItem value="urgent">Urgent</SelectItem>

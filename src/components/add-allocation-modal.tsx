@@ -10,6 +10,7 @@ interface Investor {
   full_name: string;
   email: string;
   initial_investment: number;
+  investor_source?: string;
 }
 
 interface Deal {
@@ -30,11 +31,13 @@ interface UploadedFile {
 
 interface AllocationFormData {
   investor_id: string;
+  investor_source: string;
   deal_id: string;
   allocation_amount: number;
   allocation_percentage?: number;
   annual_rate: number;
   term_length: number;
+  term_unit: string;
   payment_frequency: string;
   commit_date: string;
   expected_funding_date: string;
@@ -59,10 +62,12 @@ export function AddAllocationModal({
 }: AddAllocationModalProps) {
   const [formData, setFormData] = useState<AllocationFormData>({
     investor_id: '',
+    investor_source: 'investors',
     deal_id: '',
     allocation_amount: 0,
     annual_rate: 0,
     term_length: 12,
+    term_unit: 'months',
     payment_frequency: 'Monthly',
     commit_date: new Date().toISOString().split('T')[0],
     expected_funding_date: '',
@@ -126,11 +131,41 @@ export function AddAllocationModal({
 
   const loadInvestorsAndDeals = async () => {
     try {
-      // Fetch investors for the company
+      // Fetch manually-added investors
       const { data: investorData } = await supabase
         .from('investors')
         .select('id, full_name, email, initial_investment')
         .eq('company_id', companyId);
+
+      // Fetch signed-up investors from user_profiles
+      const { data: profileData } = await supabase
+        .from('user_profiles')
+        .select('user_id, full_name, email')
+        .eq('company_id', companyId)
+        .eq('role', 'investor');
+
+      const manualInvestors: Investor[] = (investorData || []).map((inv) => ({
+        ...inv,
+        investor_source: 'investors',
+      }));
+
+      const signedUpInvestors: Investor[] = (profileData || []).map((p) => ({
+        id: p.user_id,
+        full_name: p.full_name,
+        email: p.email,
+        initial_investment: 0,
+        investor_source: 'user_profiles',
+      }));
+
+      // Merge, deduplicating by email (prefer user_profiles entry if same email)
+      const emailSeen = new Set<string>();
+      const merged: Investor[] = [];
+      [...signedUpInvestors, ...manualInvestors].forEach((inv) => {
+        if (!emailSeen.has(inv.email)) {
+          emailSeen.add(inv.email);
+          merged.push(inv);
+        }
+      });
 
       // Fetch deals for the company
       const { data: dealData } = await supabase
@@ -138,7 +173,7 @@ export function AddAllocationModal({
         .select('id, deal_id, name, target_amount, raised_amount, type')
         .eq('company_id', companyId);
 
-      setInvestors(investorData || []);
+      setInvestors(merged);
       setDeals(dealData || []);
     } catch (error) {
       console.error('Error loading investors and deals:', error);
@@ -147,7 +182,7 @@ export function AddAllocationModal({
 
   const handleSelectInvestor = (investor: Investor) => {
     setSelectedInvestor(investor);
-    setFormData({ ...formData, investor_id: investor.id });
+    setFormData({ ...formData, investor_id: investor.id, investor_source: investor.investor_source || 'investors' });
     setInvestorSearch(investor.full_name);
     setShowInvestorDropdown(false);
     setShowDealDropdown(false);
@@ -261,19 +296,24 @@ export function AddAllocationModal({
     setLoading(true);
     try {
       // Save allocation
+      const termLengthMonths = formData.term_unit === 'years'
+        ? formData.term_length * 12
+        : formData.term_length;
+
       const response = await fetch('/api/allocations/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           company_id: companyId,
           investor_id: formData.investor_id,
+          investor_source: formData.investor_source,
           deal_id: formData.deal_id,
           allocation_amount: formData.allocation_amount,
           allocation_percentage: formData.allocation_percentage || 0,
           commit_date: formData.commit_date,
           expected_funding_date: formData.expected_funding_date,
           annual_rate: formData.annual_rate,
-          term_length: formData.term_length,
+          term_length: termLengthMonths,
           payment_frequency: formData.payment_frequency,
           payment_start_date: formData.payment_start_date,
           funding_status: formData.funding_status,
@@ -308,10 +348,12 @@ export function AddAllocationModal({
       onClose();
       setFormData({
         investor_id: '',
+        investor_source: 'investors',
         deal_id: '',
         allocation_amount: 0,
         annual_rate: 0,
         term_length: 12,
+        term_unit: 'months',
         payment_frequency: 'Monthly',
         commit_date: new Date().toISOString().split('T')[0],
         expected_funding_date: '',
@@ -558,11 +600,13 @@ export function AddAllocationModal({
                           className="flex-1 px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <select
-                          value="months"
-                          disabled
-                          className="px-4 py-2 border border-border  bg-muted"
+                          name="term_unit"
+                          value={formData.term_unit}
+                          onChange={handleInputChange}
+                          className="px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                          <option>months</option>
+                          <option value="months">months</option>
+                          <option value="years">years</option>
                         </select>
                       </div>
                     </div>

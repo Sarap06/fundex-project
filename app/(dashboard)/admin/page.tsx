@@ -506,6 +506,17 @@ export default function AdminDashboard() {
       }
 
       if (dealsData) {
+        const dealIds = dealsData.map((d) => d.id);
+        const { data: diCounts } = await supabase
+          .from('deal_investors')
+          .select('deal_id')
+          .in('deal_id', dealIds);
+
+        const countMap: Record<string, number> = {};
+        (diCounts || []).forEach((row) => {
+          countMap[row.deal_id] = (countMap[row.deal_id] || 0) + 1;
+        });
+
         const formattedDeals = dealsData.map((deal) => ({
           id: deal.deal_id,
           name: deal.name,
@@ -513,7 +524,7 @@ export default function AdminDashboard() {
           target: Number(deal.target_amount) || 0,
           raised: Number(deal.raised_amount) || 0,
           progress: deal.progress || 0,
-          investors: deal.investor_count || 0
+          investors: countMap[deal.id] || 0
         }));
         setRecentDeals(formattedDeals);
       }

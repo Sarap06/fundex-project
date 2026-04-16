@@ -585,7 +585,15 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               <h1 className="text-2xl font-display font-semibold text-stone-900">Deal Communications</h1>
               <p className="text-sm text-stone-500 mt-1">Official updates from your active deals.</p>
             </div>
-            <button className="px-4 py-2 bg-white border border-stone-100  text-sm font-medium text-stone-500 hover:bg-stone-50 transition">
+            <button
+              onClick={() => selectedDeal && setCurrentView('send-update')}
+              disabled={!selectedDeal}
+              className={`px-4 py-2 bg-white border border-stone-100 text-sm font-medium transition ${
+                selectedDeal
+                  ? 'text-stone-700 hover:bg-stone-50 cursor-pointer'
+                  : 'text-stone-300 cursor-not-allowed'
+              }`}
+            >
               Manage Communications
             </button>
           </div>

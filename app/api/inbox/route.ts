@@ -62,24 +62,81 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Enrich with investor names
-    const userProfileIds = [...threadMap.values()]
-      .filter(t => t.investorSource === 'user_profiles')
-      .map(t => t.investorId);
-
-    const nameMap = new Map<string, string>();
-    if (userProfileIds.length > 0) {
-      const { data: profiles } = await supabase
+    // Fetch ALL investors for this company (both signed-up and manually added)
+    const [{ data: profileInvestors }, { data: manualInvestors }] = await Promise.all([
+      supabase
         .from('user_profiles')
-        .select('user_id, full_name')
-        .in('user_id', userProfileIds);
-      (profiles ?? []).forEach((p: any) => nameMap.set(p.user_id, p.full_name));
+        .select('user_id, full_name, email')
+        .eq('company_id', ctx.companyId)
+        .eq('role', 'investor'),
+      supabase
+        .from('investors')
+        .select('id, full_name, email')
+        .eq('company_id', ctx.companyId),
+    ]);
+
+    // Build name map from both sources
+    const nameMap = new Map<string, string>();
+    (profileInvestors ?? []).forEach((p: any) => nameMap.set(`${p.user_id}:user_profiles`, p.full_name));
+    (manualInvestors ?? []).forEach((i: any) => nameMap.set(`${i.id}:investors`, i.full_name));
+
+    // Merge: start with all known investors (no messages yet = empty thread)
+    const seenKeys = new Set<string>();
+    const allInvestorEntries: Array<{ investorId: string; investorSource: string; latestMessage: any; unreadCount: number; latestTime: string | null }> = [];
+
+    // First add threads that have messages
+    for (const t of threadMap.values()) {
+      const key = `${t.investorId}:${t.investorSource}`;
+      seenKeys.add(key);
+      allInvestorEntries.push({
+        investorId: t.investorId,
+        investorSource: t.investorSource,
+        latestMessage: t.latestMessage,
+        unreadCount: t.unreadCount,
+        latestTime: t.latestMessage?.created_at ?? null,
+      });
     }
 
-    const result = [...threadMap.values()].map(t => ({
+    // Then add investors with no messages yet
+    for (const p of (profileInvestors ?? [])) {
+      const key = `${p.user_id}:user_profiles`;
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        allInvestorEntries.push({
+          investorId: p.user_id,
+          investorSource: 'user_profiles',
+          latestMessage: null,
+          unreadCount: 0,
+          latestTime: null,
+        });
+      }
+    }
+    for (const i of (manualInvestors ?? [])) {
+      const key = `${i.id}:investors`;
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        allInvestorEntries.push({
+          investorId: i.id,
+          investorSource: 'investors',
+          latestMessage: null,
+          unreadCount: 0,
+          latestTime: null,
+        });
+      }
+    }
+
+    // Sort: threads with messages first (by recency), then messageless investors
+    allInvestorEntries.sort((a, b) => {
+      if (a.latestTime && b.latestTime) return b.latestTime.localeCompare(a.latestTime);
+      if (a.latestTime) return -1;
+      if (b.latestTime) return 1;
+      return 0;
+    });
+
+    const result = allInvestorEntries.map(t => ({
       investorId: t.investorId,
       investorSource: t.investorSource,
-      investorName: nameMap.get(t.investorId) ?? 'Investor',
+      investorName: nameMap.get(`${t.investorId}:${t.investorSource}`) ?? 'Investor',
       latestMessage: t.latestMessage,
       unreadCount: t.unreadCount,
     }));

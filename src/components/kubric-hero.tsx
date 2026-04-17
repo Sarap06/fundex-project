@@ -149,7 +149,7 @@ export function KubricHero() {
             </a>
             <a
               href="/auth/signup"
-              className="font-sans text-[14px] md:text-[15px] font-medium text-[#0a1f0a] no-underline px-5 md:px-6 py-2 md:py-2.5 bg-white rounded-[5px] tracking-[0.3px] shadow-[0_2px_12px_rgba(255,255,255,0.15)] transition-all hover:bg-fundex-cream hover:-translate-y-px"
+              className="font-sans text-[14px] md:text-[15px] font-medium text-[#0a1f0a] no-underline px-5 md:px-6 py-2 md:py-2.5 bg-white tracking-[0.3px] shadow-[0_2px_12px_rgba(255,255,255,0.15)] transition-all hover:bg-fundex-cream hover:-translate-y-px"
             >
               Sign Up
             </a>
@@ -223,7 +223,7 @@ export function KubricHero() {
               >
                 <a
                   href="#book-demo"
-                  className="group font-sans text-[14px] md:text-[16px] font-medium text-[#0a1f0a] no-underline px-6 md:px-8 py-3 md:py-3.5 bg-white rounded-[5px] tracking-[0.2px] shadow-[0_2px_16px_rgba(255,255,255,0.1)] transition-all hover:bg-fundex-cream hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(192,184,122,0.2)] flex items-center gap-1.5"
+                  className="group font-sans text-[14px] md:text-[16px] font-medium text-[#0a1f0a] no-underline px-6 md:px-8 py-3 md:py-3.5 bg-white tracking-[0.2px] shadow-[0_2px_16px_rgba(255,255,255,0.1)] transition-all hover:bg-fundex-cream hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(192,184,122,0.2)] flex items-center gap-1.5"
                 >
                   <span>Book Demo</span>
                   <span className="inline-block transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">↗</span>
@@ -278,14 +278,14 @@ export function KubricHero() {
 
             {/* About Card */}
             <motion.div
-              className="flex bg-white rounded-[6px] overflow-hidden max-w-[420px] h-[140px] shadow-[0_12px_40px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.25)]"
+              className="flex bg-white overflow-hidden max-w-[420px] h-[140px] shadow-[0_12px_40px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.25)]"
               variants={cardReveal}
               initial="hidden"
               animate="visible"
               transition={{ duration: 0.9, delay: 0.9, ease: easeOutExpo }}
             >
               <div className="w-[140px] shrink-0 p-1">
-                <div className="relative w-full h-full rounded-[4px] overflow-hidden">
+                <div className="relative w-full h-full overflow-hidden">
                   <Image
                     src="/about-image.jpg"
                     alt="Fundex"

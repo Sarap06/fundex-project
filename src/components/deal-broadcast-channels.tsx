@@ -26,6 +26,7 @@ interface InboxThread {
   investorName: string;
   latestMessage: { content: string; sender_role: string; created_at: string } | null;
   unreadCount: number;
+  deals: Array<{ id: string; name: string }>;
 }
 
 interface InboxMessage {
@@ -211,9 +212,21 @@ function AdminInboxPanel({ companyId, currentUserId }: { companyId: string; curr
                       ? `${thread.latestMessage.sender_role === 'investor' ? '' : 'You: '}${thread.latestMessage.content}`
                       : 'No messages yet'}
                   </p>
+                  {thread.deals && thread.deals.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {thread.deals.slice(0, 2).map(d => (
+                        <span key={d.id} className="text-[9px] px-1.5 py-0.5 bg-fundex-gold/10 text-fundex-forest font-medium truncate max-w-[80px]">
+                          {d.name}
+                        </span>
+                      ))}
+                      {thread.deals.length > 2 && (
+                        <span className="text-[9px] px-1.5 py-0.5 bg-stone-100 text-stone-400">+{thread.deals.length - 2}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 {thread.unreadCount > 0 && (
-                  <span className="shrink-0 size-4 bg-fundex-forest text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="shrink-0 size-4 bg-fundex-forest text-white text-[10px] font-bold  flex items-center justify-center">
                     {thread.unreadCount}
                   </span>
                 )}
@@ -254,7 +267,7 @@ function AdminInboxPanel({ companyId, currentUserId }: { companyId: string; curr
                 const isAdmin = msg.sender_role === 'admin' || msg.sender_role === 'partner';
                 return (
                   <div key={msg.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[72%] rounded-lg px-3.5 py-2.5 text-sm shadow-sm ${
+                    <div className={`max-w-[72%]  px-3.5 py-2.5 text-sm shadow-sm ${
                       isAdmin
                         ? 'bg-fundex-forest text-white'
                         : 'bg-white border border-stone-100 text-stone-900'
@@ -605,7 +618,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
                 setActiveTab('deals');
                 setSearchQuery('');
               }}
-              className={`px-4 py-2 rounded-t-lg font-medium text-sm transition-colors ${
+              className={`px-4 py-2 font-medium text-sm transition-colors ${
                 activeTab === 'deals'
                   ? 'text-stone-900 border-b-2 border-fundex-gold'
                   : 'text-stone-400 hover:bg-stone-50'
@@ -618,7 +631,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
                 setActiveTab('inbox');
                 setSearchQuery('');
               }}
-              className={`px-4 py-2 rounded-t-lg font-medium text-sm transition-colors ${
+              className={`px-4 py-2 font-medium text-sm transition-colors ${
                 activeTab === 'inbox'
                   ? 'text-stone-900 border-b-2 border-fundex-gold'
                   : 'text-stone-400 hover:bg-stone-50'

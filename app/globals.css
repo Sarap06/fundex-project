@@ -235,7 +235,7 @@
 /* ── Fundex Dashboard Design System ─────────────────────────────── */
 @layer components {
   .fdx-card           { @apply relative overflow-hidden  border border-stone-100 bg-white shadow-sm font-sans; }
-  .fdx-card-glow      { @apply pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full blur-2xl; background: rgba(242,227,187,0.30); }
+  .fdx-card-glow      { @apply pointer-events-none absolute -right-6 -top-6 h-24 w-24  blur-2xl; background: rgba(242,227,187,0.30); }
   .fdx-title          { @apply text-base font-medium text-stone-900; }
   .fdx-label          { @apply text-sm font-normal text-stone-500; }
   .fdx-value          { @apply text-2xl font-semibold tabular-nums tracking-tight text-stone-900; }

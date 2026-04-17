@@ -133,12 +133,40 @@ export async function GET(request: NextRequest) {
       return 0;
     });
 
+    // Fetch deals for each investor to show deal context in thread list
+    const allInvestorIds = allInvestorEntries.map(t => t.investorId);
+    const dealMap = new Map<string, Array<{ id: string; name: string }>>();
+    if (allInvestorIds.length > 0) {
+      const { data: diRows } = await supabase
+        .from('deal_investors')
+        .select('investor_id, deal_id')
+        .in('investor_id', allInvestorIds)
+        .eq('company_id', ctx.companyId);
+
+      if (diRows && diRows.length > 0) {
+        const dealIds = [...new Set(diRows.map((r: any) => r.deal_id))];
+        const { data: dealRows } = await supabase
+          .from('deals')
+          .select('id, name')
+          .in('id', dealIds);
+
+        const dealInfoMap = new Map((dealRows ?? []).map((d: any) => [d.id, d.name]));
+        for (const row of diRows) {
+          const name = dealInfoMap.get(row.deal_id);
+          if (!name) continue;
+          if (!dealMap.has(row.investor_id)) dealMap.set(row.investor_id, []);
+          dealMap.get(row.investor_id)!.push({ id: row.deal_id, name });
+        }
+      }
+    }
+
     const result = allInvestorEntries.map(t => ({
       investorId: t.investorId,
       investorSource: t.investorSource,
       investorName: nameMap.get(`${t.investorId}:${t.investorSource}`) ?? 'Investor',
       latestMessage: t.latestMessage,
       unreadCount: t.unreadCount,
+      deals: dealMap.get(t.investorId) ?? [],
     }));
 
     return NextResponse.json({ threads: result });

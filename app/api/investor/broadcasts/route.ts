@@ -52,10 +52,10 @@ export async function GET(request: NextRequest) {
     const { data: deals } = await supabase
       .from('deals')
       .select(`
-        id, name, target_amount, interest_rate, term_length_months,
+        id, name, target_amount, interest_rate, term,
         close_date, first_payout_date, collateral_address, estimated_property_value,
         funding_close_date, status, created_at, location_state, location_city,
-        borrower_name, type
+        borrower_name, type, enable_investor_inbox
       `)
       .in('id', dealIds)
       .eq('company_id', companyId)
@@ -75,42 +75,31 @@ export async function GET(request: NextRequest) {
           .eq('is_sent', true)
           .order('sent_at', { ascending: false });
 
-        if (!updates || updates.length === 0) return null;
+        const latestUpdate = updates && updates.length > 0 ? updates[0] : null;
 
-        const latestUpdate = updates[0];
+        let newCount = 0;
+        let actionRequired = false;
+        let latestUpdatePayload = null;
 
-        // Get this investor's recipient records
-        const updateIds = updates.map((u: any) => u.id);
-        const { data: recipients } = await supabase
-          .from('broadcast_update_recipients')
-          .select('broadcast_update_id, acknowledged_at, delivery_status')
-          .in('broadcast_update_id', updateIds)
-          .eq('investor_id', userId)
-          .eq('investor_source', 'user_profiles');
+        if (latestUpdate) {
+          // Get this investor's recipient records
+          const updateIds = updates.map((u: any) => u.id);
+          const { data: recipients } = await supabase
+            .from('broadcast_update_recipients')
+            .select('broadcast_update_id, acknowledged_at, delivery_status')
+            .in('broadcast_update_id', updateIds)
+            .eq('investor_id', userId)
+            .eq('investor_source', 'user_profiles');
 
-        const recipientMap = new Map(
-          (recipients || []).map((r: any) => [r.broadcast_update_id, r])
-        );
+          const recipientMap = new Map(
+            (recipients || []).map((r: any) => [r.broadcast_update_id, r])
+          );
 
-        const newCount = updates.filter((u: any) => !recipientMap.get(u.id)?.acknowledged_at).length;
-        const latestRecipient = recipientMap.get(latestUpdate.id);
-        const actionRequired = !!latestUpdate.require_acknowledgment && !latestRecipient?.acknowledged_at;
+          newCount = updates.filter((u: any) => !recipientMap.get(u.id)?.acknowledged_at).length;
+          const latestRecipient = recipientMap.get(latestUpdate.id);
+          actionRequired = !!latestUpdate.require_acknowledgment && !latestRecipient?.acknowledged_at;
 
-        return {
-          id: deal.id,
-          name: deal.name,
-          status: deal.status,
-          targetAmount: deal.target_amount,
-          interestRate: deal.interest_rate,
-          termMonths: deal.term_length_months,
-          closeDate: deal.close_date,
-          firstPayoutDate: deal.first_payout_date,
-          collateralAddress: deal.collateral_address || '',
-          estimatedPropertyValue: deal.estimated_property_value,
-          fundingCloseDate: deal.funding_close_date,
-          locationCity: deal.location_city,
-          locationState: deal.location_state,
-          latestUpdate: {
+          latestUpdatePayload = {
             id: latestUpdate.id,
             title: latestUpdate.title,
             message: latestUpdate.message,
@@ -118,10 +107,28 @@ export async function GET(request: NextRequest) {
             sentAt: latestUpdate.sent_at,
             requireAcknowledgment: latestUpdate.require_acknowledgment,
             acknowledged: !!latestRecipient?.acknowledged_at,
-          },
+          };
+        }
+
+        return {
+          id: deal.id,
+          name: deal.name,
+          status: deal.status,
+          targetAmount: deal.target_amount,
+          interestRate: deal.interest_rate,
+          term: deal.term,
+          closeDate: deal.close_date,
+          firstPayoutDate: deal.first_payout_date,
+          collateralAddress: deal.collateral_address || '',
+          estimatedPropertyValue: deal.estimated_property_value,
+          fundingCloseDate: deal.funding_close_date,
+          locationCity: deal.location_city,
+          locationState: deal.location_state,
+          enableInvestorInbox: !!deal.enable_investor_inbox,
+          latestUpdate: latestUpdatePayload,
           newCount,
           actionRequired,
-          totalUpdates: updates.length,
+          totalUpdates: updates?.length ?? 0,
         };
       })
     );

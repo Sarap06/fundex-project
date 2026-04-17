@@ -33,6 +33,7 @@ type BroadcastDeal = {
   totalAmount: string;
   rateDisplay: string;
   maturityShort: string;
+  enableInvestorInbox: boolean;
 };
 
 function fmtDate(iso: string | null | undefined, short = false): string {
@@ -67,7 +68,7 @@ function getInitials(name: string): string {
 }
 
 function mapApiDeal(d: any): BroadcastDeal {
-  const u = d.latestUpdate;
+  const u = d.latestUpdate ?? null;
   const amount = fmtCurrency(d.targetAmount);
   const rate = d.interestRate ? `${d.interestRate}%` : "—";
   const maturity = fmtDate(d.closeDate, true);
@@ -78,27 +79,28 @@ function mapApiDeal(d: any): BroadcastDeal {
     name: d.name,
     metrics: `${amount} • ${rate} • Matures ${maturity}`,
     updateType: u?.updateType === "manual" ? "Official Update" : "System Update",
-    preview: u?.message?.slice(0, 160) ?? "",
+    preview: u?.message?.slice(0, 160) ?? "No updates yet.",
     newCount: d.newCount ?? 0,
     actionRequired: !!d.actionRequired,
     acknowledged: !!u?.acknowledged,
     latestUpdateId: u?.id ?? "",
-    activatedBadge: `${u?.updateType === "manual" ? "Official Update" : "System Update"} • ${fmtDate(u?.sentAt)}`,
+    activatedBadge: u ? `${u.updateType === "manual" ? "Official Update" : "System Update"} • ${fmtDate(u.sentAt)}` : "No updates yet",
     messageTitle: u?.title ?? "",
     messageBody: u?.message ?? "",
-    messageTime: relativeTime(u?.sentAt),
+    messageTime: u ? relativeTime(u.sentAt) : "",
     signedDate: fmtDate(d.fundingCloseDate || d.closeDate),
     firstPayout: fmtDate(d.firstPayoutDate),
     collateralAddress: d.collateralAddress || `${d.locationCity ?? ""}${d.locationState ? ", " + d.locationState : ""}`,
     collateralValue: d.estimatedPropertyValue ? `${fmtCurrency(d.estimatedPropertyValue)} appraised` : "—",
     loanAmount: d.targetAmount ? `$${Number(d.targetAmount).toLocaleString()}` : "—",
     rateApr: d.interestRate ? `${d.interestRate}% APR` : "—",
-    term: d.termMonths ? `${d.termMonths} months` : "—",
+    term: d.term ?? "—",
     maturityDate: fmtDate(d.closeDate),
     investorCommunity: "",
     totalAmount: amount,
     rateDisplay: rate,
     maturityShort: maturity,
+    enableInvestorInbox: !!d.enableInvestorInbox,
   };
 }
 
@@ -471,10 +473,11 @@ function fmtMsgTime(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function InvestorInboxPanel({ currentUserId }: { currentUserId: string }) {
+function InvestorInboxPanel({ currentUserId, canMessage }: { currentUserId: string; canMessage: boolean }) {
   const [messages, setMessages] = useState<InboxMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useCallback((el: HTMLDivElement | null) => { el?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   useEffect(() => {
@@ -500,6 +503,7 @@ function InvestorInboxPanel({ currentUserId }: { currentUserId: string }) {
     const text = input.trim();
     if (!text || sending || !currentUserId) return;
     setSending(true);
+    setSendError(null);
     setInput("");
     try {
       const supabase = getSupabaseClient();
@@ -516,9 +520,14 @@ function InvestorInboxPanel({ currentUserId }: { currentUserId: string }) {
       if (res.ok) {
         const json = await res.json();
         setMessages(prev => [...prev, json.message]);
+      } else {
+        setInput(text); // Restore message so user can retry
+        setSendError("Failed to send. Please try again.");
       }
     } catch (err) {
       console.error("[InvestorInboxPanel] send error:", err);
+      setInput(text);
+      setSendError("Connection error. Please try again.");
     } finally {
       setSending(false);
     }
@@ -565,25 +574,36 @@ function InvestorInboxPanel({ currentUserId }: { currentUserId: string }) {
 
         {/* Input */}
         <div className="shrink-0 border-t border-stone-100 bg-white p-3 md:p-4">
-          <div className="flex items-center gap-2  border border-stone-200/90 bg-stone-50/50 px-1 py-1 pl-4 shadow-sm">
-            <input
-              type="text"
-              placeholder="Type a message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm text-stone-900 placeholder:text-stone-400 outline-none"
-            />
-            <button
-              type="button"
-              aria-label="Send message"
-              onClick={handleSend}
-              disabled={sending || !input.trim()}
-              className="flex h-10 w-10 shrink-0 items-center justify-center  bg-fundex-gold text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 disabled:opacity-50"
-            >
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </button>
-          </div>
+          {canMessage ? (
+            <>
+              {sendError && (
+                <p className="mb-2 text-xs text-red-500">{sendError}</p>
+              )}
+              <div className="flex items-center gap-2  border border-stone-200/90 bg-stone-50/50 px-1 py-1 pl-4 shadow-sm">
+                <input
+                  type="text"
+                  placeholder="Type a message..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                  className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm text-stone-900 placeholder:text-stone-400 outline-none"
+                />
+                <button
+                  type="button"
+                  aria-label="Send message"
+                  onClick={handleSend}
+                  disabled={sending || !input.trim()}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center  bg-fundex-gold text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 disabled:opacity-50"
+                >
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="py-2 text-center text-xs text-stone-400">
+              Two-way messaging is not enabled for your investments.
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -784,7 +804,7 @@ export default function BroadcastPage() {
               </div>
             </>
           ) : (
-            <InvestorInboxPanel currentUserId={currentUserId} />
+            <InvestorInboxPanel currentUserId={currentUserId} canMessage={deals.some(d => d.enableInvestorInbox)} />
           )}
         </div>
     </>

@@ -71,7 +71,7 @@ export function CompanyTopbar({ userName, userInitials }: CompanyTopbarProps) {
             >
               {link.label}
               {isActive(link.href) && (
-                <span className="absolute bottom-0 left-5 right-5 h-[2px] rounded-full bg-fundex-gold" />
+                <span className="absolute bottom-0 left-5 right-5 h-[2px]  bg-fundex-gold" />
               )}
             </Link>
           ))}

@@ -623,7 +623,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               {Object.values(stats).map((stat, i) => (
                 <div key={stat.label} className="relative flex flex-col overflow-hidden  border border-stone-100 bg-white p-5 font-sans shadow-sm">
-                  <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-fundex-cream/30 blur-2xl" />
+                  <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24  bg-fundex-cream/30 blur-2xl" />
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-normal text-stone-500">{stat.label}</p>
                     <div className="flex h-8 w-8 items-center justify-center  bg-stone-50 text-stone-400">

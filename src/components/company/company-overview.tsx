@@ -51,7 +51,7 @@ export function CompanyOverview({ company, stats, memberCount }: CompanyOverview
   return (
     <div className="relative flex flex-col overflow-hidden  border border-stone-100 bg-white font-sans shadow-sm">
       {/* Warm corner glow — cream tint */}
-      <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-fundex-cream/25 blur-3xl" />
+      <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32  bg-fundex-cream/25 blur-3xl" />
 
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-6">

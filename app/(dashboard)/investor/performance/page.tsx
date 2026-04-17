@@ -206,7 +206,7 @@ function MonthlyEarningsChart({ view }: { view: "monthly" | "quarters" }) {
               return (
                 <div key={row.label} className="flex flex-1 flex-col items-center justify-end gap-2">
                   <div
-                    className="w-full max-w-[44px] rounded-t-lg shadow-sm"
+                    className="w-full max-w-[44px] shadow-sm"
                     style={{ backgroundColor: "#C0B87A", height: `${pct}%`, minHeight: "8%" }}
                   />
                   <span className="text-xs font-medium text-stone-500">{row.label}</span>

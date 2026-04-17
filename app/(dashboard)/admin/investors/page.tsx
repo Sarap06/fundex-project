@@ -480,7 +480,7 @@ export default function InvestorsPage() {
                     <Filter className="size-4" />
                     Filter
                     {activeFilterCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 bg-fundex-forest text-white text-[10px] font-bold rounded-full size-4 flex items-center justify-center">
+                      <span className="absolute -top-1.5 -right-1.5 bg-fundex-forest text-white text-[10px] font-bold  size-4 flex items-center justify-center">
                         {activeFilterCount}
                       </span>
                     )}
@@ -685,7 +685,7 @@ export default function InvestorsPage() {
                 <div className="flex items-center gap-3">
                   <h2 className="text-xl fdx-section-title">Filter Investors</h2>
                   {activeFilterCount > 0 && (
-                    <span className="bg-fundex-forest text-white text-xs font-bold rounded-full px-2 py-0.5">
+                    <span className="bg-fundex-forest text-white text-xs font-bold  px-2 py-0.5">
                       {activeFilterCount}
                     </span>
                   )}

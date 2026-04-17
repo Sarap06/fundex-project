@@ -78,7 +78,7 @@ export function DashboardTopbar({ userName, userInitials, basePath, navLinks, po
             >
               {link.label}
               {isActive(link.href) && (
-                <span className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full bg-fundex-gold" />
+                <span className="absolute bottom-0 left-4 right-4 h-[2px]  bg-fundex-gold" />
               )}
             </Link>
           ))}

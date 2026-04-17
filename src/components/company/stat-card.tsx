@@ -46,7 +46,7 @@ export function CompanyStatCard({
   return (
     <div className="relative flex flex-col overflow-hidden  border border-stone-100 bg-white p-5 font-sans shadow-sm">
       {/* Warm corner glow — cream tint */}
-      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-fundex-cream/30 blur-2xl" />
+      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24  bg-fundex-cream/30 blur-2xl" />
 
       {/* Label + menu */}
       <div className="flex items-center justify-between">

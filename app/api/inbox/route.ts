@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Admin/partner: return conversation threads (one per investor)
+    // Gracefully handle missing table (migration not yet run) by treating as empty
     const { data: threads, error } = await supabase
       .from('investor_inbox_messages')
       .select('investor_id, investor_source, content, sender_role, created_at, is_read')
@@ -40,8 +41,8 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[INBOX] Error fetching threads:', error);
-      return NextResponse.json({ error: 'Failed to fetch threads' }, { status: 500 });
+      console.error('[INBOX] Error fetching threads (table may not exist yet):', error);
+      // Don't bail — fall through with empty threads so investors still appear
     }
 
     // Group by investor — latest message + unread count

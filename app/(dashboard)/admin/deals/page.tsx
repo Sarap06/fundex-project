@@ -841,7 +841,7 @@ export default function DealsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-stone-500">{deal.interest_rate}%</td>
-                  <td className="px-6 py-4 text-sm text-stone-500">{deal.investor_count}</td>
+                  <td className="px-6 py-4 text-sm text-stone-500">{deal.dealInvestors?.length ?? 0}</td>
                   <td className="px-6 py-4 text-sm text-stone-500">{deal.close_date ? new Date(deal.close_date).toLocaleDateString() : 'N/A'}</td>
                   <td className="px-6 py-4">
                     {deal.next_milestone && (

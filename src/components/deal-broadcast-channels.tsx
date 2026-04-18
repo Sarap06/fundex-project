@@ -333,6 +333,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
   const [deals, setDeals] = useState<Deal[]>([]);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [currentView, setCurrentView] = useState<ViewState>('channels');
+  const [previousView, setPreviousView] = useState<ViewState>('channels');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'deals' | 'inbox'>('deals');
 
@@ -469,7 +470,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
         setUpdateMessage('');
         setUpdateFile(null);
         setRequireAcknowledgment(false);
-        setCurrentView('deal-detail');
+        setCurrentView(previousView);
         setTimeout(() => setSuccessMessage(''), 3000);
         if (selectedDeal) {
           loadDealDetails(selectedDeal.id);
@@ -537,7 +538,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
         setScheduleTime('');
         setScheduledFile(null);
         setRequireAcknowledgment(false);
-        setCurrentView('deal-detail');
+        setCurrentView(previousView);
         setTimeout(() => setSuccessMessage(''), 3000);
         if (selectedDeal) {
           loadDealDetails(selectedDeal.id);
@@ -576,7 +577,8 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
       setCurrentView('channels');
       setSelectedDeal(null);
     } else if (['send-update', 'schedule-update', 'linked-docs', 'pending-actions'].includes(currentView)) {
-      setCurrentView('deal-detail');
+      setCurrentView(previousView);
+      if (previousView === 'channels') setSelectedDeal(null);
     }
   };
 
@@ -599,7 +601,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               <p className="text-sm text-stone-500 mt-1">Official updates from your active deals.</p>
             </div>
             <button
-              onClick={() => selectedDeal && setCurrentView('send-update')}
+              onClick={() => { if (selectedDeal) { setPreviousView('channels'); setCurrentView('send-update'); } }}
               disabled={!selectedDeal}
               className={`px-4 py-2 bg-white border border-stone-100 text-sm font-medium transition ${
                 selectedDeal
@@ -671,11 +673,12 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
                 {filteredDeals.map((deal) => (
                   <div
                     key={deal.id}
-                    onClick={() => {
-                      setSelectedDeal(deal);
-                      setCurrentView('deal-detail');
-                    }}
-                    className="flex items-center justify-between p-4 bg-white border border-stone-100  hover:shadow-md hover:border-fundex-gold/20 cursor-pointer transition"
+                    onClick={() => setSelectedDeal(deal)}
+                    className={`flex items-center justify-between p-4 bg-white border cursor-pointer transition hover:shadow-md ${
+                      selectedDeal?.id === deal.id
+                        ? 'border-fundex-gold bg-fundex-gold/5'
+                        : 'border-stone-100 hover:border-fundex-gold/20'
+                    }`}
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
@@ -692,7 +695,12 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
                         </div>
                       </div>
                     </div>
-                    <ChevronRight className="text-stone-500" size={20} />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSelectedDeal(deal); setPreviousView('deal-detail'); setCurrentView('deal-detail'); }}
+                      className="p-1 hover:bg-stone-100 rounded transition"
+                    >
+                      <ChevronRight className="text-stone-500" size={20} />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -724,7 +732,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
       {/* Four Buttons */}
       <div className="flex flex-wrap gap-3">
         <button
-          onClick={() => setCurrentView('send-update')}
+          onClick={() => { setPreviousView('deal-detail'); setCurrentView('send-update'); }}
           className="px-6 py-2 bg-fundex-forest text-white font-medium  hover:bg-fundex-forest/90 transition flex items-center gap-2"
         >
           <Send size={18} />
@@ -732,7 +740,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
         </button>
 
         <button
-          onClick={() => setCurrentView('linked-docs')}
+          onClick={() => { setPreviousView('deal-detail'); setCurrentView('linked-docs'); }}
           className="px-4 py-2 bg-white border border-stone-100 text-stone-900 font-medium  hover:bg-stone-50 transition flex items-center gap-2"
         >
           <FileText size={18} />
@@ -740,7 +748,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
         </button>
 
         <button
-          onClick={() => setCurrentView('schedule-update')}
+          onClick={() => { setPreviousView('deal-detail'); setCurrentView('schedule-update'); }}
           className="px-4 py-2 bg-white border border-stone-100 text-stone-900 font-medium  hover:bg-stone-50 transition flex items-center gap-2"
         >
           <Calendar size={18} />

@@ -139,12 +139,12 @@ export async function GET(
       if (userProfileIds.length > 0) {
         const { data: profiles } = await supabase
           .from('user_profiles')
-          .select('id, full_name')
-          .in('id', userProfileIds);
+          .select('user_id, full_name')
+          .in('user_id', userProfileIds);
 
         if (profiles) {
           profiles.forEach((p) => {
-            investorMap.set(`${p.id}:user_profiles`, p.full_name);
+            investorMap.set(`${p.user_id}:user_profiles`, p.full_name);
           });
         }
       }

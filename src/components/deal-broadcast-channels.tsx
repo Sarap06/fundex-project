@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import {
   Send,
@@ -907,105 +908,113 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
     </div>
   );
 
-  const renderSendUpdateView = () => (
-    <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className=" border border-stone-100 bg-white shadow-sm w-full max-w-2xl max-h-[85vh] flex flex-col">
+  const renderSendUpdateView = () => createPortal(
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" onClick={handleGoBack}>
+      <div className="border border-stone-200 bg-white shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-stone-100 flex-shrink-0">
+        <div className="bg-white border-b border-stone-100 px-6 py-4 flex justify-between items-center shrink-0">
           <div>
-            <h2 className="text-lg font-display font-semibold text-stone-900">Send Investor Update</h2>
-            <p className="text-xs text-stone-500 mt-0.5">
-              Broadcast to all {selectedDeal?.investor_count || 0} investors
+            <h2 className="text-2xl font-display font-normal text-stone-900">Send Investor Update</h2>
+            <p className="text-sm text-stone-500 mt-1">
+              Broadcast to all {selectedDeal?.investor_count || 0} investors in {selectedDeal?.name}
             </p>
           </div>
           <button
             onClick={handleGoBack}
-            className="p-1 hover:bg-stone-50  transition"
+            className="p-1 hover:bg-stone-50 transition"
           >
-            <X size={20} className="text-stone-500" />
+            <X size={24} className="text-stone-500" />
           </button>
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSendUpdate} className="flex-1 overflow-y-auto p-5 space-y-4">
+        <form onSubmit={handleSendUpdate} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200  text-red-800 text-sm flex items-center gap-2">
+            <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-sm flex items-center gap-2">
               <AlertCircle size={16} />
               {error}
             </div>
           )}
 
           {successMessage && (
-            <div className="p-3 bg-fundex-gold/10 border border-fundex-gold/20  text-fundex-forest text-sm flex items-center gap-2">
+            <div className="p-3 bg-fundex-gold/10 border border-fundex-gold/20 text-fundex-forest text-sm flex items-center gap-2">
               <CheckCircle size={16} />
               {successMessage}
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-semibold text-stone-900 mb-1.5">Update Title <span className="text-red-500">*</span></label>
-            <input
-              type="text"
-              value={updateTitle}
-              onChange={(e) => setUpdateTitle(e.target.value)}
-              placeholder="e.g., Q1 2025 Performance Update"
-              className="w-full px-3 py-2 text-sm border border-stone-100  focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
-            />
-          </div>
+          <div className="bg-stone-50 p-6 space-y-5">
+            <h3 className="text-lg font-display font-normal text-stone-900">Message Details</h3>
 
-          <div>
-            <label className="block text-sm font-semibold text-stone-900 mb-1.5">Message Body <span className="text-red-500">*</span></label>
-            <textarea
-              value={updateMessage}
-              onChange={(e) => setUpdateMessage(e.target.value)}
-              placeholder="Write your message to investors..."
-              rows={5}
-              className="w-full px-3 py-2 text-sm border border-stone-100  focus:outline-none focus:ring-2 focus:ring-fundex-gold/30 resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-stone-900 mb-2">Document Attachments</label>
-            <label className="flex flex-col items-center justify-center w-full px-4 py-5 border-2 border-dashed border-stone-100  cursor-pointer hover:border-gray-400 hover:bg-stone-50 transition">
-              <div className="flex flex-col items-center justify-center">
-                <Upload size={32} className="text-stone-500 mb-1" />
-                <p className="text-xs font-medium text-stone-900">Click to upload documents</p>
-                <p className="text-xs text-stone-500">PDF, DOC, XLS up to 10MB</p>
-              </div>
+            <div>
+              <label className="block text-sm font-normal text-stone-700 mb-1.5">Update Title <span className="text-red-600">*</span></label>
               <input
-                type="file"
-                onChange={(e) => handleFileChange(e, false)}
-                className="hidden"
+                type="text"
+                value={updateTitle}
+                onChange={(e) => setUpdateTitle(e.target.value)}
+                placeholder="e.g., Q1 2025 Performance Update"
+                className="w-full px-4 py-3 text-sm border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
               />
-            </label>
-            {updateFile && (
-              <p className="text-xs text-fundex-forest mt-1.5 flex items-center gap-1">
-                <CheckCircle size={14} /> {updateFile.name}
-              </p>
-            )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-normal text-stone-700 mb-1.5">Message Body <span className="text-red-600">*</span></label>
+              <textarea
+                value={updateMessage}
+                onChange={(e) => setUpdateMessage(e.target.value)}
+                placeholder="Write your message to investors..."
+                rows={8}
+                className="w-full px-4 py-3 text-sm border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-fundex-gold/30 resize-none"
+              />
+            </div>
           </div>
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={requireAcknowledgment}
-              onChange={(e) => setRequireAcknowledgment(e.target.checked)}
-              className="w-4 h-4 border border-stone-100 "
-            />
-            <span className="text-sm text-stone-500">Require investor acknowledgment</span>
-          </label>
+          <div className="bg-stone-50 p-6 space-y-5">
+            <h3 className="text-lg font-display font-normal text-stone-900">Attachments & Settings</h3>
+
+            <div>
+              <label className="block text-sm font-normal text-stone-700 mb-2">Document Attachments</label>
+              <label className="flex flex-col items-center justify-center w-full px-4 py-8 border-2 border-dashed border-stone-200 cursor-pointer hover:border-stone-400 hover:bg-white transition bg-white">
+                <div className="flex flex-col items-center justify-center">
+                  <Upload size={32} className="text-stone-400 mb-2" />
+                  <p className="text-sm font-medium text-stone-900">Click to upload documents</p>
+                  <p className="text-xs text-stone-500 mt-1">PDF, DOC, XLS up to 10MB</p>
+                </div>
+                <input
+                  type="file"
+                  onChange={(e) => handleFileChange(e, false)}
+                  className="hidden"
+                />
+              </label>
+              {updateFile && (
+                <p className="text-sm text-fundex-forest mt-2 flex items-center gap-1">
+                  <CheckCircle size={14} /> {updateFile.name}
+                </p>
+              )}
+            </div>
+
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={requireAcknowledgment}
+                onChange={(e) => setRequireAcknowledgment(e.target.checked)}
+                className="w-4 h-4 border border-stone-200"
+              />
+              <span className="text-sm text-stone-700">Require investor acknowledgment</span>
+            </label>
+          </div>
         </form>
 
         {/* Footer */}
-        <div className="border-t border-stone-100 p-5 bg-stone-50 flex-shrink-0">
+        <div className="border-t border-stone-100 px-6 py-4 bg-stone-50 shrink-0">
           <p className="text-xs text-stone-500 mb-3">
             <span className="font-semibold text-stone-900">{selectedDeal?.investor_count || 0} investors</span> will receive this update
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button
               type="button"
               onClick={handleGoBack}
-              className="flex-1 px-3 py-2 text-sm border border-stone-100  text-stone-900 font-medium hover:bg-stone-50 transition"
+              className="flex-1 px-4 py-2.5 text-sm border border-stone-200 text-stone-900 font-medium hover:bg-stone-100 transition"
             >
               Cancel
             </button>
@@ -1013,119 +1022,126 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               type="button"
               onClick={handleSendUpdate}
               disabled={sending}
-              className="flex-1 px-3 py-2 text-sm bg-fundex-forest text-white  font-medium hover:bg-fundex-forest/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="flex-1 px-4 py-2.5 text-sm bg-fundex-forest text-white font-medium hover:bg-fundex-forest/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               {sending ? 'Sending...' : 'Send Update'}
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 
-  const renderScheduleUpdateView = () => (
-    <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className=" border border-stone-100 bg-white shadow-sm w-full max-w-2xl max-h-[85vh] flex flex-col">
+  const renderScheduleUpdateView = () => createPortal(
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" onClick={handleGoBack}>
+      <div className="border border-stone-200 bg-white shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-stone-100 flex-shrink-0">
+        <div className="bg-white border-b border-stone-100 px-6 py-4 flex justify-between items-center shrink-0">
           <div>
-            <h2 className="text-lg font-display font-semibold text-stone-900">Schedule Future Update</h2>
-            <p className="text-xs text-stone-500 mt-0.5">
-              Plan an investor communication in advance
+            <h2 className="text-2xl font-display font-normal text-stone-900">Schedule Future Update</h2>
+            <p className="text-sm text-stone-500 mt-1">
+              Plan an investor communication in advance for {selectedDeal?.name}
             </p>
           </div>
           <button
             onClick={handleGoBack}
-            className="p-1 hover:bg-stone-50  transition"
+            className="p-1 hover:bg-stone-50 transition"
           >
-            <X size={20} className="text-stone-500" />
+            <X size={24} className="text-stone-500" />
           </button>
         </div>
 
         {/* Content */}
-        <form onSubmit={handleScheduleUpdate} className="flex-1 overflow-y-auto p-5 space-y-4">
+        <form onSubmit={handleScheduleUpdate} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200  text-red-800 text-sm flex items-center gap-2">
+            <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-sm flex items-center gap-2">
               <AlertCircle size={16} />
               {error}
             </div>
           )}
 
           {successMessage && (
-            <div className="p-3 bg-fundex-gold/10 border border-fundex-gold/20  text-fundex-forest text-sm flex items-center gap-2">
+            <div className="p-3 bg-fundex-gold/10 border border-fundex-gold/20 text-fundex-forest text-sm flex items-center gap-2">
               <CheckCircle size={16} />
               {successMessage}
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-semibold text-stone-900 mb-1.5">Update Title <span className="text-red-500">*</span></label>
-            <input
-              type="text"
-              value={updateTitle}
-              onChange={(e) => setUpdateTitle(e.target.value)}
-              placeholder="e.g., Monthly Distribution Notice"
-              className="w-full px-3 py-2 text-sm border border-stone-100  focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
-            />
-          </div>
+          <div className="bg-stone-50 p-6 space-y-5">
+            <h3 className="text-lg font-display font-normal text-stone-900">Message Details</h3>
 
-          <div>
-            <label className="block text-sm font-semibold text-stone-900 mb-1.5">Message Body <span className="text-red-500">*</span></label>
-            <textarea
-              value={updateMessage}
-              onChange={(e) => setUpdateMessage(e.target.value)}
-              placeholder="Write your scheduled message..."
-              rows={4}
-              className="w-full px-3 py-2 text-sm border border-stone-100  focus:outline-none focus:ring-2 focus:ring-fundex-gold/30 resize-none"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-stone-900 mb-1.5">Send Date <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-normal text-stone-700 mb-1.5">Update Title <span className="text-red-600">*</span></label>
               <input
-                type="date"
-                value={scheduleDate}
-                onChange={(e) => setScheduleDate(e.target.value)}
-                placeholder="dd-mm-yyyy"
-                className="w-full px-3 py-2 text-sm border border-stone-100  focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
+                type="text"
+                value={updateTitle}
+                onChange={(e) => setUpdateTitle(e.target.value)}
+                placeholder="e.g., Monthly Distribution Notice"
+                className="w-full px-4 py-3 text-sm border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
               />
             </div>
+
             <div>
-              <label className="block text-sm font-semibold text-stone-900 mb-1.5">Send Time <span className="text-red-500">*</span></label>
-              <input
-                type="time"
-                value={scheduleTime}
-                onChange={(e) => setScheduleTime(e.target.value)}
-                placeholder="--:--"
-                className="w-full px-3 py-2 text-sm border border-stone-100  focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
+              <label className="block text-sm font-normal text-stone-700 mb-1.5">Message Body <span className="text-red-600">*</span></label>
+              <textarea
+                value={updateMessage}
+                onChange={(e) => setUpdateMessage(e.target.value)}
+                placeholder="Write your scheduled message..."
+                rows={8}
+                className="w-full px-4 py-3 text-sm border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-fundex-gold/30 resize-none"
               />
             </div>
           </div>
 
-          <div className="p-3 bg-stone-50 border border-stone-200 ">
-            <div className="flex items-start gap-3">
-              <Clock size={18} className="text-stone-600 mt-0.5 flex-shrink-0" />
+          <div className="bg-stone-50 p-6 space-y-5">
+            <h3 className="text-lg font-display font-normal text-stone-900">Schedule Settings</h3>
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-semibold text-stone-900">Timezone: Eastern Time (ET)</p>
-                <p className="text-xs text-stone-600 mt-1">
-                  The update will be sent to all investors at the scheduled time in your organization's timezone.
-                </p>
+                <label className="block text-sm font-normal text-stone-700 mb-1.5">Send Date <span className="text-red-600">*</span></label>
+                <input
+                  type="date"
+                  value={scheduleDate}
+                  onChange={(e) => setScheduleDate(e.target.value)}
+                  className="w-full px-4 py-3 text-sm border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-normal text-stone-700 mb-1.5">Send Time <span className="text-red-600">*</span></label>
+                <input
+                  type="time"
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                  className="w-full px-4 py-3 text-sm border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 bg-white border border-stone-200">
+              <div className="flex items-start gap-3">
+                <Clock size={18} className="text-stone-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-stone-900">Timezone: Eastern Time (ET)</p>
+                  <p className="text-xs text-stone-500 mt-1">
+                    The update will be sent to all investors at the scheduled time in your organization&apos;s timezone.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </form>
 
         {/* Footer */}
-        <div className="border-t border-stone-100 p-5 bg-stone-50 flex-shrink-0">
+        <div className="border-t border-stone-100 px-6 py-4 bg-stone-50 shrink-0">
           <p className="text-xs text-stone-500 mb-3">
             Updates can be edited or cancelled before the scheduled time
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button
               type="button"
               onClick={handleGoBack}
-              className="flex-1 px-3 py-2 text-sm border border-stone-100  text-stone-900 font-medium hover:bg-stone-50 transition"
+              className="flex-1 px-4 py-2.5 text-sm border border-stone-200 text-stone-900 font-medium hover:bg-stone-100 transition"
             >
               Cancel
             </button>
@@ -1133,7 +1149,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               type="button"
               onClick={handleScheduleUpdate}
               disabled={scheduling}
-              className="flex-1 px-3 py-2 text-sm bg-fundex-forest text-white  font-medium hover:bg-fundex-forest/90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 text-sm bg-fundex-forest text-white font-medium hover:bg-fundex-forest/90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
             >
               <Calendar size={16} />
               {scheduling ? 'Scheduling...' : 'Schedule Update'}
@@ -1141,7 +1157,8 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 
   const renderLinkedDocsView = () => (
@@ -1199,13 +1216,18 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
     );
   }
 
+  // Determine base view (channels or deal-detail) vs overlay modals (send-update, schedule-update)
+  const isModalOpen = currentView === 'send-update' || currentView === 'schedule-update';
+  const baseView = isModalOpen ? previousView : currentView;
+
   return (
     <div className="space-y-6 pt-6">
-      {currentView === 'channels' && renderChannelsView()}
-      {currentView === 'deal-detail' && renderDealDetailView()}
+      {baseView === 'channels' && renderChannelsView()}
+      {baseView === 'deal-detail' && renderDealDetailView()}
+      {currentView === 'linked-docs' && renderLinkedDocsView()}
+      {/* Modal overlays — rendered on top of the base view */}
       {currentView === 'send-update' && renderSendUpdateView()}
       {currentView === 'schedule-update' && renderScheduleUpdateView()}
-      {currentView === 'linked-docs' && renderLinkedDocsView()}
     </div>
   );
 }

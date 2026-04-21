@@ -208,9 +208,10 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
         }
 
         // Fetch from user_profiles table with role = investor
+        // Use user_id (auth ID) as the identifier — this is what the investor-side APIs use
         const { data: userProfilesData, error: userError } = await supabase
           .from('user_profiles')
-          .select('id, email, full_name, company_id, role')
+          .select('user_id, email, full_name, company_id, role')
           .eq('company_id', companyId)
           .eq('role', 'investor');
 
@@ -219,9 +220,9 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
         } else if (userProfilesData) {
           // Add user_profiles that aren't already in allInvestors
           const existingIds = new Set(allInvestors.map(inv => inv.id));
-          const newProfiles = userProfilesData.filter((up: any) => !existingIds.has(up.id));
+          const newProfiles = userProfilesData.filter((up: any) => !existingIds.has(up.user_id));
           allInvestors.push(...newProfiles.map((up: any) => ({
-            id: up.id,
+            id: up.user_id,
             email: up.email,
             full_name: up.full_name,
             company_id: up.company_id,
@@ -282,13 +283,13 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
               if (selected.source === 'user_profiles') {
                 const { data, error } = await supabase
                   .from('user_profiles')
-                  .select('id, email, full_name, company_id, role')
-                  .eq('id', selected.id)
+                  .select('user_id, email, full_name, company_id, role')
+                  .eq('user_id', selected.id)
                   .single();
-                
+
                 if (data && !error) {
                   missingInvestors.push({
-                    id: data.id,
+                    id: data.user_id,
                     email: data.email,
                     full_name: data.full_name,
                     company_id: data.company_id,

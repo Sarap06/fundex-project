@@ -100,12 +100,12 @@ export async function POST(request: NextRequest) {
           if (userProfileIds.length > 0) {
             const { data: profiles } = await supabase
               .from('user_profiles')
-              .select('id, email')
-              .in('id', userProfileIds);
+              .select('user_id, email')
+              .in('user_id', userProfileIds);
 
             if (profiles) {
               investorEmails.push(
-                ...profiles.map((p) => ({ id: p.id, email: p.email, source: 'user_profiles' }))
+                ...profiles.map((p) => ({ id: p.user_id, email: p.email, source: 'user_profiles' }))
               );
             }
           }

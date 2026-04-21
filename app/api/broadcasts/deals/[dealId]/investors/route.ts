@@ -61,16 +61,16 @@ export async function GET(
       if (userProfileIds.length > 0) {
         const { data: profiles } = await supabase
           .from('user_profiles')
-          .select('id, email, full_name')
-          .in('id', userProfileIds);
+          .select('user_id, email, full_name')
+          .in('user_id', userProfileIds);
 
         if (profiles) {
           investors.push(
             ...profiles.map((p) => ({
-              id: p.id,
+              id: p.user_id,
               email: p.email,
               name: p.full_name || 'Unknown',
-              investor_id: p.id,
+              investor_id: p.user_id,
               investor_source: 'user_profiles',
             }))
           );

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
+import { ManageCommsPanel } from '@/components/manage-comms-panel';
 import {
   Send,
   FileText,
@@ -18,6 +19,7 @@ import {
   X,
   MessageCircle,
 } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 // ── Admin Inbox (WhatsApp-style 1-to-1 threads) ────────────────────────────
 
@@ -337,6 +339,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
   const [previousView, setPreviousView] = useState<ViewState>('channels');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'deals' | 'inbox'>('deals');
+  const [isCommsPanelOpen, setIsCommsPanelOpen] = useState(false);
 
   // State for deal detail view
   const [dealUpdates, setDealUpdates] = useState<BroadcastUpdate[]>([]);
@@ -602,47 +605,30 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               <p className="text-sm text-stone-500 mt-1">Official updates from your active deals.</p>
             </div>
             <button
-              onClick={() => { if (selectedDeal) { setPreviousView('channels'); setCurrentView('send-update'); } }}
-              disabled={!selectedDeal}
-              className={`px-4 py-2 bg-white border border-stone-100 text-sm font-medium transition ${
-                selectedDeal
-                  ? 'text-stone-700 hover:bg-stone-50 cursor-pointer'
-                  : 'text-stone-300 cursor-not-allowed'
-              }`}
+              onClick={() => setIsCommsPanelOpen(true)}
+              className="px-4 py-2 bg-white border border-stone-100 text-sm font-medium transition text-stone-700 hover:bg-stone-50 cursor-pointer"
             >
               Manage Communications
             </button>
           </div>
 
           {/* Tab Buttons */}
-          <div className="flex items-center gap-2 border-b border-stone-100 -mb-px">
-            <button
-              onClick={() => {
-                setActiveTab('deals');
-                setSearchQuery('');
-              }}
-              className={`px-4 py-2 font-medium text-sm transition-colors ${
-                activeTab === 'deals'
-                  ? 'text-stone-900 border-b-2 border-fundex-gold'
-                  : 'text-stone-400 hover:bg-stone-50'
-              }`}
-            >
-              Deal Channels
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('inbox');
-                setSearchQuery('');
-              }}
-              className={`px-4 py-2 font-medium text-sm transition-colors ${
-                activeTab === 'inbox'
-                  ? 'text-stone-900 border-b-2 border-fundex-gold'
-                  : 'text-stone-400 hover:bg-stone-50'
-              }`}
-            >
-              Investor Inbox
-            </button>
-          </div>
+          <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as 'deals' | 'inbox'); setSearchQuery(''); }} className="-mb-px">
+            <TabsList className="h-auto gap-2 rounded-none border-b border-stone-100 bg-transparent p-0">
+              <TabsTrigger
+                value="deals"
+                className="rounded-none border-b-2 border-transparent bg-transparent px-4 py-2 text-sm font-medium text-stone-400 shadow-none hover:bg-stone-50 data-[state=active]:border-fundex-gold data-[state=active]:bg-transparent data-[state=active]:text-stone-900 data-[state=active]:shadow-none"
+              >
+                Deal Channels
+              </TabsTrigger>
+              <TabsTrigger
+                value="inbox"
+                className="rounded-none border-b-2 border-transparent bg-transparent px-4 py-2 text-sm font-medium text-stone-400 shadow-none hover:bg-stone-50 data-[state=active]:border-fundex-gold data-[state=active]:bg-transparent data-[state=active]:text-stone-900 data-[state=active]:shadow-none"
+              >
+                Investor Inbox
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         {/* Search Bar */}
@@ -1221,6 +1207,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
   const baseView = isModalOpen ? previousView : currentView;
 
   return (
+    <>
     <div className="space-y-6 pt-6">
       {baseView === 'channels' && renderChannelsView()}
       {baseView === 'deal-detail' && renderDealDetailView()}
@@ -1229,5 +1216,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
       {currentView === 'send-update' && renderSendUpdateView()}
       {currentView === 'schedule-update' && renderScheduleUpdateView()}
     </div>
+    <ManageCommsPanel isOpen={isCommsPanelOpen} onClose={() => setIsCommsPanelOpen(false)} />
+    </>
   );
 }

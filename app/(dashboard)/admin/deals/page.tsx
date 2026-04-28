@@ -9,10 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/page-header';
 import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
-import { TrendingUp, DollarSign, AlertCircle, Plus, X, Filter, Search, Trash2, Edit } from 'lucide-react';
+import { TrendingUp, DollarSign, AlertCircle, Plus, X, Filter, Search, Trash2, Edit, Eye } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { getCurrentUserCompanyId, logOut } from '@/lib/auth';
 import { CreateDealWizard } from '@/components/create-deal-wizard';
+import { DealQuickViewModal, type DealQuickViewData } from '@/components/deal-quick-view-modal';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -74,10 +75,12 @@ export default function DealsPage() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [filteredDeals, setFilteredDeals] = useState<Deal[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusTab, setStatusTab] = useState('all');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [activeFilterCount, setActiveFilterCount] = useState(0);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
+  const [quickViewDeal, setQuickViewDeal] = useState<DealQuickViewData | null>(null);
   const filterPanelRef = useRef<HTMLDivElement>(null);
 
 
@@ -124,7 +127,7 @@ export default function DealsPage() {
   // Filter deals when search or filters change
   useEffect(() => {
     applyFilters();
-  }, [deals, searchTerm, filters]);
+  }, [deals, searchTerm, filters, statusTab]);
 
   const fetchDeals = async (cId: string | null) => {
     let query = supabase
@@ -171,6 +174,19 @@ export default function DealsPage() {
           deal.location?.toLowerCase().includes(term) ||
           deal.type.toLowerCase().includes(term);
         if (!matchesSearch) return false;
+      }
+
+      // Status tab filter
+      if (statusTab !== 'all') {
+        const tabStatusMap: Record<string, string[]> = {
+          funding: ['Funding', 'funding'],
+          active: ['Active', 'active'],
+          'due-diligence': ['Due Diligence', 'due_diligence', 'due diligence'],
+          'awaiting-docs': ['Awaiting Docs', 'awaiting_docs', 'awaiting docs'],
+          closed: ['Closed', 'closed'],
+        };
+        const allowed = tabStatusMap[statusTab] || [];
+        if (allowed.length > 0 && !allowed.some(s => s.toLowerCase() === deal.status.toLowerCase())) return false;
       }
 
       // Status filter
@@ -651,6 +667,30 @@ export default function DealsPage() {
           </div>
         </div>
       </div>
+
+      {/* Status Tabs */}
+      <div className="flex items-center gap-1 overflow-x-auto pb-1 mt-4">
+        {[
+          { key: 'all', label: 'All' },
+          { key: 'funding', label: 'Funding' },
+          { key: 'active', label: 'Active' },
+          { key: 'due-diligence', label: 'Due Diligence' },
+          { key: 'awaiting-docs', label: 'Awaiting Docs' },
+          { key: 'closed', label: 'Closed' },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setStatusTab(tab.key)}
+            className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+              statusTab === tab.key
+                ? 'bg-fundex-forest text-white'
+                : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
       </StaggerItem>
 
       {/* Create Deal Wizard Modal */}
@@ -853,6 +893,28 @@ export default function DealsPage() {
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <button
+                        onClick={() => setQuickViewDeal({
+                          id: deal.id,
+                          name: deal.name,
+                          dealId: deal.deal_id,
+                          status: deal.status,
+                          type: deal.type,
+                          location: [deal.location_city, deal.location_state].filter(Boolean).join(', ') || deal.location,
+                          targetAmount: deal.target_amount,
+                          raisedAmount: deal.raised_amount,
+                          progress: deal.progress,
+                          interestRate: deal.interest_rate,
+                          monthlyInterest: deal.target_amount * (deal.interest_rate / 100) / 12,
+                          minimumInvestment: 0,
+                          term: deal.term || '',
+                          investorCount: deal.dealInvestors?.length ?? deal.investor_count,
+                        })}
+                        className="text-stone-500 hover:text-fundex-forest"
+                        title="Quick view"
+                      >
+                        <Eye className="size-4" />
+                      </button>
+                      <button
                         onClick={() => {
                           setEditingDeal(deal);
                           setIsDrawerOpen(true);
@@ -887,6 +949,12 @@ export default function DealsPage() {
 
       </StaggerContainer>
       </div>
+
+      <DealQuickViewModal
+        isOpen={!!quickViewDeal}
+        onClose={() => setQuickViewDeal(null)}
+        deal={quickViewDeal}
+      />
     </>
   );
 }

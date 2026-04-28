@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { Download, Eye, FileText, Filter, Search, X } from "lucide-react";
-import { ReactNode, useState } from "react";
+import { Download, Eye, FileText, Filter, Loader2, Search, X } from 'lucide-react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 
 type StatCardProps = {
@@ -242,53 +243,88 @@ function DocumentRow({ doc, onView }: { doc: DocumentRowData; onView: (doc: Docu
   );
 }
 
-const SAMPLE_DOCUMENTS: DocumentRowData[] = [
-  {
-    id: "DOC-2026-014",
-    name: "Wire Confirmation — Initial Capital",
-    type: "Deposit",
-    deals: ["Dallas Mixed-Use Development", "Miami Office Project"],
-    date: "Apr 1, 2026",
-  },
-  {
-    id: "DOC-2026-089",
-    name: "Subscription Agreement — Amendment",
-    type: "Agreement",
-    deals: ["Dallas Mixed-Use Development"],
-    date: "Mar 22, 2026",
-  },
-  {
-    id: "DOC-2026-072",
-    name: "Quarterly Statement Q1",
-    type: "Other",
-    deals: ["Miami Office Project"],
-    date: "Mar 15, 2026",
-  },
-  {
-    id: "DOC-2026-051",
-    name: "Distribution Notice",
-    type: "Other",
-    deals: ["Dallas Mixed-Use Development", "Miami Office Project"],
-    date: "Feb 28, 2026",
-  },
-  {
-    id: "DOC-2026-033",
-    name: "Operating Agreement Acknowledgment",
-    type: "Agreement",
-    deals: ["Miami Office Project"],
-    date: "Feb 10, 2026",
-  },
-];
+type DealPill = 'active' | 'closed' | 'all';
 
-type DealPill = "active" | "closed" | "all";
+function formatDateShort(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+interface ApiDocument {
+  id: string;
+  documentId: string;
+  name: string;
+  type: string;
+  category: string;
+  status: string;
+  fileUrl: string | null;
+  fileSize: string | null;
+  fileType: string | null;
+  uploadedBy: string | null;
+  uploadDate: string;
+  notes: string | null;
+  linkedDeal: string | null;
+  dealId: string | null;
+  dealStatus: string | null;
+}
 
 export default function DocumentsPage() {
-  const [activeTab, setActiveTab] = useState<TabId>("all");
-  const [dealPill, setDealPill] = useState<DealPill>("active");
+  const [activeTab, setActiveTab] = useState<TabId>('all');
+  const [dealPill, setDealPill] = useState<DealPill>('active');
   const [selectedDocument, setSelectedDocument] = useState<DocumentRowData | null>(null);
-  const isPreviewOpen = selectedDocument !== null;
+  const [documents, setDocuments] = useState<ApiDocument[]>([]);
+  const [stats, setStats] = useState({ total: 0, newCount: 0, requiresAttention: 0, active: 0 });
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) { setLoading(false); return; }
+
+        const res = await fetch('/api/investor/documents', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDocuments(data.documents || []);
+          setStats(data.stats || { total: 0, newCount: 0, requiresAttention: 0, active: 0 });
+        }
+      } catch (err) {
+        console.error('[DOCUMENTS] Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const filteredDocs = useMemo(() => {
+    return documents
+      .filter((d) => {
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          if (!d.name.toLowerCase().includes(q) && !d.type.toLowerCase().includes(q) && !(d.linkedDeal || '').toLowerCase().includes(q)) return false;
+        }
+        if (dealPill === 'active' && d.dealStatus && d.dealStatus !== 'Active') return false;
+        if (dealPill === 'closed' && d.dealStatus !== 'Closed') return false;
+        return true;
+      })
+      .map((d): DocumentRowData => ({
+        id: d.documentId || d.id,
+        name: d.name,
+        type: d.type || d.category,
+        deals: d.linkedDeal ? [d.linkedDeal] : [],
+        date: formatDateShort(d.uploadDate),
+        fileSize: d.fileSize || undefined,
+      }));
+  }, [documents, searchQuery, dealPill]);
+
+  const isPreviewOpen = selectedDocument !== null;
   const closePreview = () => setSelectedDocument(null);
+
+  if (loading) {
+    return <div className="flex min-h-[400px] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-fundex-forest" /></div>;
+  }
 
   return (
     <>
@@ -301,14 +337,14 @@ export default function DocumentsPage() {
           </header>
 
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
-            <StatCard title="My Documents" value={10} />
+            <StatCard title="My Documents" value={stats.total} />
             <StatCard
               title="New Documents"
-              value={2}
-              titleAdornment={<span className="h-2 w-2  bg-fundex-gold" aria-hidden />}
+              value={stats.newCount}
+              titleAdornment={stats.newCount > 0 ? <span className="h-2 w-2 bg-fundex-gold" aria-hidden /> : undefined}
             />
-            <StatCard title="Requires Attention" value={0} />
-            <StatCard title="Active Documents" value={8} valueClassName="text-fundex-forest" />
+            <StatCard title="Requires Attention" value={stats.requiresAttention} />
+            <StatCard title="Active Documents" value={stats.active} valueClassName="text-fundex-forest" />
           </section>
 
           <div className="relative">
@@ -316,7 +352,9 @@ export default function DocumentsPage() {
             <input
               type="search"
               placeholder="Search by document, deal, or type..."
-              className="w-full  border border-stone-200 bg-white py-3.5 pl-12 pr-4 text-sm text-stone-900 shadow-sm placeholder:text-stone-400 outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full border border-stone-200 bg-white py-3.5 pl-12 pr-4 text-sm text-stone-900 shadow-sm placeholder:text-stone-400 outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
             />
           </div>
 
@@ -325,32 +363,30 @@ export default function DocumentsPage() {
               <TabSwitcher activeTab={activeTab} onChange={setActiveTab} />
             </div>
 
-            {activeTab === "all" ? (
+            {activeTab === 'all' ? (
               <div className="space-y-5 px-6 py-6 md:px-8 md:py-8">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <button
                     type="button"
-                    className="inline-flex w-fit items-center gap-2  border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-medium text-stone-700 shadow-sm transition hover:bg-stone-100"
+                    className="inline-flex w-fit items-center gap-2 border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-medium text-stone-700 shadow-sm transition hover:bg-stone-100"
                   >
                     <Filter className="h-4 w-4 text-stone-500" />
                     Deal Status
                   </button>
                   <div className="flex flex-wrap gap-2">
-                    {(
-                      [
-                        { id: "active" as const, label: "Active" },
-                        { id: "closed" as const, label: "Closed" },
-                        { id: "all" as const, label: "All" },
-                      ] as const
-                    ).map((p) => (
+                    {([
+                      { id: 'active' as const, label: 'Active' },
+                      { id: 'closed' as const, label: 'Closed' },
+                      { id: 'all' as const, label: 'All' },
+                    ]).map((p) => (
                       <button
                         key={p.id}
                         type="button"
                         onClick={() => setDealPill(p.id)}
-                        className={` px-4 py-2 text-sm font-medium transition ${
+                        className={`px-4 py-2 text-sm font-medium transition ${
                           dealPill === p.id
-                            ? "bg-fundex-gold text-fundex-forest shadow-sm"
-                            : "border border-stone-200 bg-white text-stone-600 shadow-sm hover:bg-stone-50"
+                            ? 'bg-fundex-gold text-fundex-forest shadow-sm'
+                            : 'border border-stone-200 bg-white text-stone-600 shadow-sm hover:bg-stone-50'
                         }`}
                       >
                         {p.label}
@@ -359,7 +395,7 @@ export default function DocumentsPage() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden  border border-stone-100">
+                <div className="overflow-hidden border border-stone-100">
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[800px] text-left text-sm">
                       <thead>
@@ -372,9 +408,15 @@ export default function DocumentsPage() {
                         </tr>
                       </thead>
                       <tbody className="bg-white">
-                        {SAMPLE_DOCUMENTS.map((doc) => (
-                          <DocumentRow key={doc.id} doc={doc} onView={setSelectedDocument} />
-                        ))}
+                        {filteredDocs.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="px-4 py-10 text-center text-sm text-stone-400">No documents found</td>
+                          </tr>
+                        ) : (
+                          filteredDocs.map((doc) => (
+                            <DocumentRow key={doc.id} doc={doc} onView={setSelectedDocument} />
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -382,44 +424,8 @@ export default function DocumentsPage() {
               </div>
             ) : (
               <div className="space-y-6 px-6 py-6 md:px-8 md:py-8">
-                <div className=" border border-stone-100 bg-white p-6 shadow-sm">
-                  <div className="flex flex-col gap-1 border-b border-stone-100 pb-4 sm:flex-row sm:items-baseline sm:justify-between">
-                    <h3 className="text-lg font-medium text-stone-900">2026</h3>
-                    <p className="text-sm font-semibold text-fundex-forest">Total Income: $18,450</p>
-                  </div>
-                  <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-semibold text-stone-900">Tax Summary 2026</p>
-                      <p className="mt-1 text-sm text-stone-500">File size: 456 KB • PDF</p>
-                    </div>
-                    <button
-                      type="button"
-                      className="inline-flex w-full shrink-0 items-center justify-center gap-2  bg-fundex-gold px-5 py-2.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 sm:w-auto"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download
-                    </button>
-                  </div>
-                </div>
-
-                <div className=" border border-stone-100 bg-white p-6 shadow-sm">
-                  <div className="flex flex-col gap-1 border-b border-stone-100 pb-4 sm:flex-row sm:items-baseline sm:justify-between">
-                    <h3 className="text-lg font-medium text-stone-900">2025</h3>
-                    <p className="text-sm font-semibold text-stone-700">Total Income: $12,200</p>
-                  </div>
-                  <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-semibold text-stone-900">Tax Summary 2025</p>
-                      <p className="mt-1 text-sm text-stone-500">File size: 412 KB • PDF</p>
-                    </div>
-                    <button
-                      type="button"
-                      className="inline-flex w-full shrink-0 items-center justify-center gap-2  bg-fundex-gold px-5 py-2.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 sm:w-auto"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download
-                    </button>
-                  </div>
+                <div className="py-8 text-center text-sm text-stone-400">
+                  Tax documents will appear here when available
                 </div>
               </div>
             )}

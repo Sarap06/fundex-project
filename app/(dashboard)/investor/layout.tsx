@@ -14,6 +14,7 @@ const INVESTOR_NAV_LINKS = [
   { label: 'Transactions', href: '/investor/transactions' },
   { label: 'Documents', href: '/investor/documents' },
   { label: 'Broadcast', href: '/investor/broadcast' },
+  { label: 'Settings', href: '/investor/settings' },
 ];
 
 export default function InvestorLayout({ children }: { children: React.ReactNode }) {

@@ -22,25 +22,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('company_id')
+      .select('company_id, role')
       .eq('user_id', user.id)
       .single();
 
-    if (!profile?.company_id) {
+    if (profileError || !profile?.company_id) {
       return NextResponse.json({ error: 'No company found' }, { status: 403 });
+    }
+
+    if (profile.role !== 'investor') {
+      return NextResponse.json({ error: 'Not an investor' }, { status: 403 });
     }
 
     const companyId = profile.company_id;
     const userId = user.id;
 
-    // Find all deals this investor is linked to
+    // Find all deals this investor is linked to, scoped by company
     const { data: dealInvestors } = await supabase
       .from('deal_investors')
-      .select('deal_id')
+      .select('deal_id, deals!inner(company_id)')
       .eq('investor_id', userId)
-      .eq('investor_source', 'user_profiles');
+      .eq('investor_source', 'user_profiles')
+      .eq('deals.company_id', companyId);
 
     if (!dealInvestors || dealInvestors.length === 0) {
       return NextResponse.json({ deals: [] });

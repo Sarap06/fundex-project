@@ -489,7 +489,76 @@ export default function InvestorsPage() {
                 </div>
               </div>
 
-              <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+              {/* Sort Dropdown + Filter Chips Row */}
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <select
+                  value={filters.sortBy}
+                  onChange={(e) => setFilter('sortBy', e.target.value)}
+                  className="fdx-input text-sm px-3 py-1.5 h-auto w-auto"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="name_az">Name A–Z</option>
+                  <option value="name_za">Name Z–A</option>
+                  <option value="highest_invested">Highest Invested</option>
+                  <option value="lowest_invested">Lowest Invested</option>
+                  <option value="highest_return">Highest Return</option>
+                  <option value="most_active">Most Active</option>
+                  <option value="recently_onboarded">Recently Onboarded</option>
+                </select>
+
+                {filters.sortBy !== 'newest' && (
+                  <span className="inline-flex items-center gap-1 bg-fundex-cream text-fundex-forest text-xs font-medium px-2.5 py-1 rounded-full">
+                    Sorted by: {filters.sortBy.replace(/_/g, ' ')}
+                  </span>
+                )}
+
+                {/* Active Filter Chips */}
+                {filters.sponsors.map((s) => (
+                  <span key={`sp-${s}`} className="inline-flex items-center gap-1 bg-stone-100 text-stone-700 text-xs font-medium px-2.5 py-1 rounded-full">
+                    Sponsor: {s}
+                    <button onClick={() => toggleArr('sponsors', s)} className="hover:text-red-500 ml-0.5"><X className="size-3" /></button>
+                  </span>
+                ))}
+                {filters.investmentActivity.map((a) => (
+                  <span key={`ia-${a}`} className="inline-flex items-center gap-1 bg-stone-100 text-stone-700 text-xs font-medium px-2.5 py-1 rounded-full">
+                    Activity: {a}
+                    <button onClick={() => toggleArr('investmentActivity', a)} className="hover:text-red-500 ml-0.5"><X className="size-3" /></button>
+                  </span>
+                ))}
+                {filters.needsAttention.map((n) => (
+                  <span key={`na-${n}`} className="inline-flex items-center gap-1 bg-stone-100 text-stone-700 text-xs font-medium px-2.5 py-1 rounded-full">
+                    Attention: {n}
+                    <button onClick={() => toggleArr('needsAttention', n)} className="hover:text-red-500 ml-0.5"><X className="size-3" /></button>
+                  </span>
+                ))}
+                {filters.avgReturnQuick && (
+                  <span className="inline-flex items-center gap-1 bg-stone-100 text-stone-700 text-xs font-medium px-2.5 py-1 rounded-full">
+                    Avg Return: {filters.avgReturnQuick}
+                    <button onClick={() => setFilter('avgReturnQuick', '')} className="hover:text-red-500 ml-0.5"><X className="size-3" /></button>
+                  </span>
+                )}
+                {filters.totalInvestedQuick && (
+                  <span className="inline-flex items-center gap-1 bg-stone-100 text-stone-700 text-xs font-medium px-2.5 py-1 rounded-full">
+                    Total Invested: {filters.totalInvestedQuick}
+                    <button onClick={() => setFilter('totalInvestedQuick', '')} className="hover:text-red-500 ml-0.5"><X className="size-3" /></button>
+                  </span>
+                )}
+                {filters.onboardedPreset && (
+                  <span className="inline-flex items-center gap-1 bg-stone-100 text-stone-700 text-xs font-medium px-2.5 py-1 rounded-full">
+                    Onboarded: {filters.onboardedPreset}
+                    <button onClick={() => setFilter('onboardedPreset', '')} className="hover:text-red-500 ml-0.5"><X className="size-3" /></button>
+                  </span>
+                )}
+
+                {activeFilterCount > 0 && (
+                  <button onClick={clearFilters} className="text-xs text-red-500 hover:text-red-700 font-medium ml-1">
+                    Clear all
+                  </button>
+                )}
+              </div>
+
+              <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
                 {['all', 'active', 'onboarding', 'pending'].map((status) => (
                   <button key={status} onClick={() => setStatusFilter(status)} className={`px-4 py-2  text-sm font-medium whitespace-nowrap transition-colors ${statusFilter === status ? 'fdx-btn-primary' : 'fdx-btn-secondary'}`}>
                     {status.charAt(0).toUpperCase() + status.slice(1)}

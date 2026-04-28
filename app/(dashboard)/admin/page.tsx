@@ -16,7 +16,6 @@ interface StatCard {
   label: string;
   value: string | number;
   subtext?: string;
-  trend?: number;
   icon: React.ReactNode;
   color?: string;
   bgColor?: string;
@@ -449,8 +448,6 @@ export default function AdminDashboard() {
         totalAUM: {
           label: 'Total AUM',
           value: `$${(totalAUMValue / 1000000).toFixed(2)}M`,
-          subtext: '',
-          trend: 12.5,
           icon: <DollarSign size={16} />,
           color: '#10B981',
           bgColor: '#ECFDF5'
@@ -458,8 +455,6 @@ export default function AdminDashboard() {
         activeInvestors: {
           label: 'Active Investors',
           value: investorCount,
-          subtext: '',
-          trend: 18,
           icon: <Users size={16} />,
           color: '#3B82F6',
           bgColor: '#EFF6FF'
@@ -467,8 +462,6 @@ export default function AdminDashboard() {
         activeDeals: {
           label: 'Active Deals',
           value: dealCount,
-          subtext: '',
-          trend: 5,
           icon: <Briefcase size={16} />,
           color: '#A855F7',
           bgColor: '#F3E8FF'
@@ -476,8 +469,6 @@ export default function AdminDashboard() {
         allocatedCapital: {
           label: 'Allocated Capital',
           value: `$${(allocatedCapitalTotal / 1000000).toFixed(2)}M`,
-          subtext: '',
-          trend: 24.8,
           icon: <TrendingUp size={16} />,
           color: '#F59E0B',
           bgColor: '#FFFBEB'
@@ -633,14 +624,6 @@ export default function AdminDashboard() {
                   <p className="mt-3 text-2xl font-semibold tabular-nums tracking-tight text-stone-900">
                     {stat.value}
                   </p>
-                  {stat.trend && (
-                    <div className="mt-2 flex items-center justify-between">
-                      <p className="text-xs font-normal text-stone-400">Growth Rate</p>
-                      <span className="text-[13px] font-medium tabular-nums text-emerald-500">
-                        ↑ {stat.trend}%
-                      </span>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

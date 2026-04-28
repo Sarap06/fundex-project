@@ -40,9 +40,6 @@ function CustomTooltip({ active, payload, label }: any) {
             <span className="text-xs font-medium tabular-nums text-stone-800">
               {formatCurrency(Math.abs(entry.value))}
             </span>
-            <span className={`ml-1 text-xs font-medium ${isInflow ? 'text-emerald-500' : 'text-red-400'}`}>
-              {isInflow ? '↑' : '↓'} 2.5%
-            </span>
           </div>
         );
       })}

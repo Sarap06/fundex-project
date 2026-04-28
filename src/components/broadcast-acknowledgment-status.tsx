@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type AcknowledgmentStatus = 'all' | 'pending' | 'opened' | 'acknowledged';
 
@@ -188,48 +189,22 @@ export function BroadcastAcknowledgmentStatus({
         )}
 
         {/* Status Tabs */}
-        <div className="flex gap-4 mb-6 border-b border-border pb-4">
-          <button
-            onClick={() => setSelectedTab('all')}
-            className={`px-4 py-2 text-sm font-medium  transition-colors ${
-              selectedTab === 'all'
-                ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setSelectedTab('pending')}
-            className={`px-4 py-2 text-sm font-medium  transition-colors ${
-              selectedTab === 'pending'
-                ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Pending ({pendingCount})
-          </button>
-          <button
-            onClick={() => setSelectedTab('opened')}
-            className={`px-4 py-2 text-sm font-medium  transition-colors ${
-              selectedTab === 'opened'
-                ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Opened ({openedCount})
-          </button>
-          <button
-            onClick={() => setSelectedTab('acknowledged')}
-            className={`px-4 py-2 text-sm font-medium  transition-colors ${
-              selectedTab === 'acknowledged'
-                ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Acknowledged ({acknowledgedCount})
-          </button>
-        </div>
+        <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as AcknowledgmentStatus)} className="mb-6">
+          <TabsList className="h-auto gap-4 rounded-none border-b border-border bg-transparent p-0 pb-4">
+            <TabsTrigger value="all" className="rounded-none bg-transparent px-4 py-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:shadow-none">
+              All
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="rounded-none bg-transparent px-4 py-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:shadow-none">
+              Pending ({pendingCount})
+            </TabsTrigger>
+            <TabsTrigger value="opened" className="rounded-none bg-transparent px-4 py-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:shadow-none">
+              Opened ({openedCount})
+            </TabsTrigger>
+            <TabsTrigger value="acknowledged" className="rounded-none bg-transparent px-4 py-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:shadow-none">
+              Acknowledged ({acknowledgedCount})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {/* Recipients List */}
         <div className="space-y-3 max-h-96 overflow-y-auto">

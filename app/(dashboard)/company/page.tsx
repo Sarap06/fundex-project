@@ -10,7 +10,7 @@ import { CapitalFlowChart } from '@/components/company/capital-flow-chart';
 import { CompanyOverview } from '@/components/company/company-overview';
 import { ActivityTable } from '@/components/company/activity-table';
 import { BroadcastPreview } from '@/components/company/broadcast-preview';
-import { DUMMY_STATS, DUMMY_FLOW_DATA, DUMMY_GROWTH } from '@/components/company/dummy-data';
+import { DUMMY_STATS, DUMMY_FLOW_DATA } from '@/components/company/dummy-data';
 import type { Company } from '@/lib/types';
 
 interface DashboardStats {
@@ -196,27 +196,19 @@ export default function CompanyDashboard() {
           <CompanyStatCard
             label="Total AUM"
             value={displayCurrency(displayStats.totalAUM)}
-            change={isDummy ? DUMMY_GROWTH.totalAUM : `+${((displayStats.fundedAllocations / Math.max(displayStats.fundedAllocations + displayStats.pendingAllocations, 1)) * 100).toFixed(1)}%`}
-            changeLabel="from last month"
             featured
           />
           <CompanyStatCard
             label="Allocated Capital"
             value={displayCurrency(displayStats.allocatedCapital)}
-            sublabel="Growth Rate"
-            change={isDummy ? DUMMY_GROWTH.allocatedCapital : `+${((displayStats.activeDeals / Math.max(displayStats.totalDeals, 1)) * 100).toFixed(1)}%`}
           />
           <CompanyStatCard
             label="Active Investors"
             value={String(displayStats.activeInvestors)}
-            sublabel="Growth Rate"
-            change={isDummy ? DUMMY_GROWTH.activeInvestors : `+${((displayStats.activeInvestors / Math.max(displayStats.totalInvestors, 1)) * 100).toFixed(1)}%`}
           />
           <CompanyStatCard
             label="Monthly Returns"
             value={displayCurrency(displayStats.monthlyInterest)}
-            sublabel="Growth Rate"
-            change={isDummy ? DUMMY_GROWTH.monthlyReturns : `+${((displayStats.monthlyInterest / Math.max(displayStats.allocatedCapital, 1)) * 100).toFixed(1)}%`}
           />
         </div>
       )}

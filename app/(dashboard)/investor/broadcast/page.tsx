@@ -3,6 +3,7 @@
 import { ChevronRight, CheckCircle2, Loader2, Search, Send, X } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 type BroadcastDeal = {
@@ -723,35 +724,32 @@ export default function BroadcastPage() {
             <p className="mt-2 text-base text-stone-600">Official updates from your active investments</p>
           </div>
 
-          <div className="flex gap-2 border-b border-stone-200 pb-0">
-            <button
-              type="button"
-              onClick={() => setMainTab("channels")}
-              className={`relative px-4 py-2.5 text-sm font-medium transition md:px-5 ${
-                mainTab === "channels"
-                  ? " bg-fundex-gold text-fundex-forest shadow-sm"
-                  : " text-stone-500 hover:text-stone-700"
-              }`}
-            >
-              Deal Channels
-            </button>
-            <button
-              type="button"
-              onClick={() => {
+          <Tabs
+            value={mainTab}
+            onValueChange={(v) => {
+              if (v === "inbox") {
                 setIsChannelModalOpen(false);
                 setIsContractFactsOpen(false);
                 setSelectedDealChannel(null);
-                setMainTab("inbox");
-              }}
-              className={`relative px-4 py-2.5 text-sm font-medium transition md:px-5 ${
-                mainTab === "inbox"
-                  ? " bg-fundex-gold text-fundex-forest shadow-sm"
-                  : " text-stone-500 hover:text-stone-700"
-              }`}
-            >
-              Investor Inbox
-            </button>
-          </div>
+              }
+              setMainTab(v as MainTab);
+            }}
+          >
+            <TabsList className="h-auto gap-2 rounded-none border-b border-stone-200 bg-transparent p-0 pb-0">
+              <TabsTrigger
+                value="channels"
+                className="rounded-none bg-transparent px-4 py-2.5 text-sm font-medium text-stone-500 shadow-none hover:text-stone-700 data-[state=active]:bg-fundex-gold data-[state=active]:text-fundex-forest data-[state=active]:shadow-sm md:px-5"
+              >
+                Deal Channels
+              </TabsTrigger>
+              <TabsTrigger
+                value="inbox"
+                className="rounded-none bg-transparent px-4 py-2.5 text-sm font-medium text-stone-500 shadow-none hover:text-stone-700 data-[state=active]:bg-fundex-gold data-[state=active]:text-fundex-forest data-[state=active]:shadow-sm md:px-5"
+              >
+                Investor Inbox
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           {mainTab === "channels" ? (
             <>

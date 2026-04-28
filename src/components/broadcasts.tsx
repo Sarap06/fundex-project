@@ -26,6 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
 interface Broadcast {
@@ -121,7 +122,6 @@ export function Broadcasts({
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [expandedBroadcast, setExpandedBroadcast] = useState<Broadcast | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSendForm, setShowSendForm] = useState(false);
 
@@ -386,41 +386,25 @@ export function Broadcasts({
             <CompanyStatCard
               label="Total Announcements"
               value={String(stats.total)}
-              change={stats.momChange}
-              changeLabel={stats.momLabel}
               featured
             />
             <CompanyStatCard
               label="This Month"
               value={String(stats.thisMonth)}
-              sublabel="New posts"
-              change={
-                stats.thisMonth > 0
-                  ? `+${Math.min(100, Math.round((stats.thisMonth / Math.max(stats.total, 1)) * 100))}%`
-                  : '+0%'
-              }
             />
             <CompanyStatCard
               label="With Attachments"
               value={String(stats.withAttachments)}
-              sublabel="Include a file"
-              change={
-                stats.withAttachments > 0
-                  ? `+${((stats.withAttachments / Math.max(stats.total, 1)) * 100).toFixed(0)}%`
-                  : '+0%'
-              }
             />
             <CompanyStatCard
               label="Last 7 Days"
               value={String(stats.last7)}
-              sublabel="Recent activity"
-              change={`+${stats.last7}`}
             />
           </div>
         </div>
 
         {/* Row 3 — list shell (ActivityTable pattern) */}
-        <div className="border border-stone-100 bg-white font-sans shadow-sm">
+        <Tabs defaultValue="all" className="border border-stone-100 bg-white font-sans shadow-sm">
           <div className="flex flex-col gap-4 border-b border-stone-100 px-6 py-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="text-base font-medium text-stone-900">All Announcements</h3>
@@ -438,34 +422,22 @@ export function Broadcasts({
               </div>
             </div>
 
-            <div className="flex gap-6 border-b border-stone-100">
-              <button
-                type="button"
-                onClick={() => setActiveTab('all')}
-                className={cn(
-                  'pb-3 text-sm font-normal transition-colors',
-                  activeTab === 'all'
-                    ? 'border-b-2 border-fundex-gold text-stone-900'
-                    : 'border-b-2 border-transparent text-stone-400 hover:text-stone-600',
-                )}
+            <TabsList className="h-auto gap-6 rounded-none border-b border-stone-100 bg-transparent p-0">
+              <TabsTrigger
+                value="all"
+                className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 text-sm font-normal text-stone-400 shadow-none hover:text-stone-600 data-[state=active]:border-fundex-gold data-[state=active]:bg-transparent data-[state=active]:text-stone-900 data-[state=active]:shadow-none"
               >
                 All
-              </button>
+              </TabsTrigger>
               {!isAdmin && (
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('unread')}
-                  className={cn(
-                    'pb-3 text-sm font-normal transition-colors',
-                    activeTab === 'unread'
-                      ? 'border-b-2 border-fundex-gold text-stone-900'
-                      : 'border-b-2 border-transparent text-stone-400 hover:text-stone-600',
-                  )}
+                <TabsTrigger
+                  value="unread"
+                  className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 text-sm font-normal text-stone-400 shadow-none hover:text-stone-600 data-[state=active]:border-fundex-gold data-[state=active]:bg-transparent data-[state=active]:text-stone-900 data-[state=active]:shadow-none"
                 >
                   Unread
-                </button>
+                </TabsTrigger>
               )}
-            </div>
+            </TabsList>
           </div>
 
           {filteredBroadcasts.length === 0 ? (
@@ -548,7 +520,7 @@ export function Broadcasts({
               })}
             </ul>
           )}
-        </div>
+        </Tabs>
       </StaggerContainer>
 
       <Dialog open={showSendForm} onOpenChange={setShowSendForm}>

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   ArrowDown,
@@ -7,12 +7,14 @@ import {
   DollarSign,
   Download,
   ExternalLink,
+  Loader2,
   RefreshCw,
   Search,
   X,
-} from "lucide-react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+} from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 
 function FilterBar() {
@@ -108,96 +110,29 @@ type Transaction = {
   completedPayments: number;
 };
 
-const SAMPLE_TRANSACTIONS: Transaction[] = [
-  {
-    id: "TXN-9284",
-    deal: "Green Energy Infrastructure",
-    type: "Interest Income",
-    date: "Jul 31, 2026",
-    amount: 4167,
-    status: "Completed",
-    ratePct: 12.5,
-    totalPayments: 12,
-    completedPayments: 8,
-  },
-  {
-    id: "TXN-9281",
-    deal: "Luxury Apartment Complex",
-    type: "Contribution",
-    date: "Jul 28, 2026",
-    amount: 100000,
-    status: "Completed",
-    ratePct: 10,
-    totalPayments: 24,
-    completedPayments: 24,
-  },
-  {
-    id: "TXN-9275",
-    deal: "Downtown Commercial Plaza",
-    type: "Distribution",
-    date: "Jul 22, 2026",
-    amount: -10000,
-    status: "Completed",
-    ratePct: 11.25,
-    totalPayments: 12,
-    completedPayments: 12,
-  },
-  {
-    id: "TXN-9268",
-    deal: "General Account Activity",
-    type: "Interest Income",
-    date: "Jul 15, 2026",
-    amount: 2083,
-    status: "Pending",
-    ratePct: 9.5,
-    totalPayments: 12,
-    completedPayments: 3,
-  },
-  {
-    id: "TXN-9260",
-    deal: "Green Energy Infrastructure",
-    type: "Reinvestment",
-    date: "Jul 10, 2026",
-    amount: 25000,
-    status: "Processing",
-    ratePct: 12.5,
-    totalPayments: 12,
-    completedPayments: 6,
-  },
-  {
-    id: "TXN-9254",
-    deal: "Luxury Apartment Complex",
-    type: "Contribution",
-    date: "Jul 5, 2026",
-    amount: 50000,
-    status: "Failed",
-    ratePct: 10,
-    totalPayments: 24,
-    completedPayments: 0,
-  },
-  {
-    id: "TXN-9249",
-    deal: "Downtown Commercial Plaza",
-    type: "Interest Income",
-    date: "Jul 1, 2026",
-    amount: 3125,
-    status: "Completed",
-    ratePct: 11.25,
-    totalPayments: 12,
-    completedPayments: 10,
-  },
-  {
-    id: "TXN-9241",
-    deal: "General Account Activity",
-    type: "Distribution",
-    date: "Jun 28, 2026",
-    amount: -5000,
-    status: "Completed",
-    ratePct: 8,
-    totalPayments: 6,
-    completedPayments: 6,
-  },
-];
+function mapApiTypeToDisplay(type: string): TxType {
+  switch (type) {
+    case 'contribution': return 'Contribution';
+    case 'distribution': return 'Distribution';
+    case 'interest_income': return 'Interest Income';
+    case 'reinvestment': return 'Reinvestment';
+    default: return 'Contribution';
+  }
+}
+
+function mapApiStatusToDisplay(status: string): TxStatus {
+  switch (status) {
+    case 'completed': return 'Completed';
+    case 'pending': return 'Pending';
+    case 'processing': return 'Processing';
+    case 'failed': return 'Failed';
+    default: return 'Completed';
+  }
+}
+
+function formatDateShort(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 function TypeCell({ type }: { type: TxType }) {
   if (type === "Contribution") {
@@ -582,6 +517,43 @@ function TransactionTable({
 export default function TransactionsPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all-types');
+  const [statusFilter, setStatusFilter] = useState('all-status');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) { setLoading(false); return; }
+
+        const res = await fetch('/api/investor/transactions', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const mapped: Transaction[] = (data.transactions || []).map((tx: any) => ({
+            id: tx.id,
+            deal: tx.dealName || 'Unknown Deal',
+            type: mapApiTypeToDisplay(tx.type),
+            date: formatDateShort(tx.date),
+            amount: tx.type === 'distribution' ? -Math.abs(tx.amount) : tx.amount,
+            status: mapApiStatusToDisplay(tx.status),
+            ratePct: tx.monthlyRate || 0,
+            totalPayments: tx.totalPayments || 0,
+            completedPayments: tx.paymentNumber || 0,
+          }));
+          setTransactions(mapped);
+        }
+      } catch (err) {
+        console.error('[TRANSACTIONS] Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (!isDrawerOpen) {
@@ -590,13 +562,20 @@ export default function TransactionsPage() {
     }
   }, [isDrawerOpen]);
 
-  function handleViewTransaction(tx: Transaction) {
-    setSelectedTransaction(tx);
-    setIsDrawerOpen(true);
-  }
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((tx) => {
+      if (searchQuery && !tx.deal.toLowerCase().includes(searchQuery.toLowerCase()) && !tx.id.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (typeFilter !== 'all-types') {
+        const typeMap: Record<string, TxType> = { contribution: 'Contribution', distribution: 'Distribution', interest: 'Interest Income', reinvestment: 'Reinvestment' };
+        if (tx.type !== typeMap[typeFilter]) return false;
+      }
+      if (statusFilter !== 'all-status' && tx.status.toLowerCase() !== statusFilter) return false;
+      return true;
+    });
+  }, [transactions, searchQuery, typeFilter, statusFilter]);
 
-  function handleCloseDrawer() {
-    setIsDrawerOpen(false);
+  if (loading) {
+    return <div className="flex min-h-[400px] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-fundex-forest" /></div>;
   }
 
   return (
@@ -609,13 +588,13 @@ export default function TransactionsPage() {
 
           <FilterBar />
 
-          <TransactionTable rows={SAMPLE_TRANSACTIONS} onViewTransaction={handleViewTransaction} />
+          <TransactionTable rows={filteredTransactions} onViewTransaction={(tx) => { setSelectedTransaction(tx); setIsDrawerOpen(true); }} />
       </div>
 
       <TransactionDetailsDrawer
         open={isDrawerOpen}
         transaction={selectedTransaction}
-        onClose={handleCloseDrawer}
+        onClose={() => setIsDrawerOpen(false)}
       />
     </>
   );

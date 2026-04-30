@@ -123,7 +123,10 @@ export default function InvestorsPage() {
           }
         }
 
-        const { data: sponsorsData } = await supabase.from('sponsors').select('*');
+        const { data: sponsorsData } = await supabase
+          .from('sponsors')
+          .select('*')
+          .eq('company_id', cId);
         setSponsors(sponsorsData || []);
 
         let query = supabase
@@ -182,10 +185,14 @@ export default function InvestorsPage() {
       if (selectedSponsor === 'add-new' && formData.newSponsorName) {
         const { data: newSponsor } = await supabase
           .from('sponsors')
-          .insert([{ name: formData.newSponsorName, company: formData.newSponsorCompany || null }])
+          .insert([{ name: formData.newSponsorName, company: formData.newSponsorCompany || null, company_id: companyId }])
           .select()
           .single();
         sponsorId = newSponsor?.id;
+        // Add new sponsor to local state so it appears in the dropdown next time
+        if (newSponsor) {
+          setSponsors(prev => [...prev, newSponsor]);
+        }
       } else {
         const selected = sponsors.find(s =>
           `${s.name}${s.company ? ' – ' + s.company : ''}`.toLowerCase() === selectedSponsor.toLowerCase() ||
@@ -197,7 +204,7 @@ export default function InvestorsPage() {
       // Generate investor ID
       const investorId = `INV-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-      const { data: newInvestor } = await supabase
+      const { data: newInvestor, error: insertError } = await supabase
         .from('investors')
         .insert([{
           company_id: companyId,
@@ -214,6 +221,16 @@ export default function InvestorsPage() {
         }])
         .select(`id, investor_id, full_name, email, phone, status, sponsor_id, total_invested, average_return, number_of_investments, onboarded_date, tags, notes, sponsors(name, company)`)
         .single();
+
+      if (insertError) {
+        console.error('Error inserting investor:', insertError);
+        const msg = insertError.message?.includes('duplicate key')
+          ? 'An investor with this email already exists.'
+          : `Failed to create investor: ${insertError.message}`;
+        alert(msg);
+        setIsSubmitting(false);
+        return;
+      }
 
       if (newInvestor) {
         const formatted = {
@@ -640,15 +657,16 @@ export default function InvestorsPage() {
       {isAddInvestorDrawerOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setIsAddInvestorDrawerOpen(false)} />
-          <div className="absolute right-0 top-0 bottom-0 w-full max-w-[480px] bg-white shadow-xl overflow-y-auto">
-            <div className="sticky top-0 border-b border-stone-100 bg-white p-6 z-10">
+          <div className="absolute right-0 top-0 bottom-0 w-full max-w-[480px] bg-white shadow-xl flex flex-col">
+            <div className="border-b border-stone-100 bg-white p-6 shrink-0">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl fdx-section-title">Add Investor</h2>
                 <button onClick={() => setIsAddInvestorDrawerOpen(false)} className="p-2 hover:bg-stone-50  transition-colors"><X className="size-5 text-stone-500" /></button>
               </div>
             </div>
 
-            <form onSubmit={handleAddInvestor} className="p-6 space-y-6">
+            <form onSubmit={handleAddInvestor} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Basic Information</h3>
                 <div><Label htmlFor="fullName">Full Name *</Label><input id="fullName" placeholder="John Smith" required value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className="fdx-input mt-1.5" /></div>
@@ -699,9 +717,10 @@ export default function InvestorsPage() {
                   <p className="text-xs text-stone-400 mt-1.5">Defaults to &quot;Internal&quot; if not selected</p>
                 </div>
                 {showAddSponsorInput && (
-                  <div className="p-4 bg-fundex-cream/30 border border-fundex-gold/20  space-y-3">
+                  <div className="p-4 bg-fundex-cream/30 border border-fundex-gold/20 space-y-3">
                     <div><Label htmlFor="newSponsorName">Sponsor Name *</Label><input id="newSponsorName" placeholder="e.g., Derek" value={formData.newSponsorName} onChange={(e) => setFormData({...formData, newSponsorName: e.target.value})} className="fdx-input mt-1.5" required={showAddSponsorInput} /></div>
                     <div><Label htmlFor="newSponsorCompany">Company (optional)</Label><input id="newSponsorCompany" placeholder="e.g., 818 Consulting" value={formData.newSponsorCompany} onChange={(e) => setFormData({...formData, newSponsorCompany: e.target.value})} className="fdx-input mt-1.5" /></div>
+                    <p className="text-xs text-fundex-forest/70">This sponsor will be saved automatically when you create the investor.</p>
                   </div>
                 )}
               </div>
@@ -723,9 +742,10 @@ export default function InvestorsPage() {
                   ))}
                 </div>
               </div>
+              </div>
 
-              <div className="sticky bottom-0 bg-white border-t border-stone-100 p-6 -mx-6">
-                <div className="flex gap-3 px-6">
+              <div className="shrink-0 bg-white border-t border-stone-100 p-6">
+                <div className="flex gap-3">
                   <button
                     type="button"
                     className="fdx-btn-secondary flex-1"

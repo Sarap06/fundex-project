@@ -22,12 +22,16 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Determine investor source from query param (defaults to 'user_profiles' for backwards compat)
+    const url = new URL(request.url);
+    const investorSource = url.searchParams.get('source') || 'user_profiles';
+
     const { data: messages, error } = await supabase
       .from('investor_inbox_messages')
       .select('id, sender_id, sender_role, sender_name, content, is_read, created_at')
       .eq('company_id', ctx.companyId)
       .eq('investor_id', investorId)
-      .eq('investor_source', 'user_profiles')
+      .eq('investor_source', investorSource)
       .order('created_at', { ascending: true })
       .limit(100);
 
@@ -77,17 +81,20 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { content } = await request.json();
+    const { content, investorSource } = await request.json();
     if (!content?.trim()) {
       return NextResponse.json({ error: 'content is required' }, { status: 400 });
     }
+
+    // Use provided source, default to 'user_profiles' for backwards compat
+    const source = investorSource || 'user_profiles';
 
     const { data: message, error } = await supabase
       .from('investor_inbox_messages')
       .insert({
         company_id: ctx.companyId,
         investor_id: investorId,
-        investor_source: 'user_profiles',
+        investor_source: source,
         sender_id: ctx.userId,
         sender_role: ctx.role,
         sender_name: ctx.fullName ?? null,

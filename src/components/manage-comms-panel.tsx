@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Bell, Globe, Mail, MessageSquare, Settings, Shield, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -36,10 +37,13 @@ export function ManageCommsPanel({ isOpen, onClose }: ManageCommsPanelProps) {
   const [channelMode, setChannelMode] = useState('broadcast-only');
   const [defaultAckRequired, setDefaultAckRequired] = useState(true);
 
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
-  return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999]" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <div className="absolute inset-y-0 right-0 flex h-full w-full max-w-2xl flex-col bg-white shadow-xl">
         {/* Header */}
@@ -180,6 +184,7 @@ export function ManageCommsPanel({ isOpen, onClose }: ManageCommsPanelProps) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

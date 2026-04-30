@@ -73,12 +73,12 @@ function AdminInboxPanel({ companyId, currentUserId }: { companyId: string; curr
     }
   }, [getToken]);
 
-  const loadMessages = useCallback(async (investorId: string) => {
+  const loadMessages = useCallback(async (investorId: string, investorSource: string = 'user_profiles') => {
     const token = await getToken();
     if (!token) return;
     setLoadingMessages(true);
     try {
-      const res = await fetch(`/api/inbox/${investorId}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/inbox/${investorId}?source=${encodeURIComponent(investorSource)}`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) return;
       const json = await res.json();
       setMessages(json.messages ?? []);
@@ -100,7 +100,7 @@ function AdminInboxPanel({ companyId, currentUserId }: { companyId: string; curr
 
   useEffect(() => {
     if (!selectedThread) return;
-    const poll = setInterval(() => loadMessages(selectedThread.investorId), 10000);
+    const poll = setInterval(() => loadMessages(selectedThread.investorId, selectedThread.investorSource), 10000);
     return () => clearInterval(poll);
   }, [selectedThread, loadMessages]);
 
@@ -110,7 +110,7 @@ function AdminInboxPanel({ companyId, currentUserId }: { companyId: string; curr
 
   const handleSelectThread = (thread: InboxThread) => {
     setSelectedThread(thread);
-    loadMessages(thread.investorId);
+    loadMessages(thread.investorId, thread.investorSource);
   };
 
   const handleSend = async () => {
@@ -133,7 +133,7 @@ function AdminInboxPanel({ companyId, currentUserId }: { companyId: string; curr
       const res = await fetch(`/api/inbox/${selectedThread.investorId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ content: optimistic.content }),
+        body: JSON.stringify({ content: optimistic.content, investorSource: selectedThread.investorSource }),
       });
       if (res.ok) {
         const json = await res.json();
@@ -196,7 +196,7 @@ function AdminInboxPanel({ companyId, currentUserId }: { companyId: string; curr
           ) : (
             filteredThreads.map(thread => (
               <button
-                key={thread.investorId}
+                key={`${thread.investorId}:${thread.investorSource}`}
                 onClick={() => handleSelectThread(thread)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-stone-50 transition border-b border-stone-50 ${selectedThread?.investorId === thread.investorId ? 'bg-fundex-gold/5 border-l-2 border-l-fundex-gold' : ''}`}
               >
@@ -660,7 +660,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
                 {filteredDeals.map((deal) => (
                   <div
                     key={deal.id}
-                    onClick={() => setSelectedDeal(deal)}
+                    onClick={() => { setSelectedDeal(deal); setPreviousView('deal-detail'); setCurrentView('deal-detail'); }}
                     className={`flex items-center justify-between p-4 bg-white border cursor-pointer transition hover:shadow-md ${
                       selectedDeal?.id === deal.id
                         ? 'border-fundex-gold bg-fundex-gold/5'
@@ -682,12 +682,9 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setSelectedDeal(deal); setPreviousView('deal-detail'); setCurrentView('deal-detail'); }}
-                      className="p-1 hover:bg-stone-100 rounded transition"
-                    >
+                    <div className="p-1">
                       <ChevronRight className="text-stone-500" size={20} />
-                    </button>
+                    </div>
                   </div>
                 ))}
               </div>

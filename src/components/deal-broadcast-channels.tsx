@@ -345,6 +345,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
   const [dealUpdates, setDealUpdates] = useState<BroadcastUpdate[]>([]);
   const [timeline, setTimeline] = useState<BroadcastCommunicationTimeline[]>([]);
   const [documents, setDocuments] = useState<BroadcastDocument[]>([]);
+  const [dealInvestors, setDealInvestors] = useState<Array<{ id: string; name: string; email: string; investor_source: string }>>([]);
 
   // State for send update form
   const [updateTitle, setUpdateTitle] = useState('');
@@ -418,6 +419,11 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
         console.error('Timeline API error:', timelineData.error);
       }
       setTimeline(timelineData.timeline || []);
+
+      // Load deal investors
+      const investorsResponse = await fetch(`/api/broadcasts/deals/${dealId}/investors`, { headers });
+      const investorsData = await investorsResponse.json();
+      setDealInvestors(investorsData.investors || []);
     } catch (err) {
       console.error('Error loading deal details:', err);
       setError('Failed to load deal details');
@@ -853,6 +859,40 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Investors in this Deal */}
+      <div className="border border-stone-100 bg-white overflow-hidden">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-display font-semibold text-stone-900">
+              Investors in this Deal
+              <span className="ml-2 text-sm font-normal text-stone-400">({dealInvestors.length})</span>
+            </h3>
+          </div>
+          {dealInvestors.length === 0 ? (
+            <div className="text-center py-6 bg-stone-50 border border-stone-100">
+              <p className="text-stone-400 text-sm">No investors assigned to this deal yet</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {dealInvestors.map((inv) => (
+                <div key={inv.id} className="flex items-center gap-3 p-3 border border-stone-100 hover:border-fundex-gold/20 transition">
+                  <div className="size-9 shrink-0 flex items-center justify-center bg-fundex-gold/20 text-fundex-forest text-xs font-semibold">
+                    {inv.name.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-stone-900 truncate">{inv.name}</p>
+                    <p className="text-xs text-stone-400 truncate">{inv.email}</p>
+                  </div>
+                  <span className="ml-auto shrink-0 text-[10px] px-1.5 py-0.5 bg-stone-50 text-stone-400 font-medium">
+                    {inv.investor_source === 'user_profiles' ? 'Signed up' : 'Manual'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

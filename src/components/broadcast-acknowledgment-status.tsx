@@ -10,6 +10,7 @@ type AcknowledgmentStatus = 'all' | 'pending' | 'opened' | 'acknowledged';
 interface AcknowledgmentRecipient {
   id: string;
   investor_id: string;
+  name?: string;
   email: string;
   delivery_status: 'pending' | 'sent' | 'failed' | 'opened' | 'acknowledged';
   sent_at?: string;
@@ -82,6 +83,7 @@ export function BroadcastAcknowledgmentStatus({
           (investor: any) => ({
             id: investor.id,
             investor_id: investor.investor_id,
+            name: investor.name,
             email: investor.email,
             delivery_status: 'pending' as const,
             sent_at: undefined,
@@ -220,18 +222,16 @@ export function BroadcastAcknowledgmentStatus({
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8  bg-blue-100 flex items-center justify-center text-xs font-medium text-blue-600">
-                      {recipient.email
-                        .split('@')[0]
-                        .split('.')
-                        .map((part) => part[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2)}
+                    <div className="w-8 h-8  bg-fundex-gold/20 flex items-center justify-center text-xs font-semibold text-fundex-forest">
+                      {(recipient.name || recipient.email.split('@')[0])
+                        .split(' ')
+                        .slice(0, 2)
+                        .map((w: string) => w[0]?.toUpperCase() ?? '')
+                        .join('')}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-foreground">
-                        {recipient.email.split('@')[0].toUpperCase()}
+                        {recipient.name || recipient.email.split('@')[0]}
                       </p>
                       <p className="text-xs text-muted-foreground">{recipient.email}</p>
                     </div>

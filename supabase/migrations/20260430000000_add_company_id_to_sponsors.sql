@@ -34,12 +34,16 @@ WHERE id IN (
 -- Index for filtered lookups
 CREATE INDEX IF NOT EXISTS sponsors_company_id_idx ON sponsors(company_id);
 
--- Drop old permissive policies and create company-scoped ones
+-- Drop all existing policies (old and new) to make migration idempotent
 DROP POLICY IF EXISTS "Allow public to read sponsors" ON sponsors;
 DROP POLICY IF EXISTS "Allow all to read sponsors" ON sponsors;
 DROP POLICY IF EXISTS "Allow all to insert sponsors" ON sponsors;
 DROP POLICY IF EXISTS "Allow all to update sponsors" ON sponsors;
 DROP POLICY IF EXISTS "Allow all to delete sponsors" ON sponsors;
+DROP POLICY IF EXISTS "Company-scoped sponsor read" ON sponsors;
+DROP POLICY IF EXISTS "Company-scoped sponsor insert" ON sponsors;
+DROP POLICY IF EXISTS "Company-scoped sponsor update" ON sponsors;
+DROP POLICY IF EXISTS "Company-scoped sponsor delete" ON sponsors;
 
 CREATE POLICY "Company-scoped sponsor read"
   ON sponsors FOR SELECT

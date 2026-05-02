@@ -121,14 +121,29 @@ export default function AdminDashboard() {
 
   const loadMembers = async (companyId: string) => {
     try {
+      // Fetch signed-up users (admins, partners, investors who registered)
       const { data: memberData } = await supabase
         .from('user_profiles')
         .select('id, email, full_name, role')
         .eq('company_id', companyId);
 
-      if (memberData) {
-        setMembers(memberData);
+      // Fetch manually-added investors
+      const { data: manualInvestors } = await supabase
+        .from('investors')
+        .select('id, email, full_name')
+        .eq('company_id', companyId);
+
+      const combined = [...(memberData || [])];
+
+      // Add manual investors that aren't already in user_profiles (by email)
+      const existingEmails = new Set((memberData || []).map(m => m.email.toLowerCase()));
+      for (const inv of manualInvestors || []) {
+        if (!existingEmails.has(inv.email.toLowerCase())) {
+          combined.push({ id: inv.id, email: inv.email, full_name: inv.full_name, role: 'investor' });
+        }
       }
+
+      setMembers(combined);
     } catch (error) {
       console.error('Error loading members:', error);
     }

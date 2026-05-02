@@ -253,9 +253,19 @@ function AdminInboxPanel({ companyId, currentUserId }: { companyId: string; curr
             <div className="size-8 flex items-center justify-center bg-fundex-gold/20 text-fundex-forest text-xs font-semibold">
               {getInitials(selectedThread.investorName)}
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-stone-900">{selectedThread.investorName}</p>
-              <p className="text-xs text-stone-400">Investor</p>
+              {selectedThread.deals && selectedThread.deals.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                  {selectedThread.deals.map(d => (
+                    <span key={d.id} className="text-[10px] px-1.5 py-0.5 bg-fundex-gold/10 text-fundex-forest font-medium truncate max-w-[120px]">
+                      {d.name}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-stone-400">Investor</p>
+              )}
             </div>
           </div>
 

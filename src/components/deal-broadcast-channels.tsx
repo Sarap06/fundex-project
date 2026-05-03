@@ -51,6 +51,7 @@ function AdminInboxPanel({ companyId, currentUserId }: { companyId: string; curr
   const [loadingThreads, setLoadingThreads] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [threadSearch, setThreadSearch] = useState('');
+  const [threadDeals, setThreadDeals] = useState<Array<{ id: string; name: string; type: string; location: string; status: string; target_amount: number; raised_amount: number; interest_rate: number; investor_count: number }>>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const getToken = useCallback(async () => {
@@ -108,9 +109,26 @@ function AdminInboxPanel({ companyId, currentUserId }: { companyId: string; curr
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSelectThread = (thread: InboxThread) => {
+  const handleSelectThread = async (thread: InboxThread) => {
     setSelectedThread(thread);
     loadMessages(thread.investorId, thread.investorSource);
+
+    // Fetch full deal details for this investor's deals
+    if (thread.deals && thread.deals.length > 0) {
+      try {
+        const res = await fetch(`/api/broadcasts/deals?companyId=${companyId}`);
+        if (res.ok) {
+          const json = await res.json();
+          const dealIds = new Set(thread.deals.map(d => d.id));
+          const matched = (json.deals || []).filter((d: any) => dealIds.has(d.id));
+          setThreadDeals(matched);
+        }
+      } catch (e) {
+        console.error('[AdminInbox] loadThreadDeals', e);
+      }
+    } else {
+      setThreadDeals([]);
+    }
   };
 
   const handleSend = async () => {
@@ -320,6 +338,57 @@ function AdminInboxPanel({ companyId, currentUserId }: { companyId: string; curr
         <div className="hidden md:flex flex-1 items-center justify-center text-stone-400 text-sm flex-col gap-2">
           <MessageCircle size={32} className="text-stone-300" />
           <p>Select a conversation</p>
+        </div>
+      )}
+
+      {/* Deal context panel — right side */}
+      {selectedThread && (
+        <div className="hidden lg:flex flex-col w-72 shrink-0 border-l border-stone-100 bg-stone-50/30 overflow-y-auto">
+          <div className="p-4 border-b border-stone-100 bg-white">
+            <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Deal Context</h3>
+          </div>
+          {threadDeals.length === 0 ? (
+            <div className="flex flex-col items-center justify-center flex-1 text-stone-400 text-sm gap-2 p-4">
+              <FileText size={24} className="text-stone-300" />
+              <p>No deals assigned</p>
+            </div>
+          ) : (
+            <div className="p-3 space-y-3">
+              {threadDeals.map(deal => (
+                <div key={deal.id} className="bg-white border border-stone-100 p-3 space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-semibold text-stone-900 leading-tight">{deal.name}</p>
+                    <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold ${
+                      deal.status === 'Active' ? 'bg-fundex-gold/10 text-fundex-forest' :
+                      deal.status === 'Closed' ? 'bg-stone-100 text-stone-500' :
+                      'bg-yellow-50 text-yellow-700'
+                    }`}>
+                      {deal.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-400">{deal.type} • {deal.location}</p>
+                  <div className="grid grid-cols-2 gap-2 pt-1 border-t border-stone-50">
+                    <div>
+                      <p className="text-[10px] text-stone-400 uppercase">Target</p>
+                      <p className="text-xs font-semibold text-stone-900">${Number(deal.target_amount || 0).toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-stone-400 uppercase">Raised</p>
+                      <p className="text-xs font-semibold text-fundex-forest">${Number(deal.raised_amount || 0).toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-stone-400 uppercase">Rate</p>
+                      <p className="text-xs font-semibold text-stone-900">{deal.interest_rate ? `${deal.interest_rate}%` : '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-stone-400 uppercase">Investors</p>
+                      <p className="text-xs font-semibold text-stone-900">{deal.investor_count || 0}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -15,9 +15,12 @@ export async function GET(req: NextRequest) {
     ]);
 
     return NextResponse.json({
-      totalAUM: allocSummary.totalAllocated,
-      allocatedCapital: allocSummary.totalAllocated,
-      monthlyInterest: allocSummary.totalMonthlyInterest,
+      // Normalized:
+      // - Total AUM = active deployed capital (funded, confirmed, active deals)
+      // - Allocated Capital = total committed capital (all allocations committed into platform)
+      totalAUM: allocSummary.activeDeployedCapital ?? allocSummary.totalAllocated,
+      allocatedCapital: allocSummary.totalCommittedCapital ?? allocSummary.totalAllocated,
+      monthlyInterest: allocSummary.activeMonthlyIncome ?? allocSummary.totalMonthlyInterest,
       fundedAllocations: allocSummary.funded,
       pendingAllocations: allocSummary.pending,
       activeDeals: dealSummary.active,

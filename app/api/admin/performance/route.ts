@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/services/access';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import {
+  activeDeployedCapital,
+  capitalInDeployment,
+  currentMonthlyIncome,
+  projectUpcomingPayments,
+  weightedAverageAnnualRate,
+} from '@/services/portfolio-metrics';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,30 +28,40 @@ export async function GET(request: NextRequest) {
 
     if (dealsError) throw dealsError;
 
-    // ── Fetch allocations ──────────────────────────────────────────────
+    // ── Fetch allocations (+ deal status for normalized formulas) ──────
     const { data: allocations, error: allocError } = await supabase
       .from('allocations')
-      .select('id, deal_id, allocation_amount, monthly_interest, annual_rate, funding_status, commit_date, payment_start_date, expected_funding_date, term_length, term_unit')
+      .select(`
+        id, deal_id, allocation_amount, monthly_interest, annual_rate, funding_status, status,
+        commit_date, payment_start_date, expected_funding_date, term_length, term_unit,
+        deals (id, status)
+      `)
       .eq('company_id', companyId);
 
     if (allocError) throw allocError;
 
     const allDeals = deals ?? [];
     const allAllocs = allocations ?? [];
+    const allAllocsForMetrics = allAllocs.map((a: any) => ({
+      ...a,
+      deals: Array.isArray(a.deals) ? a.deals[0] : a.deals,
+    }));
 
     // ── KPI Calculations ──────────────────────────────────────────────
     const activeDeals = allDeals.filter(d => d.status === 'Active');
     const fundedAllocs = allAllocs.filter(a => a.funding_status === 'Funded');
-    const pendingAllocs = allAllocs.filter(a => a.funding_status === 'Pending');
+    const pendingAllocs = allAllocs.filter(a => a.funding_status === 'Pending' || a.funding_status === 'Review');
 
-    const totalActivePrincipal = fundedAllocs.reduce((s, a) => s + Number(a.allocation_amount || 0), 0);
-    const availableCash = pendingAllocs.reduce((s, a) => s + Number(a.allocation_amount || 0), 0);
-    const monthlyInterestDue = fundedAllocs.reduce((s, a) => s + Number(a.monthly_interest || 0), 0);
+    // Normalized (firm layer):
+    // - Total Active Principal = active deployed capital (active deals, funded, confirmed)
+    // - Available Cash (placeholder name) = capital pending funding / in deployment
+    // - Monthly Interest Due = expected monthly interest from currently active allocations
+    const totalActivePrincipal = activeDeployedCapital(allAllocsForMetrics);
+    const availableCash = capitalInDeployment(allAllocsForMetrics);
+    const monthlyInterestDue = currentMonthlyIncome(allAllocsForMetrics);
 
     // Net spread: rough estimate — use average funded rate as margin indicator
-    const avgRate = fundedAllocs.length
-      ? fundedAllocs.reduce((s, a) => s + Number(a.annual_rate || 0), 0) / fundedAllocs.length
-      : 0;
+    const avgRate = weightedAverageAnnualRate(allAllocsForMetrics);
     const netSpread = (totalActivePrincipal * (avgRate / 100)) / 12;
 
     const contractsAtRisk = allDeals.filter(d =>
@@ -61,7 +78,7 @@ export async function GET(request: NextRequest) {
       return s + Number(a.monthly_interest || 0) * monthsElapsed;
     }, 0);
 
-    // ── Payment Operations ────────────────────────────────────────────
+    // ── Payment Operations (schedule-based proxy) ──────────────────────
     const weekFromNow = new Date();
     weekFromNow.setDate(weekFromNow.getDate() + 7);
     const todayStr = now.toISOString().slice(0, 10);
@@ -72,12 +89,8 @@ export async function GET(request: NextRequest) {
       a.expected_funding_date && a.expected_funding_date >= todayStr && a.expected_funding_date <= weekStr
     ).length;
 
-    // Next payout date: earliest payment_start_date in the future or nearest upcoming
-    const nextPayoutDate = fundedAllocs
-      .map(a => a.payment_start_date)
-      .filter(Boolean)
-      .sort()
-      .find(d => d >= todayStr) ?? null;
+    const payoutProjection = projectUpcomingPayments(allAllocsForMetrics, { windowDays: 30, now });
+    const nextPayoutDate = payoutProjection.nextPaymentDate;
 
     // ── Capital Flow Chart (last 7 months) ───────────────────────────
     const months: { month: string; label: string }[] = [];
@@ -110,7 +123,7 @@ export async function GET(request: NextRequest) {
 
     const contractPerformance = activeDeals.map(deal => {
       const dealAllocs = allocsByDeal.get(deal.id) ?? [];
-      const fundedDealAllocs = dealAllocs.filter(a => a.funding_status === 'Funded');
+      const fundedDealAllocs = dealAllocs.filter(a => a.funding_status === 'Funded' && (a.status ?? '').toLowerCase() === 'confirmed');
       const principalDeployed = fundedDealAllocs.reduce((s, a) => s + Number(a.allocation_amount || 0), 0);
       const totalMonthly = fundedDealAllocs.reduce((s, a) => s + Number(a.monthly_interest || 0), 0);
 
@@ -163,12 +176,12 @@ export async function GET(request: NextRequest) {
         avgRate: Math.round(avgRate * 100) / 100,
       },
       paymentOps: {
-        paidThisCycle: fundedAllocs.length,
+        paidThisCycle: fundedAllocs.length, // still allocation-based until a payments table exists
         pending: pendingAllocs.length,
         overdue,
         upcomingThisWeek,
         nextPayoutDate,
-        nextPayoutAmount: monthlyInterestDue,
+        nextPayoutAmount: payoutProjection.totalAmount,
         activeInvestors: allDeals.reduce((s, d) => s + (d.investor_count ?? 0), 0),
       },
       capitalFlow,
@@ -181,7 +194,7 @@ export async function GET(request: NextRequest) {
       distributions: {
         totalPaidYTD,
         nextDistributionDate: nextPayoutDate,
-        nextDistributionAmount: monthlyInterestDue,
+        nextDistributionAmount: payoutProjection.totalAmount,
         activeInvestors: allDeals.reduce((s, d) => s + (d.investor_count ?? 0), 0),
         avgPayment: fundedAllocs.length > 0 ? monthlyInterestDue / fundedAllocs.length : 0,
         onTimeRate: 98.2, // placeholder until payment records exist

@@ -59,8 +59,9 @@ export async function GET(request: NextRequest) {
     for (const a of (allocations || [])) {
       const amount = Number(a.allocation_amount || 0);
       const monthlyInt = Number(a.monthly_interest || 0);
-      const dealName = a.deals?.name || 'Unknown Deal';
-      const dealId = a.deals?.deal_id || '';
+      const dealRow = Array.isArray(a.deals) ? a.deals[0] : a.deals;
+      const dealName = dealRow?.name || 'Unknown Deal';
+      const dealId = dealRow?.deal_id || '';
 
       // Contribution event (when allocation was committed)
       if (a.commit_date) {

@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import {
+  activeDeployedCapital,
+  activePositionsCount,
+  averageActivePositionSize,
+  currentMonthlyIncome,
+  largestActivePosition,
+  weightedAverageAnnualRate,
+} from '@/services/portfolio-metrics';
 
 /**
  * GET /api/investor/investments
@@ -58,15 +66,15 @@ export async function GET(request: NextRequest) {
 
     const allocs = allocations || [];
 
-    // Calculate stats
-    const funded = allocs.filter((a: any) => a.funding_status === 'Funded' && a.status === 'confirmed');
+    // Calculate stats (normalized definitions)
     const totalCapital = allocs.reduce((s: number, a: any) => s + Number(a.allocation_amount || 0), 0);
-    const activeCapital = funded.reduce((s: number, a: any) => s + Number(a.allocation_amount || 0), 0);
-    const monthlyIncome = funded.reduce((s: number, a: any) => s + Number(a.monthly_interest || 0), 0);
-    const amounts = allocs.map((a: any) => Number(a.allocation_amount || 0));
-    const largestInvestment = amounts.length > 0 ? Math.max(...amounts) : 0;
-    const avgPositionSize = amounts.length > 0 ? totalCapital / amounts.length : 0;
-    const activeDealCount = new Set(funded.filter((a: any) => a.deals?.status === 'Active').map((a: any) => a.deals?.id)).size;
+    const activeCapital = activeDeployedCapital(allocs);
+    const monthlyIncome = currentMonthlyIncome(allocs);
+    const avgPositionSize = averageActivePositionSize(allocs);
+    const largestInvestment = largestActivePosition(allocs);
+    const activeDealCount = activePositionsCount(allocs);
+    // Useful for future UI: weighted average rate across active positions.
+    const _weightedAvgRate = weightedAverageAnnualRate(allocs);
 
     // Map investments with calculated fields
     const now = new Date();
@@ -76,7 +84,6 @@ export async function GET(request: NextRequest) {
       const rate = Number(a.annual_rate || 0);
       const termMonths = Number(a.term_length || 0);
       const dealTarget = Number(a.deals?.target_amount || 0);
-      const propValue = Number(a.deals?.estimated_property_value || 0);
       const ltv = Number(a.deals?.loan_to_value_ratio || 0);
 
       // Calculate payment progress
@@ -104,9 +111,11 @@ export async function GET(request: NextRequest) {
         nextPaymentDate = start.toISOString().split('T')[0];
       }
 
-      // Calculate total earned
-      const totalEarned = monthlyInt * paymentsCompleted;
-      const totalExpectedReturn = monthlyInt * totalPayments;
+      // Fallback: compute monthly interest if not stored
+      const effectiveMonthlyInt = monthlyInt > 0 ? monthlyInt : (amount * rate) / 12;
+      // Fallback: compute ownership % if not stored
+      const storedPct = Number(a.allocation_percentage || 0);
+      const effectivePct = storedPct > 0 ? storedPct : (dealTarget > 0 ? (amount / dealTarget) * 100 : 0);
 
       return {
         id: a.id,
@@ -118,16 +127,16 @@ export async function GET(request: NextRequest) {
         investedAmount: amount,
         status: a.status,
         fundingStatus: a.funding_status,
-        monthlyInterest: monthlyInt,
+        monthlyInterest: effectiveMonthlyInt,
         annualRate: rate,
         paymentsCompleted,
         totalPayments,
         nextPaymentDate,
         maturityDate,
         ltv,
-        totalEarned,
-        totalExpectedReturn,
-        allocationPercentage: Number(a.allocation_percentage || 0),
+        totalEarned: effectiveMonthlyInt * paymentsCompleted,
+        totalExpectedReturn: effectiveMonthlyInt * totalPayments,
+        allocationPercentage: Math.round(effectivePct * 10) / 10,
         commitDate: a.commit_date,
         location: [a.deals?.location_city, a.deals?.location_state].filter(Boolean).join(', '),
       };

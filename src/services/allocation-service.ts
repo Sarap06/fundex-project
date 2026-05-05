@@ -1,4 +1,11 @@
 import { getServiceClient } from './access';
+import {
+  activeDeployedCapital,
+  capitalInDeployment,
+  currentMonthlyIncome,
+  totalCommittedCapital,
+  weightedAverageAnnualRate,
+} from './portfolio-metrics';
 
 // ─── CALCULATIONS (single source of truth) ───────────────────────────
 
@@ -43,7 +50,7 @@ export async function getAllocationsByCompany(companyId: string) {
     .select(`
       *,
       investors (id, full_name, email, investor_id),
-      deals (id, name, deal_id),
+      deals (id, name, deal_id, status, estimated_property_value, loan_to_value_ratio, target_amount),
       sponsors (id, name, company)
     `)
     .eq('company_id', companyId)
@@ -60,12 +67,9 @@ export async function getAllocationsByCompany(companyId: string) {
 export async function getAllocationSummary(companyId: string) {
   const allocations = await getAllocationsByCompany(companyId);
 
-  const totalAllocated = allocations.reduce(
-    (sum, a) => sum + Number(a.allocation_amount || 0), 0
-  );
-  const totalMonthlyInterest = allocations.reduce(
-    (sum, a) => sum + Number(a.monthly_interest || 0), 0
-  );
+  // Legacy fields (kept for compatibility)
+  const totalAllocated = allocations.reduce((sum, a) => sum + Number(a.allocation_amount || 0), 0);
+  const totalMonthlyInterest = allocations.reduce((sum, a) => sum + Number(a.monthly_interest || 0), 0);
   const averageRate = allocations.length > 0
     ? allocations.reduce((sum, a) => sum + Number(a.annual_rate || 0), 0) / allocations.length
     : 0;
@@ -82,6 +86,13 @@ export async function getAllocationSummary(companyId: string) {
     funded,
     pending,
     review,
+
+    // Normalized portfolio metrics (company-scoped)
+    totalCommittedCapital: totalCommittedCapital(allocations),
+    activeDeployedCapital: activeDeployedCapital(allocations),
+    capitalInDeployment: capitalInDeployment(allocations),
+    activeMonthlyIncome: currentMonthlyIncome(allocations),
+    weightedAvgAnnualRate: weightedAverageAnnualRate(allocations),
   };
 }
 

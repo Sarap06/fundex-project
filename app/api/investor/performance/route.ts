@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import {
+  activeFundedConfirmedAllocations,
+  fundedConfirmedAllocations,
+  currentMonthlyIncome,
+  totalCommittedCapital,
+  weightedAverageAnnualRate,
+  effectiveMonthlyInterest,
+} from '@/services/portfolio-metrics';
 
 /**
  * GET /api/investor/performance
@@ -56,92 +64,91 @@ export async function GET(request: NextRequest) {
 
     const allocs = allocations || [];
     const now = new Date();
-    const funded = allocs.filter((a: any) => a.funding_status === 'Funded' && a.status === 'confirmed');
 
-    const totalInvested = allocs.reduce((s: number, a: any) => s + Number(a.allocation_amount || 0), 0);
+    // Normalized: total committed capital (investor money committed into platform)
+    const totalInvested = totalCommittedCapital(allocs);
 
-    // Calculate earnings from each allocation
+    // Use ALL funded+confirmed allocations (active AND completed deals) for historical earnings.
+    // activeFundedConfirmedAllocations only covers live deals, so completed deal earnings
+    // would be silently dropped if we used that filter here.
+    const allFunded = fundedConfirmedAllocations(allocs);
+
     let totalEarned = 0;
     let thisMonthEarnings = 0;
     let earningsFromActive = 0;
     let earningsFromCompleted = 0;
     const monthlyEarningsMap = new Map<string, number>();
-    const portfolioGrowthMap = new Map<string, number>();
-    let runningTotal = 0;
     let completedDeals = 0;
+    const seenCompletedDealIds = new Set<string>();
     let totalDurationMonths = 0;
 
-    for (const a of funded) {
-      const monthlyInt = Number(a.monthly_interest || 0);
+    for (const a of allFunded) {
+      const monthlyInt = effectiveMonthlyInterest(a);
       const termMonths = Number(a.term_length || 0);
       const startDate = a.payment_start_date ? new Date(a.payment_start_date) : null;
+      if (!startDate || termMonths <= 0) continue;
 
-      if (!startDate) continue;
+      // Resolve deal status — Supabase can return relation as array or object
+      const dealRow = Array.isArray(a.deals) ? (a.deals[0] ?? null) : (a.deals ?? null);
+      const dealStatus = (dealRow as any)?.status ?? null;
+      const dealId = (dealRow as any)?.id ?? null;
+      const isCompleted = dealStatus === 'Closed' || dealStatus === 'Completed';
 
-      // Walk through each payment month
+      // Walk through each payment month up to today
+      let allocationEarned = 0;
       for (let i = 1; i <= termMonths; i++) {
         const paymentDate = new Date(startDate);
         paymentDate.setMonth(paymentDate.getMonth() + i);
-
         if (paymentDate > now) break;
 
-        totalEarned += monthlyInt;
+        allocationEarned += monthlyInt;
         const monthKey = paymentDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
         monthlyEarningsMap.set(monthKey, (monthlyEarningsMap.get(monthKey) || 0) + monthlyInt);
 
-        // Check if this month
         if (paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear()) {
           thisMonthEarnings += monthlyInt;
         }
       }
 
-      // Track earnings by deal status
-      const isCompleted = a.deals?.status === 'Closed' || a.deals?.status === 'Completed';
+      totalEarned += allocationEarned;
+
       if (isCompleted) {
-        completedDeals++;
-        totalDurationMonths += termMonths;
-        earningsFromCompleted += monthlyInt * Math.min(termMonths, (() => {
-          const monthsDiff = (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth());
-          return Math.max(0, monthsDiff);
-        })());
+        earningsFromCompleted += allocationEarned;
+        // Count each unique completed deal once for insights
+        if (dealId && !seenCompletedDealIds.has(dealId)) {
+          seenCompletedDealIds.add(dealId);
+          completedDeals++;
+          totalDurationMonths += termMonths;
+        }
       } else {
-        earningsFromActive += monthlyInt * Math.min(termMonths, (() => {
-          const monthsDiff = (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth());
-          return Math.max(0, monthsDiff);
-        })());
+        earningsFromActive += allocationEarned;
       }
     }
 
-    // Build portfolio growth (cumulative)
+    // Build portfolio growth (cumulative) from the monthly earnings map
     const sortedMonths = Array.from(monthlyEarningsMap.entries())
       .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
 
+    let runningTotal = 0;
+    const portfolioGrowth: { month: string; total: number }[] = [];
     for (const [month, earnings] of sortedMonths) {
       runningTotal += earnings;
-      portfolioGrowthMap.set(month, runningTotal);
+      portfolioGrowth.push({ month, total: runningTotal });
     }
 
-    const portfolioGrowth = Array.from(portfolioGrowthMap.entries()).map(([month, total]) => ({
-      month,
-      total,
-    }));
+    const monthlyEarnings = sortedMonths.map(([month, amount]) => ({ month, amount }));
 
-    const monthlyEarnings = Array.from(monthlyEarningsMap.entries())
-      .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
-      .map(([month, amount]) => ({ month, amount }));
+    // Normalized: weighted average annualized return across investor’s active deals
+    const avgDealReturn = weightedAverageAnnualRate(allocs);
 
-    // Calculate avg deal return
-    const avgDealReturn = funded.length > 0
-      ? funded.reduce((s: number, a: any) => s + Number(a.annual_rate || 0), 0) / funded.length
-      : 0;
-
-    // Expected earnings
-    const totalMonthlyIncome = funded.reduce((s: number, a: any) => s + Number(a.monthly_interest || 0), 0);
+    // Expected earnings — only from currently active positions
+    const activePositions = activeFundedConfirmedAllocations(allocs);
+    const totalMonthlyIncome = currentMonthlyIncome(allocs);
     const next30Days = totalMonthlyIncome;
     const next90Days = totalMonthlyIncome * 3;
     let remainingExpected = 0;
-    for (const a of funded) {
-      const monthlyInt = Number(a.monthly_interest || 0);
+    for (const a of activePositions) {
+      const monthlyInt = effectiveMonthlyInterest(a);
       const termMonths = Number(a.term_length || 0);
       const startDate = a.payment_start_date ? new Date(a.payment_start_date) : null;
       if (!startDate) continue;

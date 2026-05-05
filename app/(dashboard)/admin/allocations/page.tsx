@@ -28,7 +28,7 @@ import {
   Upload,
   Check,
   Send,
-  User,
+  User as UserIcon,
   Building2
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
@@ -692,7 +692,7 @@ export default function AllocationsPage() {
                 <div className="fdx-card p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                      <User className="size-6 text-emerald-700" />
+                      <UserIcon className="size-6 text-emerald-700" />
                     </div>
                     <div>
                       <p className="font-semibold text-stone-900">{selectedAllocation.investor_name}</p>

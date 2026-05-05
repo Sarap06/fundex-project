@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import {
+  activeDeployedCapital,
+  capitalInDeployment,
+  collateralBackingActiveDeals,
+  currentMonthlyIncome,
+  totalCommittedCapital,
+  activePositionsCount,
+  projectUpcomingPayments,
+} from '@/services/portfolio-metrics';
 
 /**
  * GET /api/investor/dashboard
@@ -79,82 +88,17 @@ export async function GET(request: NextRequest) {
       allocations = allocs || [];
     }
 
-    // Calculate portfolio stats
-    const confirmedAllocations = allocations.filter((a: any) => a.status === 'confirmed');
-    const pendingAllocations = allocations.filter((a: any) => a.status === 'pending' || a.status === 'review');
-    const fundedAllocations = confirmedAllocations.filter((a: any) => a.funding_status === 'Funded');
+    // ── Portfolio stats (normalized definitions) ────────────────────────
+    const totalCapital = totalCommittedCapital(allocations);
+    const capitalDeployed = activeDeployedCapital(allocations);
+    const fundsBeingDeployed = capitalInDeployment(allocations);
+    const monthlyIncome = currentMonthlyIncome(allocations);
+    const collateral = collateralBackingActiveDeals(allocations);
+    const activeDealCount = activePositionsCount(allocations);
 
-    const totalCapital = allocations.reduce(
-      (sum: number, a: any) => sum + Number(a.allocation_amount || 0), 0
-    );
-    const capitalDeployed = fundedAllocations.reduce(
-      (sum: number, a: any) => sum + Number(a.allocation_amount || 0), 0
-    );
-    const monthlyIncome = fundedAllocations.reduce(
-      (sum: number, a: any) => sum + Number(a.monthly_interest || 0), 0
-    );
-    const fundsBeingDeployed = pendingAllocations.reduce(
-      (sum: number, a: any) => sum + Number(a.allocation_amount || 0), 0
-    );
-
-    // Count active deals
-    const activeDealCount = new Set(
-      fundedAllocations
-        .filter((a: any) => a.deals?.status === 'Active')
-        .map((a: any) => a.deals?.id)
-    ).size;
-
-    // Calculate collateral backing from deals with funded allocations
-    const uniqueDealIds = new Set(fundedAllocations.map((a: any) => a.deals?.id).filter(Boolean));
-    let totalCollateralValue = 0;
-    let totalLtvSum = 0;
-    let ltvCount = 0;
-
-    for (const alloc of fundedAllocations) {
-      if (alloc.deals && uniqueDealIds.has(alloc.deals.id)) {
-        const propValue = Number(alloc.deals.estimated_property_value || 0);
-        const ltv = Number(alloc.deals.loan_to_value_ratio || 0);
-        if (propValue > 0) {
-          totalCollateralValue += propValue;
-          uniqueDealIds.delete(alloc.deals.id); // count each deal once
-        }
-        if (ltv > 0) {
-          totalLtvSum += ltv;
-          ltvCount++;
-        }
-      }
-    }
-
-    const avgLtv = ltvCount > 0 ? Math.round(totalLtvSum / ltvCount) : 0;
-
-    // Calculate upcoming payments (next 30 days)
+    // Upcoming payments projection (next 30 days)
     const now = new Date();
-    const thirtyDaysOut = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    let upcomingPaymentCount = 0;
-    let upcomingPaymentTotal = 0;
-    let nextPaymentDays: number | null = null;
-
-    for (const alloc of fundedAllocations) {
-      if (!alloc.payment_start_date || !alloc.monthly_interest) continue;
-
-      const startDate = new Date(alloc.payment_start_date);
-      const monthlyAmt = Number(alloc.monthly_interest);
-
-      // Find the next payment date after today
-      const current = new Date(startDate);
-      while (current <= now) {
-        current.setMonth(current.getMonth() + 1);
-      }
-
-      if (current <= thirtyDaysOut) {
-        upcomingPaymentCount++;
-        upcomingPaymentTotal += monthlyAmt;
-        const daysUntil = Math.ceil((current.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        if (nextPaymentDays === null || daysUntil < nextPaymentDays) {
-          nextPaymentDays = daysUntil;
-        }
-      }
-    }
+    const upcoming = projectUpcomingPayments(allocations, { windowDays: 30, now });
 
     // Check for unacknowledged broadcast updates
     let unacknowledgedBroadcasts = 0;
@@ -186,7 +130,9 @@ export async function GET(request: NextRequest) {
 
     // Check for maturing investments (within 90 days)
     const ninetyDaysOut = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
-    const maturingInvestments = fundedAllocations.filter((a: any) => {
+    const maturingInvestments = allocations
+      .filter((a: any) => a.status === 'confirmed' && a.funding_status === 'Funded' && a.deals?.status === 'Active')
+      .filter((a: any) => {
       if (!a.payment_start_date || !a.term_length) return false;
       const start = new Date(a.payment_start_date);
       const termMonths = Number(a.term_length);
@@ -222,15 +168,15 @@ export async function GET(request: NextRequest) {
         capitalDeployed,
         monthlyIncome,
         upcomingPayments: {
-          total: upcomingPaymentTotal,
-          count: upcomingPaymentCount,
-          nextInDays: nextPaymentDays,
+          total: upcoming.totalAmount,
+          count: upcoming.count,
+          nextInDays: upcoming.nextInDays,
         },
         fundsBeingDeployed,
         activeDealCount,
         collateral: {
-          totalValue: totalCollateralValue,
-          avgLtv,
+          totalValue: collateral.totalValue,
+          avgLtv: collateral.avgLtv,
         },
       },
       actions: {

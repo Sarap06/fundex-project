@@ -25,6 +25,7 @@ DO $$
 DECLARE
   v_company_id   UUID;
   v_investor_id  UUID;
+  v_user_id      UUID;  -- auth user_id for deal_investors (user_profiles source)
   v_deal1_id     UUID;
   v_deal2_id     UUID;
   v_deal3_id     UUID;
@@ -52,7 +53,21 @@ BEGIN
     RAISE EXCEPTION 'Investor not found. Make sure Smith Jackson exists in the investors table for company %', v_company_id;
   END IF;
 
+  -- Get auth user_id for deal_investors (user_profiles source uses user_id, not profile id)
+  SELECT user_id INTO v_user_id
+  FROM user_profiles
+  WHERE email = 'yaulunneijefeu-6185@yopmail.com'
+    AND company_id = v_company_id
+  LIMIT 1;
+
   -- ── 3. Clean up any previous seed runs ───────────────────
+  DELETE FROM deal_investors
+  WHERE deal_id IN (
+    SELECT id FROM deals
+    WHERE company_id = v_company_id
+      AND deal_id IN ('SEED-D-001', 'SEED-D-002', 'SEED-D-003', 'SEED-D-004')
+  );
+
   DELETE FROM allocations
   WHERE company_id = v_company_id
     AND investor_id = v_investor_id
@@ -79,6 +94,7 @@ BEGIN
     borrower_name,
     collateral_address, estimated_property_value, loan_to_value_ratio,
     company_id,
+    enable_broadcast_channel, enable_investor_inbox,
     created_at, updated_at
   ) VALUES (
     'SEED-D-001',
@@ -93,6 +109,7 @@ BEGIN
     '1200 Riverside Drive, Dallas, TX 75201',
     3000000, 65.0,
     v_company_id,
+    true, true,
     NOW(), NOW()
   )
   RETURNING id INTO v_deal1_id;
@@ -108,6 +125,7 @@ BEGIN
     borrower_name,
     collateral_address, estimated_property_value, loan_to_value_ratio,
     company_id,
+    enable_broadcast_channel, enable_investor_inbox,
     created_at, updated_at
   ) VALUES (
     'SEED-D-002',
@@ -122,6 +140,7 @@ BEGIN
     '500 Figueroa St, Los Angeles, CA 90071',
     8000000, 60.0,
     v_company_id,
+    true, true,
     NOW(), NOW()
   )
   RETURNING id INTO v_deal2_id;
@@ -137,6 +156,7 @@ BEGIN
     borrower_name,
     collateral_address, estimated_property_value, loan_to_value_ratio,
     company_id,
+    enable_broadcast_channel, enable_investor_inbox,
     created_at, updated_at
   ) VALUES (
     'SEED-D-003',
@@ -151,6 +171,7 @@ BEGIN
     '800 Harbor Blvd, Tampa, FL 33602',
     2200000, 68.0,
     v_company_id,
+    true, true,
     NOW(), NOW()
   )
   RETURNING id INTO v_deal3_id;
@@ -166,6 +187,7 @@ BEGIN
     borrower_name,
     collateral_address, estimated_property_value, loan_to_value_ratio,
     company_id,
+    enable_broadcast_channel, enable_investor_inbox,
     created_at, updated_at
   ) VALUES (
     'SEED-D-004',
@@ -180,6 +202,7 @@ BEGIN
     '200 Westside Ave, Denver, CO 80202',
     4500000, 62.0,
     v_company_id,
+    true, true,
     NOW(), NOW()
   )
   RETURNING id INTO v_deal4_id;
@@ -267,6 +290,19 @@ BEGIN
     'Pending', 'pending',
     'Westside Development — awaiting funding, test seed'
   );
+
+  -- ── 6. Create deal_investors entries ────────────────────
+  -- Links investor to deals for broadcast inbox deal context panel.
+  -- Uses user_profiles.user_id (NOT investors.id) with investor_source = 'user_profiles'.
+  IF v_user_id IS NOT NULL THEN
+    INSERT INTO deal_investors (deal_id, investor_id, investor_source, company_id)
+    VALUES
+      (v_deal1_id, v_user_id, 'user_profiles', v_company_id),
+      (v_deal2_id, v_user_id, 'user_profiles', v_company_id),
+      (v_deal3_id, v_user_id, 'user_profiles', v_company_id),
+      (v_deal4_id, v_user_id, 'user_profiles', v_company_id)
+    ON CONFLICT (deal_id, investor_id, investor_source) DO NOTHING;
+  END IF;
 
   RAISE NOTICE '========================================';
   RAISE NOTICE 'Seed complete!';

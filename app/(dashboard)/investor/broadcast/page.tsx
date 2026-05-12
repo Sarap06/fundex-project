@@ -240,12 +240,14 @@ function DealChannelChatModal({
   onClose,
   onOpenContractFacts,
   onAcknowledge,
+  onContactAdmin,
 }: {
   deal: BroadcastDeal | null;
   open: boolean;
   onClose: () => void;
   onOpenContractFacts: () => void;
   onAcknowledge: (dealId: string, updateId: string) => Promise<void>;
+  onContactAdmin: () => void;
 }) {
   const [acknowledging, setAcknowledging] = useState(false);
 
@@ -287,6 +289,7 @@ function DealChannelChatModal({
             <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
               <button
                 type="button"
+                onClick={onContactAdmin}
                 className=" border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 shadow-sm transition hover:bg-stone-50"
               >
                 Contact Admin
@@ -516,7 +519,7 @@ function InvestorInboxPanel({ currentUserId, canMessage }: { currentUserId: stri
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ content: text }),
+        body: JSON.stringify({ content: text, investorSource: "user_profiles" }),
       });
       if (res.ok) {
         const json = await res.json();
@@ -705,6 +708,10 @@ export default function BroadcastPage() {
         onClose={closeChannelModal}
         onOpenContractFacts={openContractFacts}
         onAcknowledge={handleAcknowledge}
+        onContactAdmin={() => {
+          closeChannelModal();
+          setMainTab("inbox");
+        }}
       />
       <ContractFactsDrawer
         deal={selectedDealChannel}

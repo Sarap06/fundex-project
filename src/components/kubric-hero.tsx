@@ -1,18 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
 import {
   navbarReveal,
   heroHeadline,
   heroAccent,
   fadeUp,
-  cardReveal,
-  bgZoom,
   staggerContainer,
-  sideNavItem,
   lineReveal,
   easeOutExpo,
   easeOutQuart,
@@ -20,33 +15,7 @@ import {
 
 const NAV_LINKS = ["Services", "About", "Team", "Contact"] as const;
 
-const SIDE_NAV = [
-  { label: "Home", active: true },
-  { label: "Services", active: false },
-  { label: "About", active: false },
-  { label: "Team", active: false },
-  { label: "Contact", active: false },
-] as const;
-
 export function KubricHero() {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoLoaded, setVideoLoaded] = useState(false);
-
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-
-    if (v.readyState >= 3) {
-      setVideoLoaded(true);
-    }
-
-    const handleLoaded = () => setVideoLoaded(true);
-    v.addEventListener("loadeddata", handleLoaded);
-    v.play().catch(() => {});
-
-    return () => v.removeEventListener("loadeddata", handleLoaded);
-  }, []);
-
   return (
     <section
       className="relative w-full h-screen min-h-[600px] md:min-h-[750px] overflow-hidden"
@@ -56,33 +25,17 @@ export function KubricHero() {
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div className="kubric-breathe absolute inset-0">
           <Image
-            src="/hero-bg.jpg"
+            src="/hero-cash.jpg"
             alt=""
             fill
             priority
-            className="object-cover"
+            className="object-cover -scale-x-100"
           />
         </div>
 
-        {/* <video
-          ref={videoRef}
-          className="w-full h-full object-cover block"
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          onLoadedData={() => setVideoLoaded(true)}
-        >
-          <source src="/kubric-bg.mp4" type="video/mp4" />
-        </video> */}
-
-        {/* Dark overlay */}
-        <div className="kubric-overlay absolute inset-0 z-[2]" />
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 z-[2] bg-black/40" />
       </div>
-
-      {/* ── Grain Texture ── */}
-      <div className="kubric-grain absolute inset-0 z-[3] pointer-events-none opacity-[0.03]" />
 
       {/* ── Content ── */}
       <div className="relative z-[4] w-full h-full flex flex-col">
@@ -244,71 +197,6 @@ export function KubricHero() {
             </div>
           </div>
 
-          {/* Right Column */}
-          <div className="hidden md:flex flex-col items-end justify-end min-w-[220px]">
-            {/* Side nav */}
-            <div className="mb-7 flex items-start">
-              <motion.nav
-                className="flex flex-col items-end gap-3"
-                aria-label="Section navigation"
-                variants={staggerContainer(0.08, 0.5)}
-                initial="hidden"
-                animate="visible"
-              >
-                {SIDE_NAV.map((item) => (
-                  <motion.a
-                    key={item.label}
-                    href={`#${item.label.toLowerCase().replace(/\s/g, "-")}`}
-                    className={cn(
-                      "kubric-text-shadow-sm font-sans text-[16px] no-underline flex items-center gap-2.5 transition-all duration-300 tracking-[0.2px]",
-                      item.active
-                        ? "text-white font-normal"
-                        : "text-white/85 font-medium hover:text-white"
-                    )}
-                    variants={sideNavItem}
-                  >
-                    {item.label}
-                    {item.active && (
-                      <span className="font-light text-white/40">—</span>
-                    )}
-                  </motion.a>
-                ))}
-              </motion.nav>
-            </div>
-
-            {/* About Card */}
-            <motion.div
-              className="flex bg-white overflow-hidden max-w-[420px] h-[140px] shadow-[0_12px_40px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.25)]"
-              variants={cardReveal}
-              initial="hidden"
-              animate="visible"
-              transition={{ duration: 0.9, delay: 0.9, ease: easeOutExpo }}
-            >
-              <div className="w-[140px] shrink-0 p-1">
-                <div className="relative w-full h-full overflow-hidden">
-                  <Image
-                    src="/about-image.jpg"
-                    alt="Fundex"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-              <div className="px-5 py-4 flex flex-col justify-center gap-1.5 flex-1 min-w-0">
-                <h3 className="font-display text-[15px] font-bold text-[#1a1a1a] m-0 tracking-[0.2px]">
-                  About Us
-                </h3>
-                <p className="font-sans text-[13px] font-medium leading-[1.55] text-[#555] m-0">
-                  We&apos;re driven by disciplined strategies that drive
-                  portfolio growth and maximize investor returns.
-                </p>
-                <div
-                  className="w-8 h-0.5 mt-1 "
-                  style={{ background: "linear-gradient(90deg, #1a1a1a, transparent)" }}
-                />
-              </div>
-            </motion.div>
-          </div>
         </div>
       </div>
     </section>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, Filter, Mail, Phone, MoreVertical, X, Tag, Loader, LogOut } from 'lucide-react';
+import { Plus, Search, Filter, Mail, Phone, MoreVertical, X, Tag, Loader, LogOut, Eye, Pencil, Trash2 } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase';
 import { getCurrentUserCompanyId, logOut } from '@/lib/auth';
 
@@ -17,6 +17,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
+function formatCurrency(value: number): string {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
+  if (value > 0) return `$${value.toLocaleString()}`;
+  return '$0';
+}
 
 interface Investor {
   id: string;
@@ -60,6 +68,14 @@ export default function InvestorsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sendInviteEmail, setSendInviteEmail] = useState(true);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [viewInvestor, setViewInvestor] = useState<Investor | null>(null);
+  const [editInvestor, setEditInvestor] = useState<Investor | null>(null);
+  const [editFormData, setEditFormData] = useState({ fullName: '', email: '', phone: '', status: '', initialInvestment: '', numberOfInvestments: '', notes: '' });
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [deleteInvestor, setDeleteInvestor] = useState<Investor | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [viewDeals, setViewDeals] = useState<Array<{ id: string; name: string; status: string }>>([]);
+  const [viewDealsLoading, setViewDealsLoading] = useState(false);
   const [filters, setFilters] = useState({
     sortBy: 'newest',
     sponsors: [] as string[],
@@ -131,7 +147,7 @@ export default function InvestorsPage() {
 
         let query = supabase
           .from('investors')
-          .select(`id, investor_id, full_name, email, phone, status, sponsor_id, total_invested, average_return, number_of_investments, onboarded_date, tags, notes, sponsors(name, company)`);
+          .select(`id, investor_id, full_name, email, phone, status, sponsor_id, initial_investment, total_invested, average_return, number_of_investments, onboarded_date, tags, notes, sponsors(name, company)`);
 
         // Filter by company if available
         if (cId) {
@@ -149,7 +165,7 @@ export default function InvestorsPage() {
             phone: inv.phone,
             status: inv.status,
             sponsor: inv.sponsors?.company ? `${inv.sponsors.name} – ${inv.sponsors.company}` : inv.sponsors?.name,
-            total_invested: inv.total_invested || 0,
+            total_invested: inv.total_invested || inv.initial_investment || 0,
             average_return: inv.average_return,
             number_of_investments: inv.number_of_investments || 0,
             onboarded_date: new Date(inv.onboarded_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
@@ -183,15 +199,26 @@ export default function InvestorsPage() {
       let sponsorId = undefined;
 
       if (selectedSponsor === 'add-new' && formData.newSponsorName) {
-        const { data: newSponsor } = await supabase
-          .from('sponsors')
-          .insert([{ name: formData.newSponsorName, company: formData.newSponsorCompany || null, company_id: companyId }])
-          .select()
-          .single();
-        sponsorId = newSponsor?.id;
-        // Add new sponsor to local state so it appears in the dropdown next time
-        if (newSponsor) {
-          setSponsors(prev => [...prev, newSponsor]);
+        // Check if sponsor with same name+company already exists to avoid duplicates
+        const trimmedName = formData.newSponsorName.trim();
+        const trimmedCompany = formData.newSponsorCompany?.trim() || null;
+        const existing = sponsors.find(s =>
+          s.name.toLowerCase() === trimmedName.toLowerCase() &&
+          (s.company ?? '').toLowerCase() === (trimmedCompany ?? '').toLowerCase()
+        );
+
+        if (existing) {
+          sponsorId = existing.id;
+        } else {
+          const { data: newSponsor } = await supabase
+            .from('sponsors')
+            .insert([{ name: trimmedName, company: trimmedCompany, company_id: companyId }])
+            .select()
+            .single();
+          sponsorId = newSponsor?.id;
+          if (newSponsor) {
+            setSponsors(prev => [...prev, newSponsor]);
+          }
         }
       } else {
         const selected = sponsors.find(s =>
@@ -215,6 +242,7 @@ export default function InvestorsPage() {
           status: selectedStatus,
           sponsor_id: sponsorId || null,
           initial_investment: formData.initialInvestment ? parseFloat(formData.initialInvestment) : 0,
+          total_invested: formData.initialInvestment ? parseFloat(formData.initialInvestment) : 0,
           number_of_investments: parseInt(formData.numberOfInvestments) || 0,
           notes: formData.notes || null,
           tags: selectedTags.length > 0 ? selectedTags : null,
@@ -453,6 +481,127 @@ export default function InvestorsPage() {
     router.push('/auth/login');
   };
 
+  const openViewDrawer = async (investor: Investor) => {
+    setViewInvestor(investor);
+    setViewDeals([]);
+    setViewDealsLoading(true);
+    try {
+      const supabase = getSupabaseClient();
+      const { data: diRows } = await supabase
+        .from('deal_investors')
+        .select('deal_id')
+        .eq('investor_id', investor.id)
+        .eq('investor_source', 'investors');
+      if (diRows && diRows.length > 0) {
+        const dealIds = diRows.map((r: any) => r.deal_id);
+        const { data: deals } = await supabase
+          .from('deals')
+          .select('id, name, status')
+          .in('id', dealIds);
+        setViewDeals(deals ?? []);
+      }
+    } catch (err) {
+      console.error('Error fetching investor deals:', err);
+    } finally {
+      setViewDealsLoading(false);
+    }
+  };
+
+  const openEditDrawer = (investor: Investor) => {
+    setEditFormData({
+      fullName: investor.full_name,
+      email: investor.email,
+      phone: investor.phone || '',
+      status: investor.status,
+      initialInvestment: String(investor.total_invested || ''),
+      numberOfInvestments: String(investor.number_of_investments || 0),
+      notes: investor.notes || '',
+    });
+    setEditInvestor(investor);
+  };
+
+  const handleEditInvestor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editInvestor) return;
+    setIsEditSubmitting(true);
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch(`/api/admin/investors/${editInvestor.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          full_name: editFormData.fullName,
+          email: editFormData.email,
+          phone: editFormData.phone || null,
+          status: editFormData.status,
+          total_invested: editFormData.initialInvestment ? parseFloat(editFormData.initialInvestment) : 0,
+          initial_investment: editFormData.initialInvestment ? parseFloat(editFormData.initialInvestment) : 0,
+          number_of_investments: parseInt(editFormData.numberOfInvestments) || 0,
+          notes: editFormData.notes || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        alert(data?.error || 'Failed to update investor.');
+        return;
+      }
+
+      const { investor: updated } = await res.json();
+      setInvestors(prev => prev.map(inv => inv.id === editInvestor.id ? {
+        ...inv,
+        full_name: updated.full_name,
+        email: updated.email,
+        phone: updated.phone,
+        status: updated.status,
+        sponsor: updated.sponsors?.company ? `${updated.sponsors.name} – ${updated.sponsors.company}` : updated.sponsors?.name,
+        total_invested: updated.total_invested || updated.initial_investment || 0,
+        average_return: updated.average_return,
+        number_of_investments: updated.number_of_investments || 0,
+        notes: updated.notes,
+        tags: updated.tags || [],
+      } : inv));
+      setEditInvestor(null);
+    } catch (error) {
+      console.error('Error updating investor:', error);
+      alert('Failed to update investor. Please try again.');
+    } finally {
+      setIsEditSubmitting(false);
+    }
+  };
+
+  const handleDeleteInvestor = async () => {
+    if (!deleteInvestor) return;
+    setIsDeleting(true);
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch(`/api/admin/investors/${deleteInvestor.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        alert(data?.error || 'Failed to delete investor.');
+        return;
+      }
+
+      setInvestors(prev => prev.filter(inv => inv.id !== deleteInvestor.id));
+      setDeleteInvestor(null);
+    } catch (error) {
+      console.error('Error deleting investor:', error);
+      alert('Failed to delete investor. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <>
       <div>
@@ -628,13 +777,27 @@ export default function InvestorsPage() {
                             <span className={`fdx-badge ${investor.status === 'Active' ? 'fdx-badge-active' : investor.status === 'Onboarding' ? 'fdx-badge-info' : 'fdx-badge-pending'}`}>{investor.status}</span>
                           </td>
                           <td className="py-4 px-4 text-stone-900 font-normal">{investor.number_of_investments}</td>
-                          <td className="py-4 px-4 text-stone-900 font-medium">${(investor.total_invested / 1000000).toFixed(1)}M</td>
+                          <td className="py-4 px-4 text-stone-900 font-medium">{formatCurrency(investor.total_invested)}</td>
                           <td className="py-4 px-4"><span className={`font-medium ${investor.average_return ? 'text-fundex-forest' : 'text-stone-400'}`}>{investor.average_return ? `${investor.average_return.toFixed(1)}%` : '-'}</span></td>
                           <td className="py-4 px-4 text-sm text-stone-500">{investor.onboarded_date}</td>
                           <td className="py-4 px-4">
                             <div className="flex items-center justify-end gap-2">
-                              <Button variant="ghost" size="sm" className="text-fundex-forest hover:text-fundex-forest hover:bg-fundex-gold/10">View</Button>
-                              <Button variant="ghost" size="icon"><MoreVertical className="size-4" /></Button>
+                              <Button variant="ghost" size="sm" className="text-fundex-forest hover:text-fundex-forest hover:bg-fundex-gold/10" onClick={() => openViewDrawer(investor)}>
+                                <Eye className="size-4 mr-1" />View
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon"><MoreVertical className="size-4" /></Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => openEditDrawer(investor)}>
+                                    <Pencil className="size-4 mr-2" />Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setDeleteInvestor(investor)} className="text-red-600 focus:text-red-600">
+                                    <Trash2 className="size-4 mr-2" />Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </td>
                         </tr>
@@ -760,6 +923,185 @@ export default function InvestorsPage() {
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Investor Drawer */}
+      {viewInvestor && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setViewInvestor(null)} />
+          <div className="absolute right-0 top-0 bottom-0 w-full max-w-[480px] bg-white shadow-xl flex flex-col">
+            <div className="border-b border-stone-100 bg-white p-6 shrink-0">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl fdx-section-title">Investor Profile</h2>
+                <button onClick={() => setViewInvestor(null)} className="p-2 hover:bg-stone-50 transition-colors"><X className="size-5 text-stone-500" /></button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="flex items-center gap-4">
+                <Avatar className="size-16">
+                  <AvatarFallback className="bg-fundex-gold/20 text-fundex-forest font-medium text-xl">{getInitials(viewInvestor.full_name)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-lg font-semibold text-stone-900">{viewInvestor.full_name}</h3>
+                  <p className="text-sm text-stone-500">{viewInvestor.investor_id}</p>
+                  <span className={`fdx-badge mt-1 ${viewInvestor.status === 'Active' ? 'fdx-badge-active' : viewInvestor.status === 'Onboarding' ? 'fdx-badge-info' : 'fdx-badge-pending'}`}>{viewInvestor.status}</span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Contact</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm"><Mail className="size-4 text-stone-400" /><span className="text-stone-700">{viewInvestor.email}</span></div>
+                  {viewInvestor.phone && <div className="flex items-center gap-2 text-sm"><Phone className="size-4 text-stone-400" /><span className="text-stone-700">{viewInvestor.phone}</span></div>}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Investment Summary</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="fdx-card p-4">
+                    <p className="text-xs text-stone-500">Total Invested</p>
+                    <p className="text-lg font-semibold text-stone-900 mt-1">{formatCurrency(viewInvestor.total_invested)}</p>
+                  </div>
+                  <div className="fdx-card p-4">
+                    <p className="text-xs text-stone-500">Avg. Return</p>
+                    <p className="text-lg font-semibold text-fundex-forest mt-1">{viewInvestor.average_return ? `${viewInvestor.average_return.toFixed(1)}%` : '-'}</p>
+                  </div>
+                  <div className="fdx-card p-4">
+                    <p className="text-xs text-stone-500">Investments</p>
+                    <p className="text-lg font-semibold text-stone-900 mt-1">{viewInvestor.number_of_investments}</p>
+                  </div>
+                  <div className="fdx-card p-4">
+                    <p className="text-xs text-stone-500">Onboarded</p>
+                    <p className="text-lg font-semibold text-stone-900 mt-1">{viewInvestor.onboarded_date}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Deal Associations</h4>
+                {viewDealsLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-stone-400"><Loader className="size-4 animate-spin" />Loading deals...</div>
+                ) : viewDeals.length > 0 ? (
+                  <div className="space-y-2">
+                    {viewDeals.map(deal => (
+                      <div key={deal.id} className="fdx-card p-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-stone-900">{deal.name}</p>
+                        </div>
+                        <span className={`fdx-badge ${deal.status === 'active' || deal.status === 'Active' ? 'fdx-badge-active' : deal.status === 'closed' || deal.status === 'Closed' ? 'fdx-badge-pending' : 'fdx-badge-info'}`}>{deal.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-stone-400">Not assigned to any deals yet.</p>
+                )}
+              </div>
+
+              {viewInvestor.sponsor && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Sponsor</h4>
+                  <p className="text-sm text-stone-700">{viewInvestor.sponsor}</p>
+                </div>
+              )}
+
+              {viewInvestor.tags && viewInvestor.tags.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Tags</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {viewInvestor.tags.map(tag => (
+                      <span key={tag} className="px-3 py-1 text-xs font-medium bg-fundex-gold/10 text-fundex-forest border border-fundex-gold/30">{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {viewInvestor.notes && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Notes</h4>
+                  <p className="text-sm text-stone-600 leading-relaxed">{viewInvestor.notes}</p>
+                </div>
+              )}
+
+              <div className="pt-4 flex gap-3">
+                <button className="fdx-btn-primary flex-1 gap-2" onClick={() => { setViewInvestor(null); openEditDrawer(viewInvestor); }}>
+                  <Pencil className="size-4" />Edit Investor
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Investor Drawer */}
+      {editInvestor && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setEditInvestor(null)} />
+          <div className="absolute right-0 top-0 bottom-0 w-full max-w-[480px] bg-white shadow-xl flex flex-col">
+            <div className="border-b border-stone-100 bg-white p-6 shrink-0">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl fdx-section-title">Edit Investor</h2>
+                <button onClick={() => setEditInvestor(null)} className="p-2 hover:bg-stone-50 transition-colors"><X className="size-5 text-stone-500" /></button>
+              </div>
+            </div>
+            <form onSubmit={handleEditInvestor} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Basic Information</h3>
+                  <div><Label htmlFor="editFullName">Full Name *</Label><input id="editFullName" required value={editFormData.fullName} onChange={(e) => setEditFormData({...editFormData, fullName: e.target.value})} className="fdx-input mt-1.5" /></div>
+                  <div><Label htmlFor="editEmail">Email Address *</Label><input id="editEmail" type="email" required value={editFormData.email} onChange={(e) => setEditFormData({...editFormData, email: e.target.value})} className="fdx-input mt-1.5" /></div>
+                  <div><Label htmlFor="editPhone">Phone Number</Label><input id="editPhone" type="tel" value={editFormData.phone} onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})} className="fdx-input mt-1.5" /></div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Status</h3>
+                  <Select value={editFormData.status} onValueChange={(value) => setEditFormData({...editFormData, status: value})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Onboarding">Onboarding</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Investment Details</h3>
+                  <div><Label htmlFor="editInvestment">Total Invested ($)</Label><input id="editInvestment" type="number" value={editFormData.initialInvestment} onChange={(e) => setEditFormData({...editFormData, initialInvestment: e.target.value})} className="fdx-input mt-1.5" /></div>
+                  <div><Label htmlFor="editNumInv">Number of Investments</Label><input id="editNumInv" type="number" value={editFormData.numberOfInvestments} onChange={(e) => setEditFormData({...editFormData, numberOfInvestments: e.target.value})} className="fdx-input mt-1.5" /></div>
+                  <div><Label htmlFor="editNotes">Notes</Label><Textarea id="editNotes" rows={4} value={editFormData.notes} onChange={(e) => setEditFormData({...editFormData, notes: e.target.value})} className="mt-1.5" /></div>
+                </div>
+              </div>
+              <div className="shrink-0 bg-white border-t border-stone-100 p-6">
+                <div className="flex gap-3">
+                  <button type="button" className="fdx-btn-secondary flex-1" onClick={() => setEditInvestor(null)} disabled={isEditSubmitting}>Cancel</button>
+                  <button type="submit" className="fdx-btn-primary flex-1" disabled={isEditSubmitting}>
+                    {isEditSubmitting ? <><Loader className="size-4 mr-2 animate-spin" />Saving...</> : 'Save Changes'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteInvestor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => !isDeleting && setDeleteInvestor(null)} />
+          <div className="relative bg-white shadow-xl max-w-md w-full p-6 space-y-4">
+            <h2 className="text-lg fdx-section-title">Delete Investor</h2>
+            <p className="text-sm text-stone-600">
+              Are you sure you want to delete <span className="font-semibold text-stone-900">{deleteInvestor.full_name}</span>? This will also remove them from any associated deals. This action cannot be undone.
+            </p>
+            <div className="flex gap-3 pt-2">
+              <button className="fdx-btn-secondary flex-1" onClick={() => setDeleteInvestor(null)} disabled={isDeleting}>Cancel</button>
+              <button className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-60" onClick={handleDeleteInvestor} disabled={isDeleting}>
+                {isDeleting ? <><Loader className="size-4 mr-2 animate-spin inline" />Deleting...</> : 'Delete Investor'}
+              </button>
+            </div>
           </div>
         </div>
       )}

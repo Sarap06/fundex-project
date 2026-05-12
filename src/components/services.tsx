@@ -290,7 +290,7 @@ const Services = () => {
                 gap: 8,
                 marginBottom: 24,
                 padding: "6px 14px",
-                borderRadius: 100,
+                borderRadius: 0,
                 background: palette.accentMuted,
                 border: `1px solid rgba(200,168,110,0.15)`,
               }}
@@ -404,7 +404,7 @@ const Services = () => {
                     justifyContent: "space-between",
                     minHeight: "clamp(340px, 40vw, 520px)",
                     padding: "clamp(28px, 3vw, 40px)",
-                    borderRadius: isAccent ? "20px 20px 20px 80px" : 20,
+                    borderRadius: 0,
                     background: isAccent
                       ? `linear-gradient(165deg, #001a01 0%, #001505 50%, #000f01 100%)`
                       : palette.surface,
@@ -447,7 +447,7 @@ const Services = () => {
                             style={{
                               width: 56,
                               height: 56,
-                              borderRadius: 14,
+                              borderRadius: 0,
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
@@ -512,7 +512,7 @@ const Services = () => {
                             color: isAccent ? palette.accent : palette.textMuted,
                             marginBottom: 12,
                             padding: "4px 10px",
-                            borderRadius: 6,
+                            borderRadius: 0,
                             background: isAccent ? "rgba(200,168,110,0.08)" : "rgba(255,255,255,0.03)",
                           }}
                         >
@@ -549,7 +549,7 @@ const Services = () => {
                           style={{
                             width: 48,
                             height: 48,
-                            borderRadius: 12,
+                            borderRadius: 0,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -589,7 +589,7 @@ const Services = () => {
             gap: 16,
             marginTop: "clamp(32px, 4vw, 48px)",
             padding: "20px 28px",
-            borderRadius: 16,
+            borderRadius: 0,
             background: "rgba(255,255,255,0.02)",
             border: `1px solid ${palette.border}`,
           }}
@@ -602,7 +602,7 @@ const Services = () => {
             whileTap={{ scale: 0.97 }}
             style={{
               padding: "10px 24px",
-              borderRadius: 10,
+              borderRadius: 0,
               background: `linear-gradient(135deg, ${palette.accent}, #427A43)`,
               color: "#000f01",
               fontSize: 14,

@@ -76,19 +76,31 @@ export async function GET(request: NextRequest) {
         .eq('company_id', ctx.companyId),
     ]);
 
-    // Build name map from both sources
+    // Build name/email maps from both sources
     const nameMap = new Map<string, string>();
-    (profileInvestors ?? []).forEach((p: any) => nameMap.set(`${p.user_id}:user_profiles`, p.full_name));
-    (manualInvestors ?? []).forEach((i: any) => nameMap.set(`${i.id}:investors`, i.full_name));
+    const emailMap = new Map<string, string>(); // key → email for dedup
+    (profileInvestors ?? []).forEach((p: any) => {
+      nameMap.set(`${p.user_id}:user_profiles`, p.full_name);
+      emailMap.set(`${p.user_id}:user_profiles`, (p.email ?? '').toLowerCase());
+    });
+    (manualInvestors ?? []).forEach((i: any) => {
+      nameMap.set(`${i.id}:investors`, i.full_name);
+      emailMap.set(`${i.id}:investors`, (i.email ?? '').toLowerCase());
+    });
 
     // Merge: start with all known investors (no messages yet = empty thread)
+    // Deduplicate by email — prefer user_profiles (signed-up) over manual investors
     const seenKeys = new Set<string>();
+    const seenEmails = new Set<string>();
     const allInvestorEntries: Array<{ investorId: string; investorSource: string; latestMessage: any; unreadCount: number; latestTime: string | null }> = [];
 
     // First add threads that have messages
     for (const t of threadMap.values()) {
       const key = `${t.investorId}:${t.investorSource}`;
+      const email = emailMap.get(key) ?? '';
+      if (email && seenEmails.has(email)) continue; // skip duplicate by email
       seenKeys.add(key);
+      if (email) seenEmails.add(email);
       allInvestorEntries.push({
         investorId: t.investorId,
         investorSource: t.investorSource,
@@ -98,32 +110,36 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Then add investors with no messages yet
+    // Then add investors with no messages yet (user_profiles first for priority)
     for (const p of (profileInvestors ?? [])) {
       const key = `${p.user_id}:user_profiles`;
-      if (!seenKeys.has(key)) {
-        seenKeys.add(key);
-        allInvestorEntries.push({
-          investorId: p.user_id,
-          investorSource: 'user_profiles',
-          latestMessage: null,
-          unreadCount: 0,
-          latestTime: null,
-        });
-      }
+      const email = (p.email ?? '').toLowerCase();
+      if (seenKeys.has(key)) continue;
+      if (email && seenEmails.has(email)) continue;
+      seenKeys.add(key);
+      if (email) seenEmails.add(email);
+      allInvestorEntries.push({
+        investorId: p.user_id,
+        investorSource: 'user_profiles',
+        latestMessage: null,
+        unreadCount: 0,
+        latestTime: null,
+      });
     }
     for (const i of (manualInvestors ?? [])) {
       const key = `${i.id}:investors`;
-      if (!seenKeys.has(key)) {
-        seenKeys.add(key);
-        allInvestorEntries.push({
-          investorId: i.id,
-          investorSource: 'investors',
-          latestMessage: null,
-          unreadCount: 0,
-          latestTime: null,
-        });
-      }
+      const email = (i.email ?? '').toLowerCase();
+      if (seenKeys.has(key)) continue;
+      if (email && seenEmails.has(email)) continue;
+      seenKeys.add(key);
+      if (email) seenEmails.add(email);
+      allInvestorEntries.push({
+        investorId: i.id,
+        investorSource: 'investors',
+        latestMessage: null,
+        unreadCount: 0,
+        latestTime: null,
+      });
     }
 
     // Sort: threads with messages first (by recency), then messageless investors

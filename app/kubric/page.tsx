@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { KubricHero } from "@/components/kubric-hero";
 
 export const metadata: Metadata = {
-  title: "FUNDEX — Making your investments outstanding is a Discipline",
+  title: "FUNDEX — The Operating System for Private Credit",
   description:
     "We enable the world's most engaged investors and family offices to access professionally managed investment strategies.",
 };

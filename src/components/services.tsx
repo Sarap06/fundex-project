@@ -7,31 +7,26 @@ import { motion, useMotionValue, useSpring, useTransform, useInView } from "fram
 
 const SERVICES = [
   {
-    title: "Transparency",
-    subtitle: "Investor Management",
+    title: "Centralized Investor Operations",
     description:
-      "Track all investors, commitments, and capital in one centralized, accessible platform. A departure from the ordinary.",
+      "Track investors, commitments, allocations, documents, and communications through one structured platform.",
     icon: "grid",
-    metric: "100%",
+    metric: "Investor Management",
     metricLabel: "Visibility",
   },
   {
-    title: "Creative Expansion",
-    subtitle: "Deal & Allocation Tracking",
-    description:
-      "Track capital deployment and investor participation with full visibility across your entire portfolio.",
+    title: "Deal & Allocation Tracking",    description:
+      "Monitor capital deployment, investor participation, distributions, and portfolio activity with full operational visibility",
     icon: "layers",
-    metric: "3x",
+    metric: "Deal & Capital Management",
     metricLabel: "Faster Ops",
   },
   {
-    title: "Private Credit",
-    subtitle: "Payments & Distributions",
-    description:
-      "Automated interest calculations, payment schedules, and transparent investor distributions — all in one place.",
+    title: "Structured Payment Workflows",    description:
+      "Manage payment schedules, distributions, reporting, and transaction records through centralized operational workflows.",
     icon: "flow",
     accent: true,
-    metric: "0",
+    metric: "Payment & Distribution",
     metricLabel: "Errors",
   },
 ];
@@ -325,7 +320,7 @@ const Services = () => {
                 maxWidth: 600,
               }}
             >
-              Make your fund,
+              Built for disciplined
               <br />
               <span
                 style={{
@@ -336,7 +331,7 @@ const Services = () => {
                   WebkitTextFillColor: "transparent",
                 }}
               >
-                well-managed.
+                fund operations
               </span>
             </motion.h2>
 
@@ -352,7 +347,7 @@ const Services = () => {
                 margin: 0,
               }}
             >
-              A disciplined approach to private credit fund management with efficient, streamlined processes built for scale.
+              Fundex centralizes investor management, deal operations, reporting, allocations, and capital workflows into one institutional platform.
             </motion.p>
           </div>
 
@@ -595,7 +590,7 @@ const Services = () => {
           }}
         >
           <p style={{ fontSize: 14, color: palette.textMuted, margin: 0 }}>
-            Trusted by <span style={{ color: palette.text, fontWeight: 600 }}>200+</span> fund managers worldwide
+            Trusted by <span style={{ color: palette.text, fontWeight: 600 }}> fund managers worldwide</span>
           </p>
           <motion.button
             whileHover={{ scale: 1.03 }}

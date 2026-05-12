@@ -122,9 +122,9 @@ export function KubricHero() {
                 animate="visible"
                 transition={{ duration: 1.1, delay: 0.3, ease: easeOutExpo }}
               >
-                Making your investments
+                The Operating
                 <br />
-                outstanding — is a
+                system for
                 <br />
                 <motion.span
                   className="kubric-gold-glow font-display font-bold text-fundex-gold inline-block -skew-x-[8deg]"
@@ -133,7 +133,7 @@ export function KubricHero() {
                   animate="visible"
                   transition={{ duration: 1.0, delay: 0.7, ease: easeOutExpo }}
                 >
-                  Discipline
+                  Private Credit
                 </motion.span>
               </motion.h1>
             </div>
@@ -162,7 +162,7 @@ export function KubricHero() {
                   01 — Our Mission
                 </p>
                 <p className="kubric-text-shadow-sm font-sans text-[15px] md:text-[18px] font-normal leading-[1.8] text-white/65 max-w-[400px]">
-                  We enable the world&apos;s most engaged investors and family offices to access professionally managed investment strategies.
+                  Fundex provides institutional infrastructure for investor management, deal operations, capital workflows, and reporting.
                 </p>
               </motion.div>
 

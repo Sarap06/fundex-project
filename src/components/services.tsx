@@ -496,24 +496,6 @@ const Services = () => {
 
                       {/* Bottom section */}
                       <div style={{ position: "relative", zIndex: 3 }}>
-                        {/* Subtitle pill */}
-                        <div
-                          style={{
-                            display: "inline-block",
-                            fontSize: 11,
-                            fontWeight: 600,
-                            letterSpacing: "1.5px",
-                            textTransform: "uppercase",
-                            color: isAccent ? palette.accent : palette.textMuted,
-                            marginBottom: 12,
-                            padding: "4px 10px",
-                            borderRadius: 0,
-                            background: isAccent ? "rgba(200,168,110,0.08)" : "rgba(255,255,255,0.03)",
-                          }}
-                        >
-                          {service?.subtitle}
-                        </div>
-
                         <h3
                           style={{
                             fontSize: "clamp(22px, 2vw, 26px)",

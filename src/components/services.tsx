@@ -511,7 +511,7 @@ const Services = () => {
                             background: isAccent ? "rgba(200,168,110,0.08)" : "rgba(255,255,255,0.03)",
                           }}
                         >
-                          {service.subtitle}
+                          {service?.subtitle}
                         </div>
 
                         <h3

@@ -18,6 +18,7 @@
 
 ## Layout Structure
 
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │ TOPBAR (sticky, white, border-bottom)                               │

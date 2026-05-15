@@ -35,53 +35,25 @@ export default function Home() {
         <section id="hero" aria-label="Hero section">
           <KubricHero />
         </section>
-        <section
-          id="services-section"
-          aria-label="Services section"
-          className="bg-background"
-        >
+        <section id="services-section" aria-label="Services section" className="bg-background">
           <Services />
         </section>
-        <section
-          id="use-cases-section"
-          aria-label="Use Cases section"
-          style={{ backgroundColor: "rgba(40, 105, 75, 0.05)" }}
-        >
+        <section id="use-cases-section" aria-label="Use Cases section" className="bg-[#fafaf8]">
           <UseCases />
         </section>
-        <section
-          id="product-section"
-          aria-label="Product Breakdown section"
-          className="bg-background"
-        >
+        <section id="product-section" aria-label="Product Breakdown section" className="bg-background">
           <ProductBreakdown />
         </section>
-        <section
-          id="security-section"
-          aria-label="Security section"
-          style={{ backgroundColor: "rgba(40, 105, 75, 0.05)" }}
-        >
+        <section id="security-section" aria-label="Security section" className="bg-[#fafaf8]">
           <SecurityControl />
         </section>
-        <section
-          id="why-fundex-section"
-          aria-label="Why Fundex section"
-          className="bg-background"
-        >
+        <section id="why-fundex-section" aria-label="Why Fundex section" className="bg-background">
           <WhyFundex />
         </section>
-        <section
-          id="team-section"
-          aria-label="Team section"
-          style={{ backgroundColor: "rgba(40, 105, 75, 0.05)" }}
-        >
+        <section id="team-section" aria-label="Team section" className="bg-[#fafaf8]">
           <Team />
         </section>
-        <section
-          id="book-demo-section"
-          aria-label="Book demo section"
-          className="bg-background"
-        >
+        <section id="book-demo-section" aria-label="Book demo section" className="bg-background">
           <BookDemo />
         </section>
       </main>

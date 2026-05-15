@@ -204,7 +204,7 @@ function HeroStat({ value, suffix, label, delay, isInView }) {
     <div style={{ textAlign: "center", position: "relative" }}>
       <div style={{
         fontFamily: "var(--font-display, 'Trench Slab'), system-ui, serif",
-        fontSize: "clamp(48px, 6vw, 80px)",
+        fontSize: "clamp(32px, 4vw, 48px)",
         fontWeight: 400,
         lineHeight: 1,
         letterSpacing: "-0.04em",
@@ -394,7 +394,7 @@ export function SecurityControl() {
               transition={{ duration: 1.1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
               style={{
                 fontFamily: "var(--font-display, 'Trench Slab'), system-ui, serif",
-                fontSize: "clamp(44px, 7vw, 100px)",
+                fontSize: "clamp(28px, 3.5vw, 42px)",
                 fontWeight: 400,
                 lineHeight: 0.95,
                 letterSpacing: "-0.04em",

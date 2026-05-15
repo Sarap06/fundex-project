@@ -122,7 +122,7 @@ function LayerScene({ layer, index, progress }) {
           {/* Giant number */}
           <motion.div style={{
             fontFamily: "var(--font-display, 'Trench Slab'), system-ui, serif",
-            fontSize: "clamp(56px, 12vw, 160px)",
+            fontSize: "clamp(40px, 6vw, 80px)",
             fontWeight: 400,
             lineHeight: 0.78,
             letterSpacing: "-0.06em",
@@ -390,7 +390,7 @@ function Header({ progress }) {
 
       <h2 style={{
         fontFamily: "var(--font-display, 'Trench Slab'), system-ui, serif",
-        fontSize: "clamp(36px, 6vw, 72px)",
+        fontSize: "clamp(28px, 3.5vw, 42px)",
         fontWeight: 400, lineHeight: 1.05,
         letterSpacing: "-0.04em",
         color: "#ffffff",
@@ -459,7 +459,7 @@ export function ProductBreakdown() {
         style={{
           position: "relative",
           height: `${scrollPages * 100}vh`,
-          background: "#000f01",
+          background: "#0a120b",
         }}
       >
         <div style={{

@@ -1,85 +1,65 @@
-/* Kubric Hero — Minimal CSS for things Tailwind can't do */
+/* Kubric Hero — Clean, minimal dark theme */
 
-.kubric-page {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-  background: #060e06;
+/* ── Glassmorphic Card ── */
+.kubric-glass-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-/* Overlay — darker + vignette */
-.kubric-overlay {
-  background:
-    radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.3) 20%, rgba(0, 0, 0, 0.75) 100%),
-    linear-gradient(
-      180deg,
-      rgba(0, 5, 0, 0.6) 0%,
-      rgba(0, 5, 0, 0.4) 30%,
-      rgba(0, 5, 0, 0.35) 60%,
-      rgba(0, 5, 0, 0.65) 100%
-    );
+/* ── Perspective grid floor ── */
+.kubric-grid {
+  background-image:
+    linear-gradient(rgba(192, 184, 122, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(192, 184, 122, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  transform: perspective(400px) rotateX(50deg) translateY(15%);
+  transform-origin: center bottom;
+  mask-image: radial-gradient(ellipse at 50% 100%, black 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 100%, black 30%, transparent 75%);
 }
 
-/* Fallback gradient */
-.kubric-fallback {
-  background: linear-gradient(
-    135deg,
-    #0a1f0a 0%,
-    #143a14 20%,
-    #1e4a1e 40%,
-    #2a5a2a 55%,
-    #3a6a3a 70%,
-    #1a3a1a 100%
-  );
+/* ── Horizontal scan line ── */
+@keyframes kubric-scan {
+  0% { transform: translateY(100vh); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-10vh); opacity: 0; }
 }
 
-/* Slow breathing zoom — zooms in slightly then back out, infinite loop, no snap */
-@keyframes kubric-breathe {
-  0% { transform: scale(1); }
-  100% { transform: scale(1.06); }
+.kubric-scanline {
+  animation: kubric-scan 8s ease-in-out infinite;
 }
 
-.kubric-breathe {
-  animation: kubric-breathe 20s ease-in-out infinite alternate;
-}
-
-/* Film grain texture */
+/* ── Noise grain texture ── */
 .kubric-grain {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 200px 200px;
 }
 
-/* Scroll bounce animation */
+/* ── Scroll bounce ── */
 @keyframes kubric-bounce {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(4px); }
+  50% { transform: translateY(3px); }
 }
 
 .kubric-bounce {
   animation: kubric-bounce 2s ease-in-out infinite;
 }
 
-/* Gold text glow */
+/* ── Gold text glow ── */
 .kubric-gold-glow {
   text-shadow:
-    0 2px 30px rgba(192, 184, 122, 0.35),
-    0 0 60px rgba(192, 184, 122, 0.15);
+    0 2px 30px rgba(192, 184, 122, 0.25),
+    0 0 50px rgba(192, 184, 122, 0.1);
 }
 
-/* Headline text shadow for legibility */
-.kubric-text-shadow {
-  text-shadow:
-    0 2px 24px rgba(0, 0, 0, 0.3),
-    0 0 50px rgba(0, 0, 0, 0.1);
-}
-
-/* Light text shadow for body */
-.kubric-text-shadow-sm {
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
-}
-
-/* Nav link underline on hover */
+/* ── Nav link underline ── */
 .kubric-nav-link::after {
   content: '';
   position: absolute;
@@ -88,10 +68,20 @@
   transform: translateX(-50%);
   width: 0;
   height: 1px;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.4);
   transition: width 0.3s ease;
 }
 
 .kubric-nav-link:hover::after {
   width: 100%;
+}
+
+/* ── Breathing zoom (legacy compat) ── */
+@keyframes kubric-breathe {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.06); }
+}
+
+.kubric-breathe {
+  animation: kubric-breathe 20s ease-in-out infinite alternate;
 }

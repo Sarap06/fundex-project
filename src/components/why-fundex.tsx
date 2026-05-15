@@ -128,7 +128,7 @@ function ReasonPanel({ reason, index, progress }) {
         {/* Headline */}
         <h3 style={{
           fontFamily: "var(--font-display, 'Trench Slab'), system-ui, serif",
-          fontSize: "clamp(40px, 5.5vw, 72px)",
+          fontSize: "clamp(28px, 3.5vw, 42px)",
           fontWeight: 400,
           lineHeight: 1,
           letterSpacing: "-0.04em",
@@ -162,7 +162,7 @@ function ReasonPanel({ reason, index, progress }) {
         }}>
           <span style={{
             fontFamily: "var(--font-display, 'Trench Slab'), system-ui, serif",
-            fontSize: "clamp(56px, 7vw, 96px)",
+            fontSize: "clamp(36px, 4.5vw, 52px)",
             fontWeight: 400,
             lineHeight: 0.85,
             color: reason.accent,
@@ -235,7 +235,7 @@ function StickyContext({ progress }: { progress: import("framer-motion").MotionV
       {/* Headline */}
       <h2 style={{
         fontFamily: "var(--font-display, 'Trench Slab'), system-ui, serif",
-        fontSize: "clamp(36px, 5vw, 64px)",
+        fontSize: "clamp(28px, 3.5vw, 42px)",
         fontWeight: 400,
         lineHeight: 1.05,
         letterSpacing: "-0.04em",

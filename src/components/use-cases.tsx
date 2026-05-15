@@ -88,7 +88,7 @@ function CaseRow({ data, index, isOpen, onToggle, isInView }) {
           transition={{ duration: 0.4 }}
           style={{
             fontFamily: "var(--font-display, 'Trench Slab'), system-ui, serif",
-            fontSize: "clamp(36px, 4vw, 56px)",
+            fontSize: "clamp(28px, 3.5vw, 42px)",
             fontWeight: 400,
             lineHeight: 1,
             letterSpacing: "-0.04em",
@@ -105,7 +105,7 @@ function CaseRow({ data, index, isOpen, onToggle, isInView }) {
           transition={{ duration: 0.4 }}
           style={{
             fontFamily: "var(--font-display, 'Trench Slab'), system-ui, serif",
-            fontSize: "clamp(24px, 2.8vw, 40px)",
+            fontSize: "clamp(20px, 2.2vw, 28px)",
             fontWeight: 400,
             lineHeight: 1.1,
             letterSpacing: "-0.03em",
@@ -342,7 +342,7 @@ export function UseCases() {
                   transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
                   style={{
                     fontFamily: "var(--font-display, 'Trench Slab'), system-ui, serif",
-                    fontSize: "clamp(40px, 6vw, 76px)",
+                    fontSize: "clamp(28px, 3.5vw, 42px)",
                     fontWeight: 400, lineHeight: 1,
                     letterSpacing: "-0.04em",
                     color: "#1a1a1a", margin: 0,

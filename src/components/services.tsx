@@ -311,7 +311,7 @@ const Services = () => {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
               style={{
-                fontSize: "clamp(32px, 5vw, 56px)",
+                fontSize: "clamp(28px, 3.5vw, 42px)",
                 fontWeight: 700,
                 lineHeight: 1.1,
                 color: palette.text,
@@ -470,8 +470,8 @@ const Services = () => {
                         <div style={{ marginBottom: 24 }}>
                           <div
                             style={{
-                              fontSize: "clamp(42px, 4vw, 56px)",
-                              fontWeight: 800,
+                              fontSize: "clamp(24px, 2.5vw, 32px)",
+                              fontWeight: 700,
                               lineHeight: 1,
                               letterSpacing: "-0.04em",
                               color: isAccent ? palette.accent : palette.text,

@@ -2,202 +2,152 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import {
-  navbarReveal,
-  heroHeadline,
-  heroAccent,
-  fadeUp,
-  staggerContainer,
-  lineReveal,
-  easeOutExpo,
-  easeOutQuart,
-} from "@/lib/animations";
+import { easeOutExpo, easeOutQuart } from "@/lib/animations";
 
 const NAV_LINKS = ["Services", "About", "Team", "Contact"] as const;
 
+const STEPS: { num: string; label: string; active?: boolean }[] = [
+  { num: "01", label: "Create Deal" },
+  { num: "02", label: "Add Investors" },
+  { num: "03", label: "Allocate Capital", active: true },
+  { num: "04", label: "Track Returns" },
+];
+
+const ease = [0.16, 1, 0.3, 1] as const;
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } } };
+const up = (d = 0) => ({ hidden: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0, transition: { duration: 0.9, delay: d, ease } } });
+const inn = (d = 0) => ({ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.7, delay: d, ease: easeOutQuart } } });
+
 export function KubricHero() {
   return (
-    <section
-      className="relative w-full h-screen min-h-[600px] md:min-h-[750px] overflow-hidden"
-      aria-label="Fundex hero"
-    >
-      {/* ── Background Image ── */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="kubric-breathe absolute inset-0">
-          <Image
-            src="/hero-cash.jpg"
-            alt=""
-            fill
-            priority
-            className="object-cover -scale-x-100"
-          />
-        </div>
-
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 z-[2] bg-black/40" />
+    <section className="relative w-full h-screen min-h-[750px] overflow-hidden bg-[#060806]" aria-label="Fundex hero">
+      {/* ── Background — image on right, dark fade on left ── */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Hero image — covers the full section */}
+        <Image
+          src="/hero-opt-3.jpg"
+          alt=""
+          fill
+          priority
+          className="object-cover object-center"
+        />
+        {/* Gradient overlay — solid dark on the left, fading to transparent on the right */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `
+              linear-gradient(90deg,
+                #060806 0%,
+                #060806 34%,
+                rgba(6,8,6,0.93) 44%,
+                rgba(6,8,6,0.78) 53%,
+                rgba(6,8,6,0.55) 63%,
+                rgba(6,8,6,0.3) 75%,
+                rgba(6,8,6,0.12) 88%,
+                rgba(6,8,6,0.03) 100%
+              )
+            `,
+          }}
+        />
+        {/* Top + bottom darken for readability */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(6,8,6,0.6) 0%, transparent 20%, transparent 80%, rgba(6,8,6,0.7) 100%)' }} />
+        {/* Subtle green tint over image */}
+        <div className="absolute inset-0 bg-[#060806]/20 mix-blend-multiply" />
+        {/* Grain */}
+        <div className="kubric-grain absolute inset-0 opacity-[0.02]" />
       </div>
 
       {/* ── Content ── */}
-      <div className="relative z-[4] w-full h-full flex flex-col">
-        {/* ─── Navbar ─── */}
-        <motion.header
-          className="flex items-center justify-between px-6 md:px-10 lg:px-14 py-5 md:py-7 w-full"
-          variants={navbarReveal}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* Logo */}
-          <motion.a
-            href="#"
-            className="no-underline transition-opacity hover:opacity-80"
-            aria-label="Fundex home"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.1, ease: easeOutExpo }}
-          >
-            <span className="font-display text-xl font-bold tracking-[2.5px] text-white drop-shadow-md">
-              FUNDEX
-            </span>
-          </motion.a>
-
-          {/* Center Links — frosted glass container */}
-          <motion.nav
-            className="hidden lg:flex items-center gap-10 px-8 py-3  bg-white/[0.06] backdrop-blur-[14px] border border-white/[0.1] shadow-[0_2px_20px_rgba(0,0,0,0.1)]"
-            aria-label="Main navigation"
-            variants={staggerContainer(0.08, 0.2)}
-            initial="hidden"
-            animate="visible"
-          >
+      <div className="relative z-10 w-full h-full flex flex-col">
+        {/* Navbar */}
+        <motion.header className="flex items-center justify-between px-6 md:px-10 lg:px-14 py-5 md:py-6" initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: easeOutQuart }}>
+          <a href="#" className="no-underline" aria-label="Fundex home">
+            <span className="font-display text-[20px] font-bold tracking-[2px] text-white">FUNDEX</span>
+          </a>
+          <nav className="hidden lg:flex items-center gap-10 px-8 py-2.5 bg-white/[0.03] backdrop-blur-md border border-white/[0.06]" aria-label="Main navigation">
             {NAV_LINKS.map((link) => (
-              <motion.a
-                key={link}
-                href={`#${link.toLowerCase()}`}
-                className="kubric-nav-link relative font-sans text-[16px] text-white/80 no-underline tracking-[0.2px] transition-colors hover:text-white"
-                variants={{
-                  hidden: { opacity: 0, y: -10 },
-                  visible: {
-                    opacity: 1,
-                    y: 0,
-                    transition: { duration: 0.5, ease: easeOutQuart },
-                  },
-                }}
-              >
-                {link}
-              </motion.a>
+              <a key={link} href={`#${link.toLowerCase()}`} className="kubric-nav-link relative font-sans text-[14px] text-white/55 no-underline tracking-normal transition-colors hover:text-white">{link}</a>
             ))}
-          </motion.nav>
-
-          {/* Auth buttons */}
-          <motion.div
-            className="flex items-center gap-3"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.5, ease: easeOutExpo }}
-          >
-            <a
-              href="/auth/login"
-              className="font-sans text-[14px] md:text-[15px] font-medium text-white/80 no-underline tracking-[0.2px] transition-colors hover:text-white"
-            >
-              Log in
-            </a>
-            <a
-              href="/auth/signup"
-              className="font-sans text-[14px] md:text-[15px] font-medium text-[#0a1f0a] no-underline px-5 md:px-6 py-2 md:py-2.5 bg-white tracking-[0.3px] shadow-[0_2px_12px_rgba(255,255,255,0.15)] transition-all hover:bg-fundex-cream hover:-translate-y-px"
-            >
-              Sign Up
-            </a>
-          </motion.div>
+          </nav>
+          <div className="flex items-center gap-4">
+            <a href="/sign-in" className="font-sans text-[14px] font-medium text-white/55 no-underline transition-colors hover:text-white">Log in</a>
+            <a href="/auth/signup" className="font-sans text-[14px] font-semibold text-[#0a1f0a] no-underline px-5 py-2.5 bg-fundex-gold tracking-normal transition-all hover:bg-fundex-cream hover:-translate-y-px">Sign Up</a>
+          </div>
         </motion.header>
 
-        {/* ─── Main Hero Area ─── */}
-        <div className="flex-1 flex flex-col md:flex-row md:justify-between px-6 md:px-10 lg:px-14 pb-10 md:pb-14 gap-6 md:gap-12">
-          {/* Left Column */}
-          <div className="flex flex-col flex-1 max-w-[700px]">
-            {/* Headline — positioned ~20% from top */}
-            <div className="flex-1 flex items-start pt-[8vh] md:pt-[15vh]">
-              <motion.h1
-                className="kubric-text-shadow font-sans text-[clamp(32px,5.8vw,76px)] font-normal leading-[1.06] text-white -tracking-[0.5px] max-w-2xl"
-                variants={heroHeadline}
-                initial="hidden"
-                animate="visible"
-                transition={{ duration: 1.1, delay: 0.3, ease: easeOutExpo }}
+        {/* Main content */}
+        <div className="flex-1 flex items-center px-6 md:px-10 lg:px-14">
+          <motion.div className="max-w-[560px]" variants={stagger} initial="hidden" animate="visible">
+            <motion.div className="flex items-center gap-3 mb-6" variants={inn(0.05)}>
+              <div className="h-px w-8 bg-fundex-gold/40" />
+              <span className="font-sans text-[11px] text-fundex-gold/70 tracking-[2px] uppercase">Private Lending Infrastructure</span>
+            </motion.div>
+
+            <motion.h1 className="font-display text-[clamp(40px,5.8vw,76px)] font-bold leading-[1.05] text-white tracking-tight" variants={up(0.1)}>
+              The Operating
+              <br />
+              system for
+              <br />
+              <motion.span
+                className="text-fundex-gold inline-block"
+                style={{ textShadow: '0 0 80px rgba(192,184,122,0.2)' }}
+                variants={up(0.3)}
               >
-                The Operating
-                <br />
-                system for
-                <br />
-                <motion.span
-                  className="kubric-gold-glow font-display font-bold text-fundex-gold inline-block -skew-x-[8deg]"
-                  variants={heroAccent}
-                  initial="hidden"
-                  animate="visible"
-                  transition={{ duration: 1.0, delay: 0.7, ease: easeOutExpo }}
-                >
-                  Private Credit
-                </motion.span>
-              </motion.h1>
-            </div>
+                Private Credit
+              </motion.span>
+            </motion.h1>
 
-            {/* Bottom section — pushed down */}
-            <div className="mt-auto">
-              {/* Divider — gold gradient */}
-              <motion.div
-                className="w-[50px] h-px mb-7"
-                style={{ background: "linear-gradient(90deg, rgba(192,184,122,0.6), transparent)" }}
-                variants={lineReveal}
-                initial="hidden"
-                animate="visible"
-                transition={{ duration: 0.8, delay: 0.9, ease: easeOutQuart }}
-              />
+            <motion.p className="mt-6 font-sans text-[16px] leading-[1.7] text-white/40 max-w-[420px]" variants={up(0.45)}>
+              Institutional infrastructure for investor management, deal operations, capital workflows, and reporting.
+            </motion.p>
 
-              {/* Section Label */}
-              <motion.div
-                className="mb-6 md:mb-9"
-                variants={fadeUp}
-                initial="hidden"
-                animate="visible"
-                transition={{ duration: 0.8, delay: 0.8, ease: easeOutExpo }}
-              >
-                <p className="kubric-text-shadow-sm font-sans text-[16px] font-semibold text-white tracking-wide mb-4">
-                  01 — Our Mission
-                </p>
-                <p className="kubric-text-shadow-sm font-sans text-[15px] md:text-[18px] font-normal leading-[1.8] text-white/65 max-w-[400px]">
-                  Fundex provides institutional infrastructure for investor management, deal operations, capital workflows, and reporting.
-                </p>
-              </motion.div>
+            <motion.div className="flex items-center gap-4 mt-9" variants={up(0.6)}>
+              <a href="#book-demo-section" className="group font-sans text-[14px] font-semibold text-[#0a1f0a] no-underline px-7 py-3.5 bg-fundex-gold tracking-normal transition-all hover:bg-fundex-cream hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(192,184,122,0.2)] flex items-center gap-2">
+                Book a Demo <span className="inline-block transition-transform group-hover:translate-x-0.5">→</span>
+              </a>
+              <a href="#services-section" className="font-sans text-[14px] text-white/40 no-underline px-6 py-3.5 border border-white/[0.08] transition-all hover:border-white/20 hover:text-white/65">Learn More</a>
+            </motion.div>
 
-              {/* CTAs */}
-              <motion.div
-                className="flex items-center gap-4 md:gap-8"
-                variants={fadeUp}
-                initial="hidden"
-                animate="visible"
-                transition={{ duration: 0.8, delay: 1.0, ease: easeOutExpo }}
-              >
-                <a
-                  href="#book-demo"
-                  className="group font-sans text-[14px] md:text-[16px] font-medium text-[#0a1f0a] no-underline px-6 md:px-8 py-3 md:py-3.5 bg-white tracking-[0.2px] shadow-[0_2px_16px_rgba(255,255,255,0.1)] transition-all hover:bg-fundex-cream hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(192,184,122,0.2)] flex items-center gap-1.5"
-                >
-                  <span>Book Demo</span>
-                  <span className="inline-block transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">↗</span>
-                </a>
-                <a
-                  href="#scroll"
-                  className="font-sans text-[16px] text-white/60 no-underline flex items-center gap-2.5 transition-colors hover:text-white/90"
-                >
-                  Scroll down
-                  <span className="kubric-bounce flex items-center">
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                      <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.2" />
-                      <path d="M9 6v6M6.5 10l2.5 2.5L11.5 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                </a>
-              </motion.div>
-            </div>
-          </div>
-
+            {/* Stats strip */}
+            <motion.div className="flex items-center gap-10 mt-12 pt-6 border-t border-white/[0.06]" variants={up(0.8)}>
+              {[
+                { val: "$42M+", label: "Capital Deployed" },
+                { val: "200+", label: "Investors" },
+                { val: "98%", label: "Retention" },
+              ].map((s) => (
+                <div key={s.label}>
+                  <p className="font-display text-[22px] font-bold text-white leading-none">{s.val}</p>
+                  <p className="font-sans text-[10px] text-white/25 tracking-[1.5px] uppercase mt-2">{s.label}</p>
+                </div>
+              ))}
+            </motion.div>
+          </motion.div>
         </div>
+
+        {/* Trust bar */}
+        <motion.div className="w-full px-6 md:px-10 lg:px-14 py-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 1.0, ease: easeOutQuart }}>
+          <div className="flex items-center justify-center gap-8 md:gap-12">
+            {["SOC 2 Certified", "Bank-Grade Encryption", "Multi-Tenant Isolation", "Real-Time Reporting"].map((item, i) => (
+              <motion.div key={item} className="flex items-center gap-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 1.05 + i * 0.05 }}>
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="rgba(192,184,122,0.45)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <span className="font-sans text-[11px] text-white/25 tracking-[0.5px]">{item}</span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Steps */}
+        <motion.div className="w-full px-6 md:px-10 lg:px-14 py-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 1.1, ease: easeOutQuart }}>
+          <div className="flex items-center justify-between max-w-3xl mx-auto">
+            {STEPS.map((step, i) => (
+              <motion.div key={step.num} className={`flex items-center gap-2 px-3.5 py-1.5 ${step.active ? "bg-white/[0.04] border border-white/[0.06]" : ""}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 1.15 + i * 0.05 }}>
+                <span className={`font-sans text-[11px] tracking-[1px] ${step.active ? "text-white/50" : "text-white/18"}`}>{step.num}</span>
+                <span className={`font-sans text-[11px] ${step.active ? "text-white/70 font-medium" : "text-white/25"}`}>{step.label}</span>
+                {step.active && <div className="w-1.5 h-1.5 bg-fundex-gold/40 ml-0.5" />}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
       </div>
     </section>
   );

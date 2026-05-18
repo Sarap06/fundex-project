@@ -4,7 +4,12 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { easeOutExpo, easeOutQuart } from "@/lib/animations";
 
-const NAV_LINKS = ["Services", "About", "Team", "Contact"] as const;
+const NAV_LINKS = [
+  { label: "Services", href: "#services-section" },
+  { label: "Use Cases", href: "#use-cases-section" },
+  { label: "Team", href: "#team-section" },
+  { label: "Contact", href: "#book-demo-section" },
+];
 
 const STEPS: { num: string; label: string; active?: boolean }[] = [
   { num: "01", label: "Create Deal" },
@@ -66,7 +71,7 @@ export function KubricHero() {
           </a>
           <nav className="hidden lg:flex items-center gap-10 px-8 py-2.5 bg-white/[0.03] backdrop-blur-md border border-white/[0.06]" aria-label="Main navigation">
             {NAV_LINKS.map((link) => (
-              <a key={link} href={`#${link.toLowerCase()}`} className="kubric-nav-link relative font-sans text-[14px] text-white/55 no-underline tracking-normal transition-colors hover:text-white">{link}</a>
+              <a key={link.label} href={link.href} className="kubric-nav-link relative font-sans text-[14px] text-white/55 no-underline tracking-normal transition-colors hover:text-white">{link.label}</a>
             ))}
           </nav>
           <div className="flex items-center gap-4">

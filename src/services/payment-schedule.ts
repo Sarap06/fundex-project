@@ -55,15 +55,34 @@ function buildScheduleEntries(a: PaymentScheduleAllocation, now: Date): RawSched
   const monthly = effectiveMonthlyInterest(a);
   if (!startIso || termLength <= 0 || monthly <= 0) return [];
 
-  const start = new Date(startIso);
-  if (Number.isNaN(start.getTime())) return [];
+  // Parse a 'YYYY-MM-DD' date column into local calendar parts (avoid the
+  // UTC-midnight shift that makes date-only strings render a day early).
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(startIso);
+  let startYear: number, startMonth: number, startDay: number;
+  if (m) {
+    startYear = Number(m[1]);
+    startMonth = Number(m[2]) - 1;
+    startDay = Number(m[3]);
+  } else {
+    const d = new Date(startIso);
+    if (Number.isNaN(d.getTime())) return [];
+    startYear = d.getFullYear();
+    startMonth = d.getMonth();
+    startDay = d.getDate();
+  }
 
   const funded = isFunded(a);
   const entries: RawScheduleEntry[] = [];
 
   for (let i = 0; i < termLength; i++) {
-    const due = new Date(start);
-    due.setMonth(due.getMonth() + i);
+    // Advance whole months with a day-clamp so end-of-month starts (e.g. the
+    // 31st) don't overflow into the next month — a raw setMonth would turn
+    // Feb 31 into Mar 3 and collide month keys in the deal-level merge.
+    const absMonth = startMonth + i;
+    const year = startYear + Math.floor(absMonth / 12);
+    const month = ((absMonth % 12) + 12) % 12;
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const due = new Date(year, month, Math.min(startDay, lastDay));
     const isPast = due <= now;
     entries.push({
       due,

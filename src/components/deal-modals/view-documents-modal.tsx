@@ -8,15 +8,8 @@ interface ViewDocumentsModalProps {
   isOpen: boolean;
   onClose: () => void;
   dealName: string;
-  documents?: { name: string; category: string; uploadDate: string; status: 'uploaded' | 'pending' | 'missing'; size: string }[];
+  documents: { name: string; category: string; uploadDate: string; status: 'uploaded' | 'pending' | 'missing'; size: string }[];
 }
-
-const DEFAULT_DOCS = [
-  { name: 'Subscription Agreement', category: 'Legal', uploadDate: 'Jun 15, 2026', status: 'uploaded' as const, size: '2.4 MB' },
-  { name: 'Loan Agreement & Terms', category: 'Legal', uploadDate: 'Jun 12, 2026', status: 'uploaded' as const, size: '3.1 MB' },
-  { name: 'Property Appraisal', category: 'Appraisal', uploadDate: '', status: 'pending' as const, size: '—' },
-  { name: 'Distribution Schedule', category: 'Financial', uploadDate: '', status: 'missing' as const, size: '—' },
-];
 
 function getStatusIcon(status: string) {
   switch (status) {
@@ -42,7 +35,7 @@ function getStatusBadge(status: string) {
 }
 
 export function ViewDocumentsModal({ isOpen, onClose, dealName, documents }: ViewDocumentsModalProps) {
-  const docs = documents || DEFAULT_DOCS;
+  const docs = documents;
 
   return (
     <ModalShell
@@ -64,6 +57,13 @@ export function ViewDocumentsModal({ isOpen, onClose, dealName, documents }: Vie
           </Button>
         </div>
 
+        {docs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center border border-stone-100 px-6 py-12 text-center">
+            <FileText className="h-8 w-8 text-stone-300" />
+            <p className="mt-3 text-sm font-medium text-stone-600">No documents for this deal yet</p>
+            <p className="mt-1 text-xs text-stone-400">Upload a document to get started.</p>
+          </div>
+        ) : (
         <div className="overflow-hidden border border-stone-100">
           <table className="w-full text-left text-sm">
             <thead>
@@ -104,6 +104,7 @@ export function ViewDocumentsModal({ isOpen, onClose, dealName, documents }: Vie
             </tbody>
           </table>
         </div>
+        )}
       </div>
     </ModalShell>
   );

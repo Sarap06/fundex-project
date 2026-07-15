@@ -34,7 +34,8 @@ function SignupContent() {
   const [signupType, setSignupType] = useState<SignupType>('company');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [companyCode, setCompanyCode] = useState('');
   const [error, setError] = useState('');
@@ -83,6 +84,11 @@ function SignupContent() {
           window.location.href = '/onboarding';
         }, 2000);
       } else {
+        if (!firstName.trim() || !lastName.trim()) {
+          setError('First name and last name are required');
+          return;
+        }
+        const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
         await companySignUp(email, password, fullName, companyCode);
         setSuccess(true);
 
@@ -197,15 +203,29 @@ function SignupContent() {
             <>
               <div>
                 <label className="block text-sm font-medium text-stone-900 mb-2">
-                  Full Name
+                  First Name
                 </label>
                 <input
                   type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   required
                   className="w-full px-4 py-2 border border-stone-200  focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
-                  placeholder="John Doe"
+                  placeholder="John"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-stone-900 mb-2">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 border border-stone-200  focus:ring-1 focus:ring-fundex-gold/30 focus:border-fundex-gold outline-none"
+                  placeholder="Doe"
                 />
               </div>
 

@@ -16,6 +16,7 @@ interface AddInvestorAllocationModalProps {
 
 interface InvestorOption {
   id: string;
+  investorCode: string;
   fullName: string;
   email: string;
 }
@@ -41,12 +42,12 @@ export function AddInvestorAllocationModal({ isOpen, onClose, dealName, onAdd }:
 
       const { data: invData } = await supabase
         .from('investors')
-        .select('id, full_name, email')
+        .select('id, investor_id, full_name, email')
         .eq('company_id', profile.company_id)
         .eq('status', 'Active')
         .order('full_name');
 
-      setInvestors((invData || []).map((i: any) => ({ id: i.id, fullName: i.full_name, email: i.email })));
+      setInvestors((invData || []).map((i: any) => ({ id: i.id, investorCode: i.investor_id, fullName: i.full_name, email: i.email })));
     })();
   }, [isOpen]);
 
@@ -91,7 +92,7 @@ export function AddInvestorAllocationModal({ isOpen, onClose, dealName, onAdd }:
           >
             <option value="">Select investor...</option>
             {investors.map((inv) => (
-              <option key={inv.id} value={inv.id}>{inv.fullName} ({inv.email})</option>
+              <option key={inv.id} value={inv.id}>{inv.fullName}{inv.investorCode ? ` — ${inv.investorCode}` : ''} ({inv.email})</option>
             ))}
           </select>
           {investors.length === 0 && (

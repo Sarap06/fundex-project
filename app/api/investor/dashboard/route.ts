@@ -6,7 +6,7 @@ import {
   collateralBackingActiveDeals,
   currentMonthlyIncome,
   totalCommittedCapital,
-  activePositionsCount,
+  activeDealsCount,
   projectUpcomingPayments,
 } from '@/services/portfolio-metrics';
 
@@ -59,34 +59,41 @@ export async function GET(request: NextRequest) {
       .eq('email', userEmail)
       .single();
 
+    // The same investor can be linked two ways: by their user_profiles user id
+    // (signed-up investors) or by their investors-table row id (manually added).
+    // Query both so counts and amounts cover every allocation/link.
+    const investorIds = Array.from(
+      new Set([investorRecord?.id, userId].filter(Boolean))
+    ) as string[];
+
     // Get deals this investor is linked to via deal_investors, scoped by company
+    const dealInvestorFilter = investorRecord
+      ? `and(investor_id.eq.${userId},investor_source.eq.user_profiles),and(investor_id.eq.${investorRecord.id},investor_source.eq.investors)`
+      : `and(investor_id.eq.${userId},investor_source.eq.user_profiles)`;
+
     const { data: dealInvestorLinks } = await supabase
       .from('deal_investors')
       .select('deal_id, deals!inner(company_id)')
-      .eq('investor_id', userId)
-      .eq('investor_source', 'user_profiles')
+      .or(dealInvestorFilter)
       .eq('deals.company_id', companyId);
 
     const linkedDealIds = (dealInvestorLinks || []).map((di: any) => di.deal_id);
 
-    // Get allocations for this investor (via investors table FK)
-    let allocations: any[] = [];
-    if (investorRecord) {
-      const { data: allocs } = await supabase
-        .from('allocations')
-        .select(`
-          id, allocation_amount, monthly_interest, annual_rate, term_length, term_unit,
-          payment_frequency, payment_start_date, commit_date, expected_funding_date,
-          funding_status, status, notes,
-          deals (id, name, deal_id, status, type, target_amount, interest_rate, term,
-                 collateral_address, estimated_property_value, loan_to_value_ratio,
-                 close_date, first_payout_date, location_state, location_city)
-        `)
-        .eq('company_id', companyId)
-        .eq('investor_id', investorRecord.id);
+    // Get allocations for this investor (both identity keys)
+    const { data: allocs } = await supabase
+      .from('allocations')
+      .select(`
+        id, allocation_amount, monthly_interest, annual_rate, term_length, term_unit,
+        payment_frequency, payment_start_date, commit_date, expected_funding_date,
+        funding_status, status, notes,
+        deals (id, name, deal_id, status, type, target_amount, interest_rate, term,
+               collateral_address, estimated_property_value, loan_to_value_ratio,
+               close_date, first_payout_date, location_state, location_city)
+      `)
+      .eq('company_id', companyId)
+      .in('investor_id', investorIds);
 
-      allocations = allocs || [];
-    }
+    const allocations: any[] = allocs || [];
 
     // ── Portfolio stats (normalized definitions) ────────────────────────
     const totalCapital = totalCommittedCapital(allocations);
@@ -94,7 +101,7 @@ export async function GET(request: NextRequest) {
     const fundsBeingDeployed = capitalInDeployment(allocations);
     const monthlyIncome = currentMonthlyIncome(allocations);
     const collateral = collateralBackingActiveDeals(allocations);
-    const activeDealCount = activePositionsCount(allocations);
+    const activeDealCount = activeDealsCount(allocations);
 
     // Upcoming payments projection (next 30 days)
     const now = new Date();

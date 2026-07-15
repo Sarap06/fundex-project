@@ -29,7 +29,8 @@ import {
   Check,
   Send,
   User as UserIcon,
-  Building2
+  Building2,
+  Trash2
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
@@ -73,6 +74,7 @@ export default function AllocationsPage() {
   const [messageModalOpen, setMessageModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
+  const [deletingAllocationId, setDeletingAllocationId] = useState<string | null>(null);
   const [messageType, setMessageType] = useState('');
   const [customMessage, setCustomMessage] = useState('');
 
@@ -209,7 +211,7 @@ export default function AllocationsPage() {
         id: alloc.id,
         investor_name: nameMap.get(alloc.investor_id) || 'Unknown',
         deal_name: alloc.deals?.name || 'Unknown',
-        amount: alloc.allocation_amount,
+        amount: Number(alloc.allocation_amount) || 0,
         percentage: alloc.allocation_percentage || 0,
         status: alloc.funding_status || 'Pending',
         commit_date: new Date(alloc.commit_date).toLocaleDateString('en-US', {
@@ -224,7 +226,7 @@ export default function AllocationsPage() {
               day: 'numeric',
             })
           : null,
-        monthly_interest: alloc.monthly_interest || 0,
+        monthly_interest: Number(alloc.monthly_interest) || 0,
         payments_completed: 0,
         total_payments: 12,
         payment_status: 'pending' as const,
@@ -352,6 +354,40 @@ export default function AllocationsPage() {
     setPaymentModalOpen(true);
   };
 
+  const handleDeleteAllocation = async (allocation: Allocation) => {
+    const confirmed = window.confirm(
+      `Delete the ${allocation.investor_name} allocation for ${allocation.deal_name}? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setDeletingAllocationId(allocation.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('Your session expired. Please log in again.');
+        return;
+      }
+
+      const response = await fetch(`/api/allocations/${allocation.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.success) {
+        alert(result?.message || 'Failed to delete allocation.');
+        return;
+      }
+
+      await loadAllocationsData();
+    } catch (error) {
+      console.error('Error deleting allocation:', error);
+      alert('Failed to delete allocation.');
+    } finally {
+      setDeletingAllocationId(null);
+    }
+  };
+
   const getMessageTemplate = (type: string) => {
     if (!selectedAllocation) return '';
     const name = selectedAllocation.investor_name;
@@ -420,9 +456,18 @@ export default function AllocationsPage() {
 
   const handleSaveAllocation = async (formData: any) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('Your session expired. Please log in again.');
+        return;
+      }
+
       const response = await fetch('/api/allocations/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           company_id: userProfile.company_id,
           investor_id: formData.investor_id,
@@ -642,6 +687,14 @@ export default function AllocationsPage() {
                               onClick={() => handlePaymentSchedule(allocation)}
                             >
                               <Calendar className="size-4" />
+                            </button>
+                            <button
+                              className="h-8 w-8 inline-flex items-center justify-center rounded text-stone-500 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                              title="Delete Allocation"
+                              onClick={() => handleDeleteAllocation(allocation)}
+                              disabled={deletingAllocationId === allocation.id}
+                            >
+                              <Trash2 className="size-4" />
                             </button>
                           </div>
                         </td>

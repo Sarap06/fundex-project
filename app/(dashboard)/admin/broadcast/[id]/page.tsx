@@ -112,6 +112,9 @@ export default function BroadcastDetailPage() {
   // Acknowledgment filter
   const [statusFilter, setStatusFilter] = useState<'all' | 'opened' | 'pending' | 'acknowledged'>('all');
   const [ackInvestors, setAckInvestors] = useState<AcknowledgmentInvestor[]>([]);
+  const [linkedDocuments, setLinkedDocuments] = useState<
+    { name: string; category: string; uploadDate: string; status: 'uploaded' | 'pending' | 'missing'; size: string }[]
+  >([]);
 
   // Manage channel form states
   const [channelStatus, setChannelStatus] = useState<'active' | 'paused' | 'archived'>('active');
@@ -210,25 +213,50 @@ export default function BroadcastDetailPage() {
           if (enriched[0]) {
             const { data: recipients } = await supabase
               .from('broadcast_update_recipients')
-              .select('investor_id, opened_at, acknowledged_at')
+              .select('investor_id, investor_source, email, opened_at, acknowledged_at')
               .eq('broadcast_update_id', enriched[0].id);
 
             if (recipients && recipients.length > 0) {
-              const investorIds = recipients.map((r: any) => r.investor_id);
-              const { data: investorProfiles } = await supabase
-                .from('investors')
-                .select('id, name, email')
-                .in('id', investorIds);
+              const userProfileIds = recipients
+                .filter((r: any) => r.investor_source === 'user_profiles')
+                .map((r: any) => r.investor_id);
+
+              const investorIds = recipients
+                .filter((r: any) => r.investor_source === 'investors')
+                .map((r: any) => r.investor_id);
+
+              const nameMap = new Map<string, string>();
+
+              if (userProfileIds.length > 0) {
+                const { data: profiles } = await supabase
+                  .from('user_profiles')
+                  .select('user_id, full_name')
+                  .in('user_id', userProfileIds);
+
+                profiles?.forEach((p: any) => {
+                  nameMap.set(`${p.user_id}:user_profiles`, p.full_name);
+                });
+              }
+
+              if (investorIds.length > 0) {
+                const { data: investorRows } = await supabase
+                  .from('investors')
+                  .select('id, full_name')
+                  .in('id', investorIds);
+
+                investorRows?.forEach((i: any) => {
+                  nameMap.set(`${i.id}:investors`, i.full_name);
+                });
+              }
 
               const ackList: AcknowledgmentInvestor[] = recipients.map((r: any) => {
-                const inv = investorProfiles?.find((p: any) => p.id === r.investor_id);
                 let status: 'acknowledged' | 'opened' | 'pending' = 'pending';
                 if (r.acknowledged_at) status = 'acknowledged';
                 else if (r.opened_at) status = 'opened';
                 return {
                   id: r.investor_id,
-                  name: inv?.name || 'Unknown Investor',
-                  email: inv?.email || '',
+                  name: nameMap.get(`${r.investor_id}:${r.investor_source}`) || 'Unknown Investor',
+                  email: r.email || '',
                   status,
                   time: r.acknowledged_at
                     ? new Date(r.acknowledged_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
@@ -239,6 +267,21 @@ export default function BroadcastDetailPage() {
             }
           }
         }
+
+        // Fetch linked documents
+        const docsResponse = await fetch(`/api/broadcasts/deals/${dealId}/documents`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const docsData = await docsResponse.json();
+        setLinkedDocuments(
+          (docsData.documents || []).map((d: any) => ({
+            name: d.name || '',
+            category: d.category || 'General',
+            uploadDate: d.upload_date ? formatDate(d.upload_date) : '',
+            status: 'uploaded' as const,
+            size: d.file_size || '',
+          }))
+        );
 
         // Fetch timeline
         const { data: timelineData } = await supabase
@@ -690,6 +733,7 @@ export default function BroadcastDetailPage() {
         isOpen={linkedDocsOpen}
         onClose={() => setLinkedDocsOpen(false)}
         dealName={deal.name}
+        documents={linkedDocuments}
       />
 
       {/* Schedule Modal */}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Download, ChevronDown } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StaggerContainer } from '@/components/motion-wrapper';
 import { CompanyStatCard } from '@/components/company/stat-card';
@@ -10,7 +10,6 @@ import { CapitalFlowChart } from '@/components/company/capital-flow-chart';
 import { CompanyOverview } from '@/components/company/company-overview';
 import { ActivityTable } from '@/components/company/activity-table';
 import { BroadcastPreview } from '@/components/company/broadcast-preview';
-import { DUMMY_STATS, DUMMY_FLOW_DATA } from '@/components/company/dummy-data';
 import type { Company } from '@/lib/types';
 
 interface DashboardStats {
@@ -33,6 +32,21 @@ interface FlowDataPoint {
   inflows: number;
   outflows: number;
 }
+
+const EMPTY_STATS: DashboardStats = {
+  totalAUM: 0,
+  allocatedCapital: 0,
+  monthlyInterest: 0,
+  fundedAllocations: 0,
+  pendingAllocations: 0,
+  activeDeals: 0,
+  totalDeals: 0,
+  totalTarget: 0,
+  totalRaised: 0,
+  activeInvestors: 0,
+  totalInvestors: 0,
+  totalInvested: 0,
+};
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -127,12 +141,34 @@ export default function CompanyDashboard() {
     })();
   }, []);
 
-  // Fallback to dummy data when real data is empty/zeros
-  const isDummy = !stats || stats.totalAUM === 0;
-  const displayStats = isDummy ? DUMMY_STATS : stats;
-  const displayFlow = flowData && flowData.some(d => d.inflows > 0 || d.outflows > 0)
-    ? flowData
-    : DUMMY_FLOW_DATA;
+  const displayStats: DashboardStats = stats ?? EMPTY_STATS;
+  const displayFlow = flowData ?? [];
+
+  const handleExport = () => {
+    const rows: Array<[string, string | number]> = [
+      ['Total AUM', displayStats.totalAUM],
+      ['Allocated Capital', displayStats.allocatedCapital],
+      ['Monthly Interest', displayStats.monthlyInterest],
+      ['Funded Allocations', displayStats.fundedAllocations],
+      ['Pending Allocations', displayStats.pendingAllocations],
+      ['Active Deals', displayStats.activeDeals],
+      ['Total Deals', displayStats.totalDeals],
+      ['Total Target', displayStats.totalTarget],
+      ['Total Raised', displayStats.totalRaised],
+      ['Active Investors', displayStats.activeInvestors],
+      ['Total Investors', displayStats.totalInvestors],
+      ['Total Invested', displayStats.totalInvested],
+      ...(displayFlow.map(d => [`Capital Flow ${d.month}`, `in ${d.inflows} / out ${d.outflows}`] as [string, string])),
+    ];
+    const csv = ['Metric,Value', ...rows.map(([k, v]) => `"${k}","${v}"`)].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${(company?.name || 'company').replace(/\s+/g, '-').toLowerCase()}-dashboard-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <StaggerContainer className="space-y-7 pb-12">
@@ -159,13 +195,7 @@ export default function CompanyDashboard() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            className="flex items-center gap-1.5  border border-stone-200 bg-white px-4 py-2 text-sm font-normal text-stone-600 transition-colors hover:bg-stone-50"
-          >
-            Last Month
-            <ChevronDown className="h-3.5 w-3.5 text-stone-400" />
-          </button>
-          <button
-            type="button"
+            onClick={handleExport}
             className="flex items-center gap-1.5  bg-fundex-gold px-5 py-2 text-sm font-medium text-fundex-forest shadow-sm transition-colors hover:bg-fundex-gold/85"
           >
             <Download className="h-4 w-4" />

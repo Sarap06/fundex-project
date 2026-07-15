@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 import { Search, SlidersHorizontal, DollarSign, FileText, TrendingUp, Users, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DUMMY_TRANSACTIONS } from '@/components/company/dummy-data';
 
 interface Activity {
   id: string;
@@ -66,10 +65,9 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
         });
         const json = await res.json();
         const fetched = json.activities || [];
-        // Use dummy data as fallback when no real activities exist
-        setActivities(fetched.length > 0 ? fetched : DUMMY_TRANSACTIONS);
+        setActivities(fetched);
       } catch {
-        setActivities(DUMMY_TRANSACTIONS);
+        setActivities([]);
       } finally {
         setLoading(false);
       }

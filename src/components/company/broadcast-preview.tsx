@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { MoreHorizontal, Paperclip, Megaphone } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DUMMY_BROADCASTS } from '@/components/company/dummy-data';
 
 interface Broadcast {
   id: string;
@@ -42,9 +41,9 @@ export function BroadcastPreview({ companyId }: BroadcastPreviewProps) {
         const res = await fetch(`/api/broadcasts?companyId=${companyId}`);
         const data = await res.json();
         const fetched = (data || []).slice(0, 4);
-        setBroadcasts(fetched.length > 0 ? fetched : DUMMY_BROADCASTS);
+        setBroadcasts(fetched);
       } catch {
-        setBroadcasts(DUMMY_BROADCASTS);
+        setBroadcasts([]);
       } finally {
         setLoading(false);
       }

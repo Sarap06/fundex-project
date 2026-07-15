@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
+import { buildDealPaymentSchedule, type PaymentScheduleRow } from '@/services/payment-schedule';
 import { OpenBroadcastModal } from '@/components/deal-modals/open-broadcast-modal';
 import { ViewDocumentsModal } from '@/components/deal-modals/view-documents-modal';
 import { ViewAllocationsModal } from '@/components/deal-modals/view-allocations-modal';
@@ -42,6 +43,28 @@ interface DealQuickViewModalProps {
   deal: DealQuickViewData | null;
 }
 
+interface AllocationRow {
+  investorName: string;
+  committedAmount: number;
+  status: 'Confirmed' | 'Soft Commit';
+  fundingStatus: string;
+  paymentsCompleted: number;
+  totalPayments: number;
+  nextPayment: string;
+  paymentStartDate: string | null;
+  termLength: number | null;
+  monthlyInterest: number | null;
+  annualRate: number | null;
+}
+
+interface DocumentRow {
+  name: string;
+  category: string;
+  uploadDate: string;
+  status: 'uploaded' | 'pending' | 'missing';
+  size: string;
+}
+
 function fmtM(n: number) {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
@@ -70,8 +93,29 @@ export function DealQuickViewModal({ isOpen, onClose, deal }: DealQuickViewModal
   const [paymentHistoryOpen, setPaymentHistoryOpen] = useState(false);
 
   // Real data for sub-modals
-  const [allocationsData, setAllocationsData] = useState<any[]>([]);
-  const [documentsData, setDocumentsData] = useState<any[]>([]);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [allocationsData, setAllocationsData] = useState<AllocationRow[]>([]);
+  const [documentsData, setDocumentsData] = useState<DocumentRow[]>([]);
+  const [paymentSchedule, setPaymentSchedule] = useState<PaymentScheduleRow[]>([]);
+
+  const fetchDocuments = async (cid: string, dealId: string) => {
+    const { data: docs } = await supabase
+      .from('documents')
+      .select('id, name, category, upload_date, status, file_size')
+      .eq('company_id', cid)
+      .eq('deal_id', dealId)
+      .order('upload_date', { ascending: false });
+
+    if (docs) {
+      setDocumentsData(docs.map((d) => ({
+        name: d.name,
+        category: d.category || 'General',
+        uploadDate: d.upload_date ? new Date(d.upload_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+        status: (d.status?.toLowerCase() === 'published' || d.status?.toLowerCase() === 'signed') ? 'uploaded' as const : d.status?.toLowerCase() === 'draft' ? 'pending' as const : 'missing' as const,
+        size: d.file_size || '—',
+      })));
+    }
+  };
 
   useEffect(() => {
     if (!isOpen || !deal) return;
@@ -87,50 +131,106 @@ export function DealQuickViewModal({ isOpen, onClose, deal }: DealQuickViewModal
         .single();
 
       if (!profile?.company_id) return;
+      setCompanyId(profile.company_id);
 
-      // Fetch allocations for this deal
+      // Fetch allocations for this deal. Investor names are resolved via a
+      // separate name map (investors + user_profiles) rather than a PostgREST
+      // embed — allocations.investor_id has no single FK (dual investor
+      // identity), so `investors(full_name)` embedding returns a 400.
       const { data: allocs } = await supabase
         .from('allocations')
-        .select('id, allocation_amount, status, funding_status, payment_start_date, term_length, monthly_interest, investors(full_name)')
+        .select('id, investor_id, allocation_amount, status, funding_status, payment_start_date, term_length, monthly_interest, annual_rate')
         .eq('company_id', profile.company_id)
         .eq('deal_id', deal.id);
 
       if (allocs) {
-        setAllocationsData(allocs.map((a: any) => ({
-          investorName: a.investors?.full_name || 'Unknown',
-          committedAmount: Number(a.allocation_amount || 0),
-          status: a.status === 'confirmed' ? 'Confirmed' as const : 'Soft Commit' as const,
-          fundingStatus: a.funding_status || 'Pending',
-          paymentsCompleted: (() => {
-            if (!a.payment_start_date || a.funding_status !== 'Funded') return 0;
-            const start = new Date(a.payment_start_date);
-            const now = new Date();
-            return Math.max(0, Math.min(Number(a.term_length || 0), Math.floor((now.getFullYear() - start.getFullYear()) * 12 + now.getMonth() - start.getMonth())));
-          })(),
-          totalPayments: Number(a.term_length || 0),
-          nextPayment: a.funding_status === 'Funded' ? 'Scheduled' : 'TBD',
-        })));
+        const investorIds = [...new Set(allocs.map((a) => a.investor_id))];
+        const nameMap = new Map<string, string>();
+        if (investorIds.length > 0) {
+          const [{ data: manualInvs }, { data: profileInvs }] = await Promise.all([
+            supabase.from('investors').select('id, full_name').in('id', investorIds),
+            supabase.from('user_profiles').select('user_id, full_name').in('user_id', investorIds),
+          ]);
+          (manualInvs || []).forEach((i) => nameMap.set(i.id, i.full_name));
+          (profileInvs || []).forEach((p) => nameMap.set(p.user_id, p.full_name));
+        }
+
+        setAllocationsData(allocs.map((a) => {
+          return {
+            investorName: nameMap.get(a.investor_id) || 'Unknown',
+            committedAmount: Number(a.allocation_amount || 0),
+            status: a.status === 'confirmed' ? 'Confirmed' as const : 'Soft Commit' as const,
+            fundingStatus: a.funding_status || 'Pending',
+            paymentsCompleted: (() => {
+              if (!a.payment_start_date || a.funding_status !== 'Funded') return 0;
+              const start = new Date(a.payment_start_date);
+              const now = new Date();
+              return Math.max(0, Math.min(Number(a.term_length || 0), Math.floor((now.getFullYear() - start.getFullYear()) * 12 + now.getMonth() - start.getMonth())));
+            })(),
+            totalPayments: Number(a.term_length || 0),
+            nextPayment: a.funding_status === 'Funded' ? 'Scheduled' : 'TBD',
+            paymentStartDate: a.payment_start_date,
+            termLength: a.term_length != null ? Number(a.term_length) : null,
+            monthlyInterest: a.monthly_interest != null ? Number(a.monthly_interest) : null,
+            annualRate: a.annual_rate != null ? Number(a.annual_rate) : null,
+          };
+        }));
+        setPaymentSchedule(buildDealPaymentSchedule(allocs));
       }
 
       // Fetch documents for this deal
-      const { data: docs } = await supabase
-        .from('documents')
-        .select('id, name, category, upload_date, status, file_size')
-        .eq('company_id', profile.company_id)
-        .eq('deal_id', deal.id)
-        .order('upload_date', { ascending: false });
-
-      if (docs) {
-        setDocumentsData(docs.map((d: any) => ({
-          name: d.name,
-          category: d.category || 'General',
-          uploadDate: d.upload_date ? new Date(d.upload_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
-          status: (d.status?.toLowerCase() === 'published' || d.status?.toLowerCase() === 'signed') ? 'uploaded' as const : d.status?.toLowerCase() === 'draft' ? 'pending' as const : 'missing' as const,
-          size: d.file_size || '—',
-        })));
-      }
+      await fetchDocuments(profile.company_id, deal.id);
     })();
   }, [isOpen, deal]);
+
+  const handleUploadDocument = async ({ name, category, file }: { name: string; category: string; file: File }) => {
+    if (!deal || !companyId) {
+      alert('Unable to determine company. Please refresh the page.');
+      throw new Error('Missing deal or company context');
+    }
+
+    const docId = `DOC-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    const fileExt = file.name.split('.').pop();
+    const filePath = `documents/${docId}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+    if (uploadError) {
+      console.error('Error uploading file:', uploadError);
+      alert('Failed to upload file to storage');
+      throw uploadError;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('documents')
+      .getPublicUrl(filePath);
+
+    const { error: dbError } = await supabase.from('documents').insert([{
+      company_id: companyId,
+      deal_id: deal.id,
+      document_id: docId,
+      name,
+      type: category,
+      category: 'Deal Documents',
+      upload_date: new Date().toISOString(),
+      uploaded_by: 'Admin',
+      status: 'Draft',
+      file_size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+      file_type: file.type,
+      file_url: urlData.publicUrl,
+      tags: [category, 'Deal Documents', 'Draft'],
+    }]);
+
+    if (dbError) {
+      console.error('Error creating document record:', dbError);
+      alert('File uploaded but failed to save document record');
+      throw dbError;
+    }
+
+    await fetchDocuments(companyId, deal.id);
+  };
 
   if (!isOpen || !deal) return null;
 
@@ -265,11 +365,11 @@ export function DealQuickViewModal({ isOpen, onClose, deal }: DealQuickViewModal
 
       {/* Sub-modals */}
       <OpenBroadcastModal isOpen={broadcastOpen} onClose={() => setBroadcastOpen(false)} dealName={deal.name} />
-      <ViewDocumentsModal isOpen={documentsOpen} onClose={() => setDocumentsOpen(false)} dealName={deal.name} documents={documentsData.length > 0 ? documentsData : undefined} />
-      <ViewAllocationsModal isOpen={allocationsOpen} onClose={() => setAllocationsOpen(false)} dealName={deal.name} allocations={allocationsData.length > 0 ? allocationsData : undefined} />
+      <ViewDocumentsModal isOpen={documentsOpen} onClose={() => setDocumentsOpen(false)} dealName={deal.name} documents={documentsData} />
+      <ViewAllocationsModal isOpen={allocationsOpen} onClose={() => setAllocationsOpen(false)} dealName={deal.name} allocations={allocationsData} />
       <SendUpdateModal isOpen={updateOpen} onClose={() => setUpdateOpen(false)} dealName={deal.name} />
       <AddInvestorAllocationModal isOpen={addAllocationOpen} onClose={() => setAddAllocationOpen(false)} dealName={deal.name} />
-      <UploadDocumentModal isOpen={uploadDocOpen} onClose={() => setUploadDocOpen(false)} dealName={deal.name} />
+      <UploadDocumentModal isOpen={uploadDocOpen} onClose={() => setUploadDocOpen(false)} dealName={deal.name} onUpload={handleUploadDocument} />
       <EditDealModal isOpen={editDealOpen} onClose={() => setEditDealOpen(false)} deal={{
         name: deal.name,
         targetAmount: deal.targetAmount,
@@ -278,7 +378,7 @@ export function DealQuickViewModal({ isOpen, onClose, deal }: DealQuickViewModal
         minimumInvestment: deal.minimumInvestment,
       }} />
       <CloseDealModal isOpen={closeDealOpen} onClose={() => setCloseDealOpen(false)} dealName={deal.name} />
-      <PaymentHistoryModal isOpen={paymentHistoryOpen} onClose={() => setPaymentHistoryOpen(false)} dealName={deal.name} />
+      <PaymentHistoryModal isOpen={paymentHistoryOpen} onClose={() => setPaymentHistoryOpen(false)} dealName={deal.name} payments={paymentSchedule} />
     </>
   );
 }

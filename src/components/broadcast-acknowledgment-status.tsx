@@ -36,64 +36,48 @@ export function BroadcastAcknowledgmentStatus({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!updateId) {
+      setRecipients([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     fetchAcknowledgments();
   }, [updateId, dealId]);
 
   const fetchAcknowledgments = async () => {
+    if (!updateId) return;
+
     try {
       setLoading(true);
-      
-      // If updateId is provided, fetch recipients for that specific update
-      if (updateId) {
-        const url = new URL(
-          `/api/broadcasts/deals/${dealId}/acknowledgments`,
-          window.location.origin
-        );
-        url.searchParams.append('updateId', updateId);
 
-        console.log('[COMPONENT] Fetching acknowledgments for update:', url.toString());
+      const url = new URL(
+        `/api/broadcasts/deals/${dealId}/acknowledgments`,
+        window.location.origin
+      );
+      url.searchParams.append('updateId', updateId);
 
-        const response = await fetch(url.toString());
+      console.log('[COMPONENT] Fetching acknowledgments for update:', url.toString());
 
-        if (!response.ok) {
-          const errorData = await response.text();
-          console.error('[COMPONENT] API Error:', response.status, errorData);
-          throw new Error(`Failed to fetch acknowledgments (${response.status})`);
-        }
+      const response = await fetch(url.toString());
 
-        const data = await response.json();
-        console.log('[COMPONENT] Acknowledgments data:', data);
-
-        setRecipients(data.recipients || []);
-      } else {
-        // Otherwise fetch all deal investors and show them as pending
-        console.log('[COMPONENT] Fetching all deal investors');
-        
-        const response = await fetch(`/api/broadcasts/deals/${dealId}/investors`);
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch investors');
-        }
-
-        const data = await response.json();
-        console.log('[COMPONENT] Investors data:', data);
-
-        // Convert deal investors to recipient format with pending status
-        const investorRecipients: AcknowledgmentRecipient[] = (data.investors || []).map(
-          (investor: any) => ({
-            id: investor.id,
-            investor_id: investor.investor_id,
-            name: investor.name,
-            email: investor.email,
-            delivery_status: 'pending' as const,
-            sent_at: undefined,
-            opened_at: undefined,
-            acknowledged_at: undefined,
-          })
-        );
-
-        setRecipients(investorRecipients);
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('[COMPONENT] API Error:', response.status, errorData);
+        throw new Error(`Failed to fetch acknowledgments (${response.status})`);
       }
+
+      const data = await response.json();
+      console.log('[COMPONENT] Acknowledgments data:', data);
+
+      const fetchedRecipients: AcknowledgmentRecipient[] = (data.recipients || []).map(
+        (r: any) => ({
+          ...r,
+          name: r.name || r.investor_name,
+        })
+      );
+
+      setRecipients(fetchedRecipients);
       setError(null);
     } catch (err) {
       console.error('Error fetching acknowledgments:', err);
@@ -155,6 +139,15 @@ export function BroadcastAcknowledgmentStatus({
       .map((r) => r.id);
     onSendReminder?.(pendingIds);
   };
+
+  if (!updateId) {
+    return (
+      <Card className="p-6 bg-background border border-border">
+        <h3 className="text-lg font-display font-semibold text-foreground mb-4">Acknowledgment Status</h3>
+        <div className="text-center py-8 text-muted-foreground">No updates sent yet</div>
+      </Card>
+    );
+  }
 
   if (loading) {
     return (

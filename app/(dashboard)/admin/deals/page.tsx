@@ -96,6 +96,12 @@ export default function DealsPage() {
     needsAttention: [],
   });
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('new') === '1') {
+      setIsDrawerOpen(true);
+    }
+  }, []);
+
   // Fetch deals on component mount
   useEffect(() => {
     const loadData = async () => {

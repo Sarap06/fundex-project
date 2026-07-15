@@ -113,9 +113,9 @@ export default function InvestorSettingsPage() {
     );
   }
 
-  const nameParts = (profile?.fullName || '').split(' ');
+  const nameParts = (profile?.fullName || '').trim().split(/\s+/).filter(Boolean);
   const firstName = nameParts[0] || '';
-  const lastName = nameParts.slice(1).join(' ') || '';
+  const lastName = nameParts.slice(1).join(' ');
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-8 pb-12">
@@ -144,7 +144,7 @@ export default function InvestorSettingsPage() {
               type="text"
               value={firstName}
               onChange={(e) =>
-                setProfile((p) => p ? { ...p, fullName: `${e.target.value} ${lastName}`.trim() } : p)
+                setProfile((p) => p ? { ...p, fullName: `${e.target.value} ${lastName}`.replace(/\s+/g, ' ').trim() } : p)
               }
               className="mt-1.5 w-full border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-900 shadow-sm outline-none focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest/30"
             />
@@ -155,7 +155,7 @@ export default function InvestorSettingsPage() {
               type="text"
               value={lastName}
               onChange={(e) =>
-                setProfile((p) => p ? { ...p, fullName: `${firstName} ${e.target.value}`.trim() } : p)
+                setProfile((p) => p ? { ...p, fullName: `${firstName} ${e.target.value}`.replace(/\s+/g, ' ').trim() } : p)
               }
               className="mt-1.5 w-full border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-900 shadow-sm outline-none focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest/30"
             />

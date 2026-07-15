@@ -409,6 +409,16 @@ export default function AdminDashboard() {
         console.error('Error fetching active investors:', investorsError);
       }
 
+      // Fetch investor committed capital (manual intake totals on investor records)
+      const { data: investorCapitalData, error: investorCapitalError } = await supabase
+        .from('investors')
+        .select('total_invested')
+        .eq('company_id', companyId);
+
+      if (investorCapitalError) {
+        console.error('Error fetching investor capital:', investorCapitalError);
+      }
+
       // Fetch active deals count
       const { data: activeDealsData, count: activeDealsCountValue, error: dealsError } = await supabase
         .from('deals')
@@ -452,12 +462,12 @@ export default function AdminDashboard() {
           const dealStatus = dealStatusMap.get(alloc.deal_id);
           return alloc.funding_status === 'Funded' && dealStatus === 'Active';
         })
-        .reduce((sum, alloc) => sum + (alloc.allocation_amount || 0), 0);
+        .reduce((sum, alloc) => sum + (Number(alloc.allocation_amount) || 0), 0);
 
-      // Calculate Allocated Capital: SUM(allocation_amount) WHERE funding_status = 'Funded' (all deals)
-      const allocatedCapitalTotal = (allocationsData || [])
-        .filter(alloc => alloc.funding_status === 'Funded')
-        .reduce((sum, alloc) => sum + (alloc.allocation_amount || 0), 0);
+      // Committed Capital: capital committed on investor records — moves as soon
+      // as an investor is created with capital, before any deal allocation exists
+      const committedCapitalTotal = (investorCapitalData || [])
+        .reduce((sum, inv) => sum + (Number(inv.total_invested) || 0), 0);
 
       setStats({
         totalAUM: {
@@ -481,9 +491,9 @@ export default function AdminDashboard() {
           color: '#A855F7',
           bgColor: '#F3E8FF'
         },
-        allocatedCapital: {
-          label: 'Allocated Capital',
-          value: `$${(allocatedCapitalTotal / 1000000).toFixed(2)}M`,
+        committedCapital: {
+          label: 'Committed Capital',
+          value: `$${committedCapitalTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
           icon: <TrendingUp size={16} />,
           color: '#F59E0B',
           bgColor: '#FFFBEB'
@@ -571,10 +581,10 @@ export default function AdminDashboard() {
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'add-investor':
-        router.push('/admin/investors');
+        router.push('/admin/investors?new=1');
         break;
       case 'create-deal':
-        router.push('/admin/deals');
+        router.push('/admin/deals?new=1');
         break;
       case 'manage-allocations':
         router.push('/admin/allocations');

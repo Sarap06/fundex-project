@@ -1,7 +1,7 @@
 'use client';
 
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { MoreHorizontal, ArrowUpRight, Zap, Copy, Check } from 'lucide-react';
+import { MoreHorizontal, Zap, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import type { Company } from '@/lib/types';
 
@@ -121,10 +121,7 @@ export function CompanyOverview({ company, stats, memberCount }: CompanyOverview
       {/* Bottom metrics */}
       <div className="mt-auto border-t border-stone-100 px-6 py-4">
         <div className="grid grid-cols-2 gap-4">
-          <button
-            type="button"
-            className="flex items-center gap-3  text-left transition-colors hover:bg-stone-50"
-          >
+          <div className="flex items-center gap-3 text-left">
             <div className="h-10 w-1 bg-fundex-gold" />
             <div className="min-w-0">
               <p className="text-lg font-semibold tabular-nums text-stone-900">
@@ -132,12 +129,8 @@ export function CompanyOverview({ company, stats, memberCount }: CompanyOverview
               </p>
               <p className="text-xs text-stone-400">Monthly Interest</p>
             </div>
-            <ArrowUpRight className="ml-auto h-4 w-4 shrink-0 text-stone-300" />
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-3  text-left transition-colors hover:bg-stone-50"
-          >
+          </div>
+          <div className="flex items-center gap-3 text-left">
             <div className="h-10 w-1 bg-fundex-gold" />
             <div className="min-w-0">
               <p className="text-lg font-semibold tabular-nums text-stone-900">
@@ -145,8 +138,7 @@ export function CompanyOverview({ company, stats, memberCount }: CompanyOverview
               </p>
               <p className="text-xs text-stone-400">Team Members</p>
             </div>
-            <ArrowUpRight className="ml-auto h-4 w-4 shrink-0 text-stone-300" />
-          </button>
+          </div>
         </div>
       </div>
     </div>

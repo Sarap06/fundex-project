@@ -1,8 +1,9 @@
 'use client';
 
-import { Calendar, Edit, Trash2, UserPlus } from 'lucide-react';
+import { Calendar, Edit, Trash2, UserPlus, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { buildPaymentSchedule } from '@/services/payment-schedule';
 import { ModalShell } from './modal-shell';
 import { PaymentHistoryModal } from './payment-history-modal';
 
@@ -14,20 +15,18 @@ interface Allocation {
   paymentsCompleted: number;
   totalPayments: number;
   nextPayment: string;
+  paymentStartDate?: string | null;
+  termLength?: number | null;
+  monthlyInterest?: number | null;
+  annualRate?: number | null;
 }
 
 interface ViewAllocationsModalProps {
   isOpen: boolean;
   onClose: () => void;
   dealName: string;
-  allocations?: Allocation[];
+  allocations: Allocation[];
 }
-
-const DEFAULT_ALLOCATIONS: Allocation[] = [
-  { investorName: 'Peterson Family Trust', committedAmount: 500000, status: 'Confirmed', paymentsCompleted: 8, totalPayments: 12, nextPayment: 'Aug 1, 2026' },
-  { investorName: 'Riverside Capital Group', committedAmount: 350000, status: 'Confirmed', paymentsCompleted: 8, totalPayments: 12, nextPayment: 'Aug 1, 2026' },
-  { investorName: 'Summit Investment Partners', committedAmount: 250000, status: 'Soft Commit', paymentsCompleted: 0, totalPayments: 12, nextPayment: 'TBD' },
-];
 
 function fmtM(n: number) {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
@@ -36,9 +35,9 @@ function fmtM(n: number) {
 
 export function ViewAllocationsModal({ isOpen, onClose, dealName, allocations }: ViewAllocationsModalProps) {
   const [paymentHistoryOpen, setPaymentHistoryOpen] = useState(false);
-  const [selectedInvestor, setSelectedInvestor] = useState('');
+  const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
 
-  const allocs = allocations || DEFAULT_ALLOCATIONS;
+  const allocs = allocations;
   const totalAllocated = allocs.reduce((s, a) => s + a.committedAmount, 0);
 
   return (
@@ -74,6 +73,13 @@ export function ViewAllocationsModal({ isOpen, onClose, dealName, allocations }:
           </div>
 
           {/* Table */}
+          {allocs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center border border-stone-100 px-6 py-12 text-center">
+              <Users className="h-8 w-8 text-stone-300" />
+              <p className="mt-3 text-sm font-medium text-stone-600">No allocations for this deal yet</p>
+              <p className="mt-1 text-xs text-stone-400">Add an investor to create the first allocation.</p>
+            </div>
+          ) : (
           <div className="overflow-hidden border border-stone-100">
             <table className="w-full text-left text-sm">
               <thead>
@@ -121,7 +127,7 @@ export function ViewAllocationsModal({ isOpen, onClose, dealName, allocations }:
                         <div className="flex justify-end gap-1">
                           <button
                             type="button"
-                            onClick={() => { setSelectedInvestor(a.investorName); setPaymentHistoryOpen(true); }}
+                            onClick={() => { setSelectedAllocation(a); setPaymentHistoryOpen(true); }}
                             className="p-1.5 text-fundex-forest hover:bg-fundex-gold/10"
                             title="Payment history"
                           >
@@ -141,6 +147,7 @@ export function ViewAllocationsModal({ isOpen, onClose, dealName, allocations }:
               </tbody>
             </table>
           </div>
+          )}
         </div>
       </ModalShell>
 
@@ -148,7 +155,15 @@ export function ViewAllocationsModal({ isOpen, onClose, dealName, allocations }:
         isOpen={paymentHistoryOpen}
         onClose={() => setPaymentHistoryOpen(false)}
         dealName={dealName}
-        investorName={selectedInvestor}
+        investorName={selectedAllocation?.investorName}
+        payments={selectedAllocation ? buildPaymentSchedule({
+          payment_start_date: selectedAllocation.paymentStartDate,
+          term_length: selectedAllocation.termLength,
+          monthly_interest: selectedAllocation.monthlyInterest,
+          allocation_amount: selectedAllocation.committedAmount,
+          annual_rate: selectedAllocation.annualRate,
+          funding_status: selectedAllocation.fundingStatus,
+        }) : []}
       />
     </>
   );

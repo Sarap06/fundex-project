@@ -7,6 +7,7 @@ import { X, Search, Upload, FileText, Trash2 } from 'lucide-react';
 
 interface Investor {
   id: string;
+  investor_code?: string;
   full_name: string;
   email: string;
   initial_investment: number;
@@ -116,7 +117,8 @@ export function AddAllocationModal({
   useEffect(() => {
     const filtered = investors.filter((inv) =>
       inv.full_name.toLowerCase().includes(investorSearch.toLowerCase()) ||
-      inv.email.toLowerCase().includes(investorSearch.toLowerCase())
+      inv.email.toLowerCase().includes(investorSearch.toLowerCase()) ||
+      (inv.investor_code || '').toLowerCase().includes(investorSearch.toLowerCase())
     );
     setFilteredInvestors(filtered);
   }, [investorSearch, investors]);
@@ -134,7 +136,7 @@ export function AddAllocationModal({
       // Fetch manually-added investors
       const { data: investorData } = await supabase
         .from('investors')
-        .select('id, full_name, email, initial_investment')
+        .select('id, investor_id, full_name, email, initial_investment')
         .eq('company_id', companyId);
 
       // Fetch signed-up investors from user_profiles
@@ -144,8 +146,12 @@ export function AddAllocationModal({
         .eq('company_id', companyId)
         .eq('role', 'investor');
 
-      const manualInvestors: Investor[] = (investorData || []).map((inv) => ({
-        ...inv,
+      const manualInvestors: Investor[] = (investorData || []).map((inv: any) => ({
+        id: inv.id,
+        investor_code: inv.investor_id,
+        full_name: inv.full_name,
+        email: inv.email,
+        initial_investment: inv.initial_investment,
         investor_source: 'investors',
       }));
 
@@ -300,9 +306,18 @@ export function AddAllocationModal({
         ? formData.term_length * 12
         : formData.term_length;
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('Your session expired. Please log in again.');
+        return;
+      }
+
       const response = await fetch('/api/allocations/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           company_id: companyId,
           investor_id: formData.investor_id,
@@ -460,7 +475,7 @@ export function AddAllocationModal({
                             onClick={() => handleSelectInvestor(inv)}
                             className="w-full text-left px-4 py-2 hover:bg-muted transition"
                           >
-                            <div className="font-medium text-foreground">{inv.full_name}</div>
+                            <div className="font-medium text-foreground">{inv.full_name}{inv.investor_code ? ` — ${inv.investor_code}` : ''}</div>
                             <div className="text-xs text-muted-foreground">{inv.email}</div>
                           </button>
                         ))}

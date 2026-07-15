@@ -125,6 +125,17 @@ export function activePositionsCount(allocations: AllocationLike[]): number {
   return activeFundedConfirmedAllocations(allocations).length;
 }
 
+export function activeDealsCount(allocations: AllocationLike[]): number {
+  // Distinct deals across active allocations — use wherever copy says "deals",
+  // since multiple allocations in one deal are a single deal.
+  const ids = new Set(
+    activeFundedConfirmedAllocations(allocations)
+      .map((a) => dealRow(a)?.id)
+      .filter(Boolean)
+  );
+  return ids.size;
+}
+
 export function largestActivePosition(allocations: AllocationLike[]): number {
   const active = activeFundedConfirmedAllocations(allocations);
   if (active.length === 0) return 0;

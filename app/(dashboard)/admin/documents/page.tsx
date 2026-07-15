@@ -18,6 +18,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getCurrentUserCompanyId, logOut } from '@/lib/auth';
 import { PageHeader } from '@/components/page-header';
 import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
+import { DOCUMENT_TYPES, DOCUMENT_CATEGORIES, DOCUMENT_STATUSES, DOCUMENT_ACCEPT_EXTENSIONS } from '@/config/documents';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -78,12 +79,16 @@ export default function DocumentsPage() {
     name: '',
     type: 'Offering',
     category: 'Deal Documents',
+    dealId: '',
+    investorId: '',
     uploadedBy: '',
     notes: '',
     status: 'Draft',
     notifyInvestor: false,
     file: null as File | null,
   });
+  const [dealOptions, setDealOptions] = useState<Array<{ id: string; name: string }>>([]);
+  const [investorOptions, setInvestorOptions] = useState<Array<{ id: string; full_name: string; investor_id: string }>>([]);
 
   // Fetch documents on component mount
   useEffect(() => {
@@ -91,6 +96,14 @@ export default function DocumentsPage() {
       const cId = await getCurrentUserCompanyId();
       setCompanyId(cId);
       await fetchDocuments(cId);
+      if (cId) {
+        const [{ data: dealsData }, { data: investorsData }] = await Promise.all([
+          supabase.from('deals').select('id, name').eq('company_id', cId).order('name'),
+          supabase.from('investors').select('id, full_name, investor_id').eq('company_id', cId).order('full_name'),
+        ]);
+        setDealOptions(dealsData || []);
+        setInvestorOptions(investorsData || []);
+      }
       setIsLoading(false);
     };
     loadData();
@@ -214,6 +227,8 @@ export default function DocumentsPage() {
         name: formData.name,
         type: formData.type,
         category: formData.category,
+        deal_id: formData.dealId || null,
+        investor_id: formData.investorId || null,
         upload_date: new Date().toISOString(),
         uploaded_by: formData.uploadedBy || 'Admin',
         status: formData.status,
@@ -235,6 +250,8 @@ export default function DocumentsPage() {
         name: '',
         type: 'Offering',
         category: 'Deal Documents',
+        dealId: '',
+        investorId: '',
         uploadedBy: '',
         notes: '',
         status: 'Draft',
@@ -471,6 +488,7 @@ export default function DocumentsPage() {
                           <input
                             type="file"
                             ref={fileInputRef}
+                            accept={DOCUMENT_ACCEPT_EXTENSIONS}
                             className="hidden"
                             onChange={(e) => {
                               if (e.target.files?.[0]) {
@@ -502,11 +520,9 @@ export default function DocumentsPage() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="Offering">Offering</SelectItem>
-                                <SelectItem value="Agreement">Agreement</SelectItem>
-                                <SelectItem value="Appraisal">Appraisal</SelectItem>
-                                <SelectItem value="Report">Report</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
+                                {DOCUMENT_TYPES.map((type) => (
+                                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </div>
@@ -517,10 +533,37 @@ export default function DocumentsPage() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="Deal Documents">Deal Documents</SelectItem>
-                                <SelectItem value="Investor Documents">Investor Documents</SelectItem>
-                                <SelectItem value="Reports">Reports</SelectItem>
-                                <SelectItem value="Legal Documents">Legal Documents</SelectItem>
+                                {DOCUMENT_CATEGORIES.map((category) => (
+                                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-stone-900">Related Deal</Label>
+                            <Select value={formData.dealId || 'none'} onValueChange={(value) => setFormData({ ...formData, dealId: value === 'none' ? '' : value })}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="None" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">None</SelectItem>
+                                {dealOptions.map((deal) => (
+                                  <SelectItem key={deal.id} value={deal.id}>{deal.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-stone-900">Related Investor</Label>
+                            <Select value={formData.investorId || 'none'} onValueChange={(value) => setFormData({ ...formData, investorId: value === 'none' ? '' : value })}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="None" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">None</SelectItem>
+                                {investorOptions.map((inv) => (
+                                  <SelectItem key={inv.id} value={inv.id}>{inv.full_name}{inv.investor_id ? ` — ${inv.investor_id}` : ''}</SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </div>
@@ -538,10 +581,9 @@ export default function DocumentsPage() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="Draft">Draft</SelectItem>
-                                <SelectItem value="Published">Published</SelectItem>
-                                <SelectItem value="Signed">Signed</SelectItem>
-                                <SelectItem value="Archived">Archived</SelectItem>
+                                {DOCUMENT_STATUSES.map((status) => (
+                                  <SelectItem key={status} value={status}>{status}</SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </div>
@@ -620,7 +662,7 @@ export default function DocumentsPage() {
                 <div>
                   <h4 className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-3">Category</h4>
                   <div className="space-y-2">
-                    {['Deal Documents', 'Investor Documents', 'Reports', 'Legal Documents'].map((cat) => (
+                    {DOCUMENT_CATEGORIES.map((cat) => (
                       <div key={cat} className="flex items-center gap-2">
                         <Checkbox
                           id={`cat-${cat}`}
@@ -639,7 +681,7 @@ export default function DocumentsPage() {
                 <div>
                   <h4 className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-3">Status</h4>
                   <div className="space-y-2">
-                    {['Draft', 'Published', 'Signed', 'Archived'].map((status) => (
+                    {DOCUMENT_STATUSES.map((status) => (
                       <div key={status} className="flex items-center gap-2">
                         <Checkbox
                           id={`status-${status}`}
@@ -658,7 +700,7 @@ export default function DocumentsPage() {
                 <div>
                   <h4 className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-3">Type</h4>
                   <div className="space-y-2">
-                    {['Offering', 'Agreement', 'Appraisal', 'Report'].map((type) => (
+                    {DOCUMENT_TYPES.map((type) => (
                       <div key={type} className="flex items-center gap-2">
                         <Checkbox
                           id={`type-${type}`}

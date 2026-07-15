@@ -20,10 +20,7 @@ import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 function formatCurrency(value: number): string {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
-  if (value > 0) return `$${value.toLocaleString()}`;
-  return '$0';
+  return `$${(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 }
 
 interface Investor {
@@ -72,6 +69,7 @@ export default function InvestorsPage() {
   const [editInvestor, setEditInvestor] = useState<Investor | null>(null);
   const [editFormData, setEditFormData] = useState({ fullName: '', email: '', phone: '', status: '', initialInvestment: '', numberOfInvestments: '', notes: '' });
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [isResendingInvite, setIsResendingInvite] = useState(false);
   const [deleteInvestor, setDeleteInvestor] = useState<Investor | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [viewDeals, setViewDeals] = useState<Array<{ id: string; name: string; status: string }>>([]);
@@ -108,12 +106,18 @@ export default function InvestorsPage() {
     email: '',
     phone: '',
     initialInvestment: '',
-    numberOfInvestments: '0',
+    numberOfInvestments: '',
     notes: '',
     newSponsorName: '',
     newSponsorCompany: '',
   });
 
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('new') === '1') {
+      setIsAddInvestorDrawerOpen(true);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -338,7 +342,7 @@ export default function InvestorsPage() {
         }
       }
 
-      setFormData({ fullName: '', email: '', phone: '', initialInvestment: '', numberOfInvestments: '0', notes: '', newSponsorName: '', newSponsorCompany: '' });
+      setFormData({ fullName: '', email: '', phone: '', initialInvestment: '', numberOfInvestments: '', notes: '', newSponsorName: '', newSponsorCompany: '' });
       setSelectedStatus('Onboarding');
       setSelectedTags([]);
       setSelectedSponsor('internal');
@@ -349,6 +353,50 @@ export default function InvestorsPage() {
       alert('Failed to create investor. Please try again.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResendInvite = async () => {
+    if (!editInvestor) return;
+    setIsResendingInvite(true);
+    const supabase = getSupabaseClient();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('Your session expired. Please log in again to resend the invitation.');
+        return;
+      }
+      if (!companyId || !companyCode) {
+        alert('Company details are unavailable — cannot send the invitation email.');
+        return;
+      }
+      const response = await fetch('/api/invites/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          email: editInvestor.email,
+          companyId,
+          companyCode,
+          companyName: companyName ?? 'Your Company',
+          role: 'investor',
+        }),
+      });
+      if (response.ok) {
+        alert(`Invitation email resent to ${editInvestor.email}.`);
+      } else if (response.status === 409) {
+        alert('This investor has already signed up — no invitation is needed.');
+      } else {
+        const result = await response.json().catch(() => null);
+        alert(result?.error || 'Failed to resend invitation email.');
+      }
+    } catch (err) {
+      console.error('Error resending invitation email:', err);
+      alert('Failed to resend invitation email.');
+    } finally {
+      setIsResendingInvite(false);
     }
   };
 
@@ -869,7 +917,6 @@ export default function InvestorsPage() {
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Sponsor</h3>
                 <div>
-                  <Label htmlFor="sponsor">Sponsor</Label>
                   <Select value={selectedSponsor} onValueChange={(value) => {setSelectedSponsor(value); setShowAddSponsorInput(value === 'add-new');}}>
                     <SelectTrigger className="mt-1.5" id="sponsor"><SelectValue placeholder="Select sponsor" /></SelectTrigger>
                     <SelectContent>
@@ -891,7 +938,7 @@ export default function InvestorsPage() {
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Investment Details (Optional)</h3>
                 <div><Label htmlFor="initialInvestment">Initial Investment Amount ($)</Label><input id="initialInvestment" type="number" placeholder="0" value={formData.initialInvestment} onChange={(e) => setFormData({...formData, initialInvestment: e.target.value})} className="fdx-input mt-1.5" /></div>
-                <div><Label htmlFor="numInvestments">Number of Investments</Label><input id="numInvestments" type="number" placeholder="0" value={formData.numberOfInvestments} onChange={(e) => setFormData({...formData, numberOfInvestments: e.target.value})} className="fdx-input mt-1.5" /></div>
+                <div><Label htmlFor="numInvestments">Number of Investments</Label><input id="numInvestments" type="number" placeholder="0" value={formData.numberOfInvestments} onChange={(e) => setFormData({...formData, numberOfInvestments: e.target.value})} onFocus={(e) => e.target.select()} className="fdx-input mt-1.5" /></div>
                 <div><Label htmlFor="notes">Notes</Label><Textarea id="notes" placeholder="Add any relevant notes about the investor..." rows={4} value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})} className="mt-1.5" /></div>
               </div>
 
@@ -1051,7 +1098,13 @@ export default function InvestorsPage() {
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Basic Information</h3>
                   <div><Label htmlFor="editFullName">Full Name *</Label><input id="editFullName" required value={editFormData.fullName} onChange={(e) => setEditFormData({...editFormData, fullName: e.target.value})} className="fdx-input mt-1.5" /></div>
-                  <div><Label htmlFor="editEmail">Email Address *</Label><input id="editEmail" type="email" required value={editFormData.email} onChange={(e) => setEditFormData({...editFormData, email: e.target.value})} className="fdx-input mt-1.5" /></div>
+                  <div>
+                    <Label htmlFor="editEmail">Email Address *</Label>
+                    <input id="editEmail" type="email" required value={editFormData.email} onChange={(e) => setEditFormData({...editFormData, email: e.target.value})} className="fdx-input mt-1.5" />
+                    <button type="button" onClick={handleResendInvite} disabled={isResendingInvite} className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-fundex-forest hover:underline disabled:opacity-50">
+                      {isResendingInvite ? <><Loader className="size-3 animate-spin" />Sending invitation...</> : <><Mail className="size-3" />Resend invitation email</>}
+                    </button>
+                  </div>
                   <div><Label htmlFor="editPhone">Phone Number</Label><input id="editPhone" type="tel" value={editFormData.phone} onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})} className="fdx-input mt-1.5" /></div>
                 </div>
 
@@ -1070,7 +1123,7 @@ export default function InvestorsPage() {
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-stone-900 uppercase tracking-wide">Investment Details</h3>
                   <div><Label htmlFor="editInvestment">Total Invested ($)</Label><input id="editInvestment" type="number" value={editFormData.initialInvestment} onChange={(e) => setEditFormData({...editFormData, initialInvestment: e.target.value})} className="fdx-input mt-1.5" /></div>
-                  <div><Label htmlFor="editNumInv">Number of Investments</Label><input id="editNumInv" type="number" value={editFormData.numberOfInvestments} onChange={(e) => setEditFormData({...editFormData, numberOfInvestments: e.target.value})} className="fdx-input mt-1.5" /></div>
+                  <div><Label htmlFor="editNumInv">Number of Investments</Label><input id="editNumInv" type="number" value={editFormData.numberOfInvestments} onChange={(e) => setEditFormData({...editFormData, numberOfInvestments: e.target.value})} onFocus={(e) => e.target.select()} className="fdx-input mt-1.5" /></div>
                   <div><Label htmlFor="editNotes">Notes</Label><Textarea id="editNotes" rows={4} value={editFormData.notes} onChange={(e) => setEditFormData({...editFormData, notes: e.target.value})} className="mt-1.5" /></div>
                 </div>
               </div>

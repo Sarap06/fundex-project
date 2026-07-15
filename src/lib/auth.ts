@@ -4,6 +4,15 @@ import { getSupabaseClient } from './supabase';
 
 const ADMIN_ACCESS_CODE = '100630';
 
+function deriveNameFromEmail(email: string): string {
+  return email
+    .split('@')[0]
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 export async function adminSignUp(email: string, password: string, accessCode: string) {
   // Verify access code
   if (accessCode !== ADMIN_ACCESS_CODE) {
@@ -41,7 +50,7 @@ export async function adminSignUp(email: string, password: string, accessCode: s
     .insert({
       user_id: authData.user.id,
       email,
-      full_name: email.split('@')[0],
+      full_name: deriveNameFromEmail(email),
       role: 'admin',
       company_id: companyData.id,
       status: 'approved',

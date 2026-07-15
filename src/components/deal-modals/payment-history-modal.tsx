@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ModalShell } from './modal-shell';
 
@@ -9,15 +9,8 @@ interface PaymentHistoryModalProps {
   onClose: () => void;
   dealName: string;
   investorName?: string;
-  payments?: { number: number; dueDate: string; amount: number; status: 'paid' | 'pending' | 'upcoming' | 'late' }[];
+  payments: { number: number; dueDate: string; amount: number; status: 'paid' | 'pending' | 'upcoming' | 'late' }[];
 }
-
-const DEFAULT_PAYMENTS = Array.from({ length: 12 }, (_, i) => ({
-  number: i + 1,
-  dueDate: new Date(2026, i, 1).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-  amount: 10416,
-  status: (i < 6 ? 'paid' : i === 6 ? 'pending' : 'upcoming') as 'paid' | 'pending' | 'upcoming' | 'late',
-}));
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -33,10 +26,9 @@ function getStatusBadge(status: string) {
 }
 
 export function PaymentHistoryModal({ isOpen, onClose, dealName, investorName, payments }: PaymentHistoryModalProps) {
-  const paymentList = payments || DEFAULT_PAYMENTS;
-  const paid = paymentList.filter(p => p.status === 'paid').length;
-  const remaining = paymentList.length - paid;
-  const totalPaid = paymentList.filter(p => p.status === 'paid').reduce((s, p) => s + p.amount, 0);
+  const paid = payments.filter(p => p.status === 'paid').length;
+  const remaining = payments.length - paid;
+  const totalPaid = payments.filter(p => p.status === 'paid').reduce((s, p) => s + p.amount, 0);
 
   return (
     <ModalShell
@@ -57,7 +49,7 @@ export function PaymentHistoryModal({ isOpen, onClose, dealName, investorName, p
         <div className="grid grid-cols-4 gap-3">
           <div className="border border-stone-100 p-3 text-center">
             <p className="text-xs text-stone-500">Total Scheduled</p>
-            <p className="mt-1 text-lg font-semibold text-stone-900">{paymentList.length}</p>
+            <p className="mt-1 text-lg font-semibold text-stone-900">{payments.length}</p>
           </div>
           <div className="border border-stone-100 p-3 text-center">
             <p className="text-xs text-stone-500">Completed</p>
@@ -74,28 +66,36 @@ export function PaymentHistoryModal({ isOpen, onClose, dealName, investorName, p
         </div>
 
         {/* Payment List */}
-        <div className="overflow-hidden border border-stone-100">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-stone-100 bg-stone-50 text-xs font-semibold uppercase tracking-wide text-stone-500">
-                <th className="px-4 py-3">Payment #</th>
-                <th className="px-4 py-3">Due Date</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-50">
-              {paymentList.map((p) => (
-                <tr key={p.number} className="hover:bg-stone-50/50">
-                  <td className="px-4 py-3 font-medium text-stone-900">#{p.number}</td>
-                  <td className="px-4 py-3 tabular-nums text-stone-600">{p.dueDate}</td>
-                  <td className="px-4 py-3 tabular-nums text-stone-900">${p.amount.toLocaleString()}</td>
-                  <td className="px-4 py-3">{getStatusBadge(p.status)}</td>
+        {payments.length === 0 ? (
+          <div className="flex flex-col items-center justify-center border border-stone-100 px-6 py-12 text-center">
+            <Calendar className="h-8 w-8 text-stone-300" />
+            <p className="mt-3 text-sm font-medium text-stone-600">No payments scheduled yet</p>
+            <p className="mt-1 text-xs text-stone-400">Payments will appear here once a schedule is set for this allocation.</p>
+          </div>
+        ) : (
+          <div className="overflow-hidden border border-stone-100">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-stone-100 bg-stone-50 text-xs font-semibold uppercase tracking-wide text-stone-500">
+                  <th className="px-4 py-3">Payment #</th>
+                  <th className="px-4 py-3">Due Date</th>
+                  <th className="px-4 py-3">Amount</th>
+                  <th className="px-4 py-3">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-stone-50">
+                {payments.map((p) => (
+                  <tr key={p.number} className="hover:bg-stone-50/50">
+                    <td className="px-4 py-3 font-medium text-stone-900">#{p.number}</td>
+                    <td className="px-4 py-3 tabular-nums text-stone-600">{p.dueDate}</td>
+                    <td className="px-4 py-3 tabular-nums text-stone-900">${p.amount.toLocaleString()}</td>
+                    <td className="px-4 py-3">{getStatusBadge(p.status)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </ModalShell>
   );

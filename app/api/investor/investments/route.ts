@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import {
   activeDeployedCapital,
-  activePositionsCount,
+  activeDealsCount,
   averageActivePositionSize,
   currentMonthlyIncome,
   largestActivePosition,
@@ -44,9 +44,11 @@ export async function GET(request: NextRequest) {
       .eq('email', profile.email)
       .single();
 
-    if (!investorRecord) {
-      return NextResponse.json({ investments: [], stats: { totalCapital: 0, activeCapital: 0, avgPositionSize: 0, largestInvestment: 0, monthlyIncome: 0, activeDealCount: 0 } });
-    }
+    // Allocations can be keyed by either the investors-table row id (manually
+    // added investors) or the auth user id (signed-up investors) — query both.
+    const investorIds = Array.from(
+      new Set([investorRecord?.id, user.id].filter(Boolean))
+    ) as string[];
 
     // Get all allocations with deal details
     const { data: allocations } = await supabase
@@ -61,7 +63,7 @@ export async function GET(request: NextRequest) {
                location_state, location_city, borrower_name)
       `)
       .eq('company_id', companyId)
-      .eq('investor_id', investorRecord.id)
+      .in('investor_id', investorIds)
       .order('created_at', { ascending: false });
 
     const allocs = allocations || [];
@@ -72,7 +74,7 @@ export async function GET(request: NextRequest) {
     const monthlyIncome = currentMonthlyIncome(allocs);
     const avgPositionSize = averageActivePositionSize(allocs);
     const largestInvestment = largestActivePosition(allocs);
-    const activeDealCount = activePositionsCount(allocs);
+    const activeDealCount = activeDealsCount(allocs);
     // Useful for future UI: weighted average rate across active positions.
     const _weightedAvgRate = weightedAverageAnnualRate(allocs);
 

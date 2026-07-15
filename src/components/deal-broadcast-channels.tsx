@@ -441,6 +441,14 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
 
   const isAdmin = userRole === 'admin';
 
+  const latestSentUpdate = dealUpdates
+    .filter((u) => u.is_sent)
+    .sort(
+      (a, b) =>
+        new Date(b.sent_at || b.created_at).getTime() -
+        new Date(a.sent_at || a.created_at).getTime()
+    )[0];
+
   useEffect(() => {
     if (currentView === 'channels') {
       loadDeals();
@@ -977,6 +985,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
 
       {/* Acknowledgment Status */}
       <BroadcastAcknowledgmentStatus
+        updateId={latestSentUpdate?.id}
         dealId={selectedDeal?.id || ''}
       />
 

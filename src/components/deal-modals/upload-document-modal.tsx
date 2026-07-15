@@ -4,13 +4,14 @@ import { File, Upload, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DOCUMENT_TYPES, DOCUMENT_ACCEPT_EXTENSIONS } from '@/config/documents';
 import { ModalShell } from './modal-shell';
 
 interface UploadDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
   dealName: string;
-  onUpload?: (data: { name: string; category: string; file: globalThis.File }) => void;
+  onUpload?: (data: { name: string; category: string; file: globalThis.File }) => void | Promise<void>;
 }
 
 export function UploadDocumentModal({ isOpen, onClose, dealName, onUpload }: UploadDocumentModalProps) {
@@ -18,6 +19,7 @@ export function UploadDocumentModal({ isOpen, onClose, dealName, onUpload }: Upl
   const [category, setCategory] = useState('');
   const [selectedFile, setSelectedFile] = useState<globalThis.File | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (files: FileList | null) => {
@@ -33,10 +35,17 @@ export function UploadDocumentModal({ isOpen, onClose, dealName, onUpload }: Upl
     handleFileSelect(e.dataTransfer.files);
   };
 
-  const handleUpload = () => {
-    if (!selectedFile || !category) return;
-    onUpload?.({ name: docName || selectedFile.name, category, file: selectedFile });
-    resetAndClose();
+  const handleUpload = async () => {
+    if (!selectedFile || !category || uploading) return;
+    setUploading(true);
+    try {
+      await onUpload?.({ name: docName || selectedFile.name, category, file: selectedFile });
+      resetAndClose();
+    } catch (error) {
+      console.error('Error uploading document:', error);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const resetAndClose = () => {
@@ -46,7 +55,7 @@ export function UploadDocumentModal({ isOpen, onClose, dealName, onUpload }: Upl
     onClose();
   };
 
-  const canUpload = !!selectedFile && !!category;
+  const canUpload = !!selectedFile && !!category && !uploading;
 
   return (
     <ModalShell
@@ -58,7 +67,7 @@ export function UploadDocumentModal({ isOpen, onClose, dealName, onUpload }: Upl
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
           <Button onClick={handleUpload} disabled={!canUpload} className="gap-2 bg-fundex-forest hover:bg-fundex-green disabled:opacity-50">
-            <Upload className="h-4 w-4" /> Upload
+            <Upload className="h-4 w-4" /> {uploading ? 'Uploading...' : 'Upload'}
           </Button>
         </div>
       }
@@ -76,12 +85,9 @@ export function UploadDocumentModal({ isOpen, onClose, dealName, onUpload }: Upl
             className="mt-1.5 w-full border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-700 shadow-sm outline-none focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest/30"
           >
             <option value="">Select category...</option>
-            <option value="Loan Agreement">Loan Agreement</option>
-            <option value="Appraisal">Appraisal</option>
-            <option value="Borrower Docs">Borrower Docs</option>
-            <option value="Subscription Docs">Subscription Docs</option>
-            <option value="Term Sheet">Term Sheet</option>
-            <option value="Offering Memorandum">Offering Memorandum</option>
+            {DOCUMENT_TYPES.map((type) => (
+              <option key={type} value={type}>{type}</option>
+            ))}
           </select>
         </div>
         <div>
@@ -89,7 +95,7 @@ export function UploadDocumentModal({ isOpen, onClose, dealName, onUpload }: Upl
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.doc,.docx,.xls,.xlsx"
+            accept={DOCUMENT_ACCEPT_EXTENSIONS}
             className="sr-only"
             onChange={(e) => handleFileSelect(e.target.files)}
           />

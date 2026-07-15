@@ -158,3 +158,49 @@ export async function getBroadcastDeals(companyId: string) {
   if (error) throw error;
   return data || [];
 }
+
+// ─── MUTATIONS ────────────────────────────────────────────────────────
+
+/**
+ * Recompute a deal's raised_amount and progress from its allocations.
+ * Must be called after any allocation create/update/delete so the
+ * stored figures never drift from the allocation rows.
+ */
+export async function recalcDealRaisedAmount(dealId: string, companyId: string) {
+  const supabase = getServiceClient();
+
+  const { data: allocations, error: allocError } = await supabase
+    .from('allocations')
+    .select('allocation_amount')
+    .eq('deal_id', dealId)
+    .eq('company_id', companyId);
+
+  if (allocError) throw allocError;
+
+  const raised = (allocations || []).reduce(
+    (sum, a) => sum + (Number(a.allocation_amount) || 0),
+    0
+  );
+
+  const { data: deal, error: dealError } = await supabase
+    .from('deals')
+    .select('target_amount')
+    .eq('id', dealId)
+    .eq('company_id', companyId)
+    .single();
+
+  if (dealError) throw dealError;
+
+  const target = Number(deal?.target_amount) || 0;
+  const progress = target > 0 ? Math.min(100, Math.round((raised / target) * 100)) : 0;
+
+  const { error: updateError } = await supabase
+    .from('deals')
+    .update({ raised_amount: raised, progress })
+    .eq('id', dealId)
+    .eq('company_id', companyId);
+
+  if (updateError) throw updateError;
+
+  return { raised, progress };
+}

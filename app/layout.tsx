@@ -37,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning style={{ scrollBehavior: "smooth" }}>
       <head>
         <link rel="preconnect" href="https://api.fontshare.com" />
         <link

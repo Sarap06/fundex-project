@@ -230,6 +230,15 @@ export function BookDemo() {
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState("10:00");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [statusMsg, setStatusMsg] = useState("");
+
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const canConfirm =
+    !!selectedDate && !!selectedTime && name.trim().length > 0 && emailValid && !submitting;
 
   const bookedDates = useMemo(() => {
     return Array.from({ length: 3 }, (_, i) => {
@@ -247,10 +256,41 @@ export function BookDemo() {
       })
     : null;
 
+  const handleConfirm = async () => {
+    if (!canConfirm || !selectedDate) return;
+    setSubmitting(true);
+    setStatus("idle");
+    setStatusMsg("");
+    try {
+      const res = await fetch("/api/book-demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          date: formattedDate,
+          time: selectedTime,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
+        setStatus("success");
+        setStatusMsg(data.message || "Demo booked — check your inbox for confirmation.");
+      } else {
+        setStatus("error");
+        setStatusMsg(data?.message || "Something went wrong. Please try again.");
+      }
+    } catch {
+      setStatus("error");
+      setStatusMsg("Network error. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <section
       ref={sectionRef}
-      id="book-demo-section"
       className="relative overflow-hidden"
     >
       <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 py-24 lg:py-32">
@@ -317,10 +357,54 @@ export function BookDemo() {
             </div>
           </div>
 
+          {/* Contact details */}
+          <div className="border-t border-border px-8 md:px-10 py-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="demo-name"
+                className="font-sans text-[10px] font-[600] tracking-[4px] uppercase text-muted-foreground mb-2 block"
+              >
+                Your Name
+              </label>
+              <input
+                id="demo-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={status === "success"}
+                placeholder="Jane Doe"
+                className="w-full bg-transparent border border-border px-4 py-3 font-sans text-[14px] text-foreground outline-none transition-colors focus:border-[var(--primary)] placeholder:text-muted-foreground/60 disabled:opacity-60"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="demo-email"
+                className="font-sans text-[10px] font-[600] tracking-[4px] uppercase text-muted-foreground mb-2 block"
+              >
+                Work Email
+              </label>
+              <input
+                id="demo-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={status === "success"}
+                placeholder="jane@company.com"
+                className="w-full bg-transparent border border-border px-4 py-3 font-sans text-[14px] text-foreground outline-none transition-colors focus:border-[var(--primary)] placeholder:text-muted-foreground/60 disabled:opacity-60"
+              />
+            </div>
+          </div>
+
           {/* Footer */}
           <div className="border-t border-border px-8 md:px-10 py-5 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              {selectedDate && selectedTime ? (
+            <div aria-live="polite">
+              {status === "success" ? (
+                <p className="font-sans text-sm text-[var(--primary)] font-[600] m-0">
+                  {statusMsg}
+                </p>
+              ) : status === "error" ? (
+                <p className="font-sans text-sm text-red-600 m-0">{statusMsg}</p>
+              ) : selectedDate && selectedTime ? (
                 <p className="font-sans text-sm text-muted-foreground m-0">
                   Demo scheduled for{" "}
                   <span className="text-foreground font-[600]">
@@ -341,20 +425,26 @@ export function BookDemo() {
               )}
             </div>
 
-            <motion.button
-              whileHover={selectedDate ? { scale: 1.04, y: -2 } : {}}
-              whileTap={selectedDate ? { scale: 0.96 } : {}}
-              disabled={!selectedDate}
-              className={cn(
-                "inline-flex items-center gap-2.5 px-8 py-3.5 font-sans text-[15px] font-[500] border-none transition-all duration-300 cursor-pointer",
-                selectedDate
-                  ? "bg-foreground text-background hover:opacity-90 "
-                  : "bg-muted text-muted-foreground cursor-default "
-              )}
-            >
-              Confirm
-              <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />
-            </motion.button>
+            {status !== "success" && (
+              <motion.button
+                type="button"
+                onClick={handleConfirm}
+                whileHover={canConfirm ? { scale: 1.04, y: -2 } : {}}
+                whileTap={canConfirm ? { scale: 0.96 } : {}}
+                disabled={!canConfirm}
+                className={cn(
+                  "inline-flex items-center gap-2.5 px-8 py-3.5 font-sans text-[15px] font-[500] border-none transition-all duration-300",
+                  canConfirm
+                    ? "bg-foreground text-background hover:opacity-90 cursor-pointer"
+                    : "bg-muted text-muted-foreground cursor-default"
+                )}
+              >
+                {submitting ? "Booking…" : "Confirm"}
+                {!submitting && (
+                  <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />
+                )}
+              </motion.button>
+            )}
           </div>
         </motion.div>
       </div>

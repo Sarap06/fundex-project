@@ -5,12 +5,13 @@ import { getSupabaseClient } from './supabase';
 const ADMIN_ACCESS_CODE = '100630';
 
 function deriveNameFromEmail(email: string): string {
-  return email
-    .split('@')[0]
+  const local = email.split('@')[0];
+  const name = local
     .split(/[._-]+/)
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+  return name || local;
 }
 
 export async function adminSignUp(email: string, password: string, accessCode: string) {

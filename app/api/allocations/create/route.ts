@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
       payment_start_date,
       funding_status,
       notes,
-      created_by,
     } = body;
 
     // company_id always comes from the session, never the request body
@@ -59,6 +58,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // The investor must also belong to the caller's company. investor_id can
+    // reference either an investors row (id) or a signed-up user_profiles row
+    // (user_id) — check both, scoped by company_id.
+    const [{ data: manualInvestor }, { data: profileInvestor }] = await Promise.all([
+      supabase.from('investors').select('full_name').eq('id', investor_id).eq('company_id', company_id).maybeSingle(),
+      supabase.from('user_profiles').select('full_name').eq('user_id', investor_id).eq('company_id', company_id).maybeSingle(),
+    ]);
+    const investor = manualInvestor || profileInvestor;
+
+    if (!investor) {
+      return NextResponse.json(
+        { success: false, message: 'Investor not found' },
+        { status: 404 }
+      );
+    }
+
     // Calculate monthly interest (will also be calculated by trigger)
     const monthlyInterest = (allocation_amount * annual_rate / 100) / 12;
 
@@ -82,7 +97,7 @@ export async function POST(request: NextRequest) {
           notes,
           monthly_interest: monthlyInterest,
           status: 'pending',
-          created_by: created_by || ctx.userId,
+          created_by: ctx.userId,
         },
       ])
       .select();
@@ -104,14 +119,7 @@ export async function POST(request: NextRequest) {
 
     await recalcDealRaisedAmount(deal_id, company_id);
 
-    // Fetch investor name for activity logging
-    const { data: investor } = await supabase
-      .from('investors')
-      .select('full_name')
-      .eq('id', investor_id)
-      .single();
-
-    // Log activity
+    // Log activity (investor name resolved above, scoped to this company)
     await logActivity({
       companyId: company_id,
       activityType: 'allocation_created',

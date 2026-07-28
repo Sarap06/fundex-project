@@ -12,6 +12,7 @@ const ADMIN_NAV_LINKS = [
   { label: 'Deals', href: '/admin/deals' },
   { label: 'Investors', href: '/admin/investors' },
   { label: 'Allocations', href: '/admin/allocations' },
+  { label: 'Payments', href: '/admin/payments' },
   { label: 'Documents', href: '/admin/documents' },
   { label: 'Broadcast', href: '/admin/broadcast' },
   { label: 'Performance', href: '/admin/performance' },

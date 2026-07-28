@@ -8,6 +8,7 @@ import {
   projectUpcomingPayments,
   weightedAverageAnnualRate,
 } from '@/services/portfolio-metrics';
+import { getPayoutOperationsSummary } from '@/services/payments-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,7 +51,6 @@ export async function GET(request: NextRequest) {
     // ── KPI Calculations ──────────────────────────────────────────────
     const activeDeals = allDeals.filter(d => d.status === 'Active');
     const fundedAllocs = allAllocs.filter(a => a.funding_status === 'Funded');
-    const pendingAllocs = allAllocs.filter(a => a.funding_status === 'Pending' || a.funding_status === 'Review');
 
     // Normalized (firm layer):
     // - Total Active Principal = active deployed capital (active deals, funded, confirmed)
@@ -68,27 +68,16 @@ export async function GET(request: NextRequest) {
       d.milestone_type === 'urgent' || d.milestone_type === 'attention'
     ).length;
 
-    // Total Paid Out YTD: monthly_interest × months elapsed this year for funded allocs
-    const yearStart = new Date(new Date().getFullYear(), 0, 1);
     const now = new Date();
-    const totalPaidYTD = fundedAllocs.reduce((s, a) => {
-      if (!a.payment_start_date) return s;
-      const start = new Date(a.payment_start_date) > yearStart ? new Date(a.payment_start_date) : yearStart;
-      const monthsElapsed = Math.max(0, (now.getFullYear() - start.getFullYear()) * 12 + now.getMonth() - start.getMonth());
-      return s + Number(a.monthly_interest || 0) * monthsElapsed;
-    }, 0);
 
-    // ── Payment Operations (schedule-based proxy) ──────────────────────
-    const weekFromNow = new Date();
-    weekFromNow.setDate(weekFromNow.getDate() + 7);
-    const todayStr = now.toISOString().slice(0, 10);
-    const weekStr = weekFromNow.toISOString().slice(0, 10);
+    // ── Payment Operations (real payout data) ──────────────────────────
+    // Sourced from the payments backend — the schedule/allocation proxy and the
+    // hardcoded drill-down that used to live here are gone.
+    const payoutOps = await getPayoutOperationsSummary(companyId, now.toISOString());
+    const totalPaidYTD = payoutOps.totalPaidYTD;
+    const overdue = payoutOps.overdue;
 
-    const overdue = pendingAllocs.filter(a => a.expected_funding_date && a.expected_funding_date < todayStr).length;
-    const upcomingThisWeek = pendingAllocs.filter(a =>
-      a.expected_funding_date && a.expected_funding_date >= todayStr && a.expected_funding_date <= weekStr
-    ).length;
-
+    // Kept only for the contract table's "next payment" column and capital chart.
     const payoutProjection = projectUpcomingPayments(allAllocsForMetrics, { windowDays: 30, now });
     const nextPayoutDate = payoutProjection.nextPaymentDate;
 
@@ -176,13 +165,13 @@ export async function GET(request: NextRequest) {
         avgRate: Math.round(avgRate * 100) / 100,
       },
       paymentOps: {
-        paidThisCycle: fundedAllocs.length, // still allocation-based until a payments table exists
-        pending: pendingAllocs.length,
-        overdue,
-        upcomingThisWeek,
-        nextPayoutDate,
-        nextPayoutAmount: payoutProjection.totalAmount,
-        activeInvestors: allDeals.reduce((s, d) => s + (d.investor_count ?? 0), 0),
+        paidThisCycle: payoutOps.paidThisCycle,
+        pending: payoutOps.pending,
+        overdue: payoutOps.overdue,
+        upcomingThisWeek: payoutOps.upcomingThisWeek,
+        nextPayoutDate: payoutOps.nextPayoutDate,
+        nextPayoutAmount: payoutOps.nextPayoutAmount,
+        activeInvestors: payoutOps.nextPayoutInvestors,
       },
       capitalFlow,
       risk: {
@@ -193,11 +182,11 @@ export async function GET(request: NextRequest) {
       contractPerformance,
       distributions: {
         totalPaidYTD,
-        nextDistributionDate: nextPayoutDate,
-        nextDistributionAmount: payoutProjection.totalAmount,
-        activeInvestors: allDeals.reduce((s, d) => s + (d.investor_count ?? 0), 0),
-        avgPayment: fundedAllocs.length > 0 ? monthlyInterestDue / fundedAllocs.length : 0,
-        onTimeRate: 98.2, // placeholder until payment records exist
+        nextDistributionDate: payoutOps.nextPayoutDate,
+        nextDistributionAmount: payoutOps.nextPayoutAmount,
+        activeInvestors: payoutOps.nextPayoutInvestors,
+        avgPayment: payoutOps.avgPaymentThisCycle,
+        onTimeRate: payoutOps.onTimeRate,
       },
     });
   } catch (error: any) {

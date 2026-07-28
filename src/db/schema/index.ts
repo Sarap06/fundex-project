@@ -673,6 +673,7 @@ export const deals = pgTable("deals", {
 	termLengthMonths: integer("term_length_months"),
 	fundingCloseDate: date("funding_close_date"),
 	firstPayoutDate: date("first_payout_date"),
+	payoutCycle: integer("payout_cycle").default(1),
 	defaultInvestorAudience: varchar("default_investor_audience", { length: 100 }),
 	enableBroadcastChannel: boolean("enable_broadcast_channel").default(true),
 	enableInvestorInbox: boolean("enable_investor_inbox").default(true),

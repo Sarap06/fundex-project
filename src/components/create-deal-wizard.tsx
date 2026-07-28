@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PROPERTY_TYPES, LOAN_PURPOSES, CITIES_BY_STATE, CITY_OTHER } from '@/config/deal-options';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { createClient } from '@supabase/supabase-js';
@@ -126,6 +127,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
   const [investorsLoading, setInvestorsLoading] = useState(true);
   const [investorSearch, setInvestorSearch] = useState('');
   const [showInvestorDropdown, setShowInvestorDropdown] = useState(false);
+  const [cityOther, setCityOther] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -377,8 +379,29 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
 
         notes: initialData.notes || '',
       });
+
+      // If the saved city isn't in its state's curated list, start in "Other" mode
+      const initState = initialData.location_state || 'TX';
+      const initCity = initialData.location_city || '';
+      setCityOther(!!initCity && !(CITIES_BY_STATE[initState] || []).includes(initCity));
     }
   }, [initialData, investorsLoading, investors]);
+
+  const handleStateChange = (value: string) => {
+    // Changing state invalidates the chosen city — reset it and its mode.
+    setFormData(prev => ({ ...prev, state: value, city: '' }));
+    setCityOther(false);
+  };
+
+  const handleCityChange = (value: string) => {
+    if (value === CITY_OTHER) {
+      setCityOther(true);
+      setFormData(prev => ({ ...prev, city: '' }));
+    } else {
+      setCityOther(false);
+      setFormData(prev => ({ ...prev, city: value }));
+    }
+  };
 
   const getFilteredInvestors = () => {
     if (!investorSearch.trim()) return investors;
@@ -614,17 +637,44 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>City *</Label>
-                      <Input
-                        placeholder="City"
-                        name="city"
-                        value={formData.city}
-                        onChange={handleInputChange}
-                        required
-                      />
+                      {cityOther ? (
+                        <div className="space-y-1.5">
+                          <Input
+                            placeholder="Enter city"
+                            name="city"
+                            value={formData.city}
+                            onChange={handleInputChange}
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => { setCityOther(false); setFormData(prev => ({ ...prev, city: '' })); }}
+                            className="text-xs text-fundex-forest hover:underline"
+                          >
+                            Choose from list
+                          </button>
+                        </div>
+                      ) : (
+                        <Select
+                          value={formData.city}
+                          onValueChange={handleCityChange}
+                          disabled={!formData.state}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={formData.state ? 'Select city' : 'Select a state first'} />
+                          </SelectTrigger>
+                          <SelectContent className="z-[9999]">
+                            {(CITIES_BY_STATE[formData.state] || []).map((c) => (
+                              <SelectItem key={c} value={c}>{c}</SelectItem>
+                            ))}
+                            <SelectItem value={CITY_OTHER}>Other…</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
                     <div>
                       <Label>State *</Label>
-                      <Select value={formData.state} onValueChange={(value) => handleSelectChange('state', value)}>
+                      <Select value={formData.state} onValueChange={handleStateChange}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select state" />
                         </SelectTrigger>
@@ -687,12 +737,19 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
 
                   <div>
                     <Label>Property Type</Label>
-                    <Input
-                      placeholder="e.g., Multi-family residential"
-                      name="propertyType"
-                      value={formData.propertyType}
-                      onChange={handleInputChange}
-                    />
+                    <Select value={formData.propertyType} onValueChange={(value) => handleSelectChange('propertyType', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select property type" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[9999]">
+                        {formData.propertyType && !PROPERTY_TYPES.includes(formData.propertyType as never) && (
+                          <SelectItem value={formData.propertyType}>{formData.propertyType}</SelectItem>
+                        )}
+                        {PROPERTY_TYPES.map((pt) => (
+                          <SelectItem key={pt} value={pt}>{pt}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>
@@ -711,13 +768,19 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
 
                   <div>
                     <Label>Loan Purpose</Label>
-                    <Textarea
-                      placeholder="Describe the purpose of the loan"
-                      name="loanPurpose"
-                      value={formData.loanPurpose}
-                      onChange={handleInputChange}
-                      rows={3}
-                    />
+                    <Select value={formData.loanPurpose} onValueChange={(value) => handleSelectChange('loanPurpose', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select loan purpose" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[9999]">
+                        {formData.loanPurpose && !LOAN_PURPOSES.includes(formData.loanPurpose as never) && (
+                          <SelectItem value={formData.loanPurpose}>{formData.loanPurpose}</SelectItem>
+                        )}
+                        {LOAN_PURPOSES.map((lp) => (
+                          <SelectItem key={lp} value={lp}>{lp}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>

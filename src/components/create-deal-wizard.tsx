@@ -71,6 +71,7 @@ interface DealFormData {
   termLengthMonths: string;
   fundingCloseDate: string;
   firstPayoutDate: string;
+  payoutCycle: string;
 
   // Step 4: Collateral
   collateralType: string;
@@ -151,6 +152,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
     termLengthMonths: '12',
     fundingCloseDate: '',
     firstPayoutDate: '',
+    payoutCycle: '1',
 
     collateralType: '',
     collateralAddress: '',
@@ -351,6 +353,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
         minimumInvestment: initialData.minimum_investment?.toString() || '',
         interestRate: initialData.interest_rate?.toString() || '',
         termLengthMonths: initialData.term_length_months?.toString() || '12',
+        payoutCycle: initialData.payout_cycle?.toString() || '1',
         fundingCloseDate: initialData.funding_close_date || '',
         firstPayoutDate: initialData.first_payout_date || '',
 
@@ -963,6 +966,22 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                         value={formData.firstPayoutDate}
                         onChange={handleInputChange}
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Label>Payout Cycle *</Label>
+                      <Select value={formData.payoutCycle} onValueChange={(value) => handleSelectChange('payoutCycle', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select payout cycle" />
+                        </SelectTrigger>
+                        <SelectContent className="z-[9999]">
+                          <SelectItem value="1">1st of every month</SelectItem>
+                          <SelectItem value="15">15th of every month</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1.5">Every investor in this deal is paid on this day.</p>
                     </div>
                   </div>
                 </div>

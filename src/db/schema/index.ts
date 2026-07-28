@@ -513,6 +513,36 @@ export const allocations = pgTable("allocations", {
 	check("allocations_status_check", sql`(status)::text = ANY ((ARRAY['confirmed'::character varying, 'pending'::character varying, 'review'::character varying])::text[])`),
 ]);
 
+// Manual payout tracking. A row exists only once an admin marks a payout
+// Completed or Missed — "Pending" is the absence of a row. Expected payouts are
+// computed on the fly (src/services/payout-service.ts); this table persists the
+// exceptions. One row per (company, investor, payroll date).
+export const investorPayouts = pgTable("investor_payouts", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	companyId: uuid("company_id").notNull(),
+	// references investors.id OR user_profiles.user_id (dual identity, no FK)
+	investorId: uuid("investor_id").notNull(),
+	investorSource: varchar("investor_source", { length: 50 }),
+	dueDate: date("due_date").notNull(),
+	expectedAmount: numeric("expected_amount", { precision: 15, scale: 2 }).default('0').notNull(),
+	status: varchar({ length: 20 }).notNull(),
+	actualAmount: numeric("actual_amount", { precision: 15, scale: 2 }),
+	paidDate: date("paid_date"),
+	note: text(),
+	createdBy: uuid("created_by"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+}, (table) => [
+	index("idx_investor_payouts_company_date").using("btree", table.companyId.asc().nullsLast().op("uuid_ops"), table.dueDate.asc().nullsLast().op("date_ops")),
+	foreignKey({
+			columns: [table.companyId],
+			foreignColumns: [companies.id],
+			name: "investor_payouts_company_id_fkey"
+		}).onDelete("cascade"),
+	unique("investor_payouts_unique").on(table.companyId, table.investorId, table.dueDate),
+	check("investor_payouts_status_check", sql`(status)::text = ANY ((ARRAY['completed'::character varying, 'missed'::character varying])::text[])`),
+]);
+
 export const broadcastCommunicationTimeline = pgTable("broadcast_communication_timeline", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	dealId: uuid("deal_id").notNull(),
@@ -673,6 +703,7 @@ export const deals = pgTable("deals", {
 	termLengthMonths: integer("term_length_months"),
 	fundingCloseDate: date("funding_close_date"),
 	firstPayoutDate: date("first_payout_date"),
+	payoutCycle: integer("payout_cycle").default(1),
 	defaultInvestorAudience: varchar("default_investor_audience", { length: 100 }),
 	enableBroadcastChannel: boolean("enable_broadcast_channel").default(true),
 	enableInvestorInbox: boolean("enable_investor_inbox").default(true),

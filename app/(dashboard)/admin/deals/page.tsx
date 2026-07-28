@@ -300,6 +300,7 @@ export default function DealsPage() {
         term_length_months: wizardData.termLengthMonths ? parseInt(wizardData.termLengthMonths) : null,
         funding_close_date: wizardData.fundingCloseDate || null,
         first_payout_date: wizardData.firstPayoutDate || null,
+        payout_cycle: wizardData.payoutCycle ? parseInt(wizardData.payoutCycle) : 1,
         collateral_type: wizardData.collateralType,
         collateral_address: wizardData.collateralAddress,
         estimated_property_value: wizardData.estimatedPropertyValue ? parseFloat(wizardData.estimatedPropertyValue) : null,

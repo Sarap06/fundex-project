@@ -231,6 +231,15 @@ export interface PayoutOperationsSummary {
   totalPaidYTD: number; // sum of actual amounts of completed payouts paid this year
   avgPaymentThisCycle: number;
   onTimeRate: number | null; // completed / (completed + missed), across all resolved payouts
+  lateAlerts: LatePaymentAlert[]; // per-deal overdue payouts (real risk alerts)
+}
+
+export interface LatePaymentAlert {
+  dealId: string;
+  dealName: string;
+  count: number; // number of overdue payout line-items
+  amount: number; // total overdue amount
+  since: string; // oldest overdue payroll date (ISO)
 }
 
 // Add whole days to a 'YYYY-MM-DD' string using local calendar parts.
@@ -286,6 +295,7 @@ export async function getPayoutOperationsSummary(
   let totalPaidYTD = 0;
   let completed = 0;
   let missed = 0;
+  const lateByDeal = new Map<string, LatePaymentAlert>();
 
   for (const date of dates) {
     const payouts = computePayoutsForDate(inputs, date);
@@ -299,7 +309,26 @@ export async function getPayoutOperationsSummary(
         if (status === 'completed') paidThisCycle += 1;
         if (status === 'pending') pending += 1;
       }
-      if (date < today && status !== 'completed') overdue += 1;
+      if (date < today && status !== 'completed') {
+        overdue += 1;
+        // Accumulate per-deal overdue detail for the risk alerts.
+        for (const line of p.deals) {
+          const a = lateByDeal.get(line.dealId);
+          if (a) {
+            a.count += 1;
+            a.amount += line.amount;
+            if (date < a.since) a.since = date;
+          } else {
+            lateByDeal.set(line.dealId, {
+              dealId: line.dealId,
+              dealName: line.dealName,
+              count: 1,
+              amount: line.amount,
+              since: date,
+            });
+          }
+        }
+      }
       if (date >= today && date <= weekEnd) upcomingThisWeek += 1;
 
       if (status === 'completed') {
@@ -326,6 +355,7 @@ export async function getPayoutOperationsSummary(
     totalPaidYTD,
     avgPaymentThisCycle: nextPayoutInvestors > 0 ? nextPayoutAmount / nextPayoutInvestors : 0,
     onTimeRate: resolved > 0 ? Math.round((completed / resolved) * 1000) / 10 : null,
+    lateAlerts: Array.from(lateByDeal.values()).sort((a, b) => a.since.localeCompare(b.since)),
   };
 }
 

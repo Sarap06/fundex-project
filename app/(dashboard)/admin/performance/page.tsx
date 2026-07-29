@@ -9,7 +9,7 @@ import {
 import {
   DollarSign, TrendingUp, AlertTriangle, CheckCircle2,
   Calendar, ArrowUpRight, FileWarning, Download,
-  X, ArrowRightCircle, UserX, Eye,
+  X, ArrowRightCircle, Eye,
 } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase';
 import { PageHeader } from '@/components/page-header';
@@ -52,7 +52,10 @@ interface PerformanceData {
     activeInvestors: number;
   };
   capitalFlow: { month: string; capitalIn: number; interestOut: number; principalReturned: number }[];
-  risk: { latePayments: number; missingDocuments: number; contractsNearingMaturity: number };
+  risk: {
+    latePayments: number; missingDocuments: number; contractsNearingMaturity: number;
+    alerts: { id: string; contract: string; issue: string; severity: 'High' | 'Medium' | 'Low'; description: string }[];
+  };
   contractPerformance: {
     id: string; dealId: string; name: string;
     principalDeployed: number; interestRate: number; monthlyInterest: number;
@@ -280,14 +283,13 @@ export default function PerformancePage() {
             <p className="text-sm text-stone-400 mb-5">Active alerts and operational issues</p>
             <div className="space-y-3">
               {[
-                { label: 'Late Payments', desc: 'Requires immediate action', count: risk.latePayments, color: 'text-red-600 bg-red-50' },
+                { label: 'Late Payments', desc: 'Overdue investor payouts', count: risk.latePayments, color: 'text-red-600 bg-red-50' },
                 { label: 'Missing Documents', desc: 'Follow up required', count: risk.missingDocuments, color: 'text-amber-600 bg-amber-50' },
-                { label: 'Borrower Delinquent', desc: 'Under review', count: 1, color: 'text-orange-600 bg-orange-50', icon: <UserX className="size-4 text-orange-500" /> },
                 { label: 'Contracts Nearing Maturity', desc: 'Within 90 days', count: risk.contractsNearingMaturity, color: 'text-blue-600 bg-blue-50' },
-              ].map(({ label, desc, count, color, icon }) => (
+              ].map(({ label, desc, count, color }) => (
                 <div key={label} className="flex items-center justify-between p-3 border border-stone-100">
                   <div className="flex items-center gap-3">
-                    {icon || <FileWarning className="size-4 text-stone-400" />}
+                    <FileWarning className="size-4 text-stone-400" />
                     <div>
                       <p className="text-sm font-medium text-stone-900">{label}</p>
                       <p className="text-xs text-stone-400">{desc}</p>
@@ -415,40 +417,32 @@ export default function PerformancePage() {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              {[
-                { id: 'R-001', contract: 'Office Building Acquisition', issue: 'Late Payment', severity: 'High' as const, daysLate: 11, amount: fmtM(kpis.monthlyInterestDue * 0.03) },
-                { id: 'R-002', contract: 'Mixed-Use Development', issue: 'Missing Documents', severity: 'Medium' as const, description: 'Borrower agreement pending' },
-                { id: 'R-003', contract: 'Hotel Acquisition', issue: 'Borrower Delinquent', severity: 'High' as const, description: 'Under legal review' },
-              ].map((risk) => (
-                <div key={risk.id} className={`p-4 rounded-lg border ${risk.severity === 'High' ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-semibold text-stone-900">{risk.contract}</p>
-                      <p className="text-sm text-stone-600 mt-0.5">{risk.id}</p>
-                    </div>
-                    <span className={`text-xs font-bold px-2 py-1 rounded ${risk.severity === 'High' ? 'bg-red-600 text-white' : 'bg-amber-600 text-white'}`}>
-                      {risk.severity}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <AlertTriangle className={`size-4 ${risk.severity === 'High' ? 'text-red-600' : 'text-amber-600'}`} />
-                    <span className="font-medium">{risk.issue}</span>
-                  </div>
-                  {'daysLate' in risk && risk.daysLate && (
-                    <p className="text-sm text-red-700 mt-2">{risk.daysLate} days late &bull; Amount: {risk.amount}</p>
-                  )}
-                  {'description' in risk && risk.description && (
-                    <p className="text-sm text-stone-700 mt-2">{risk.description}</p>
-                  )}
-                  <div className="flex gap-2 mt-3">
-                    <button className="fdx-btn-primary text-xs px-3 py-1.5 gap-1">
-                      <ArrowRightCircle className="size-3" />
-                      Take Action
-                    </button>
-                    <button className="fdx-btn-outline text-xs px-3 py-1.5">View Contract</button>
-                  </div>
+              {risk.alerts.length === 0 ? (
+                <div className="text-center py-10">
+                  <CheckCircle2 className="mx-auto size-8 text-emerald-400" />
+                  <p className="mt-3 text-stone-600 font-medium">No active alerts</p>
+                  <p className="mt-1 text-sm text-stone-500">No overdue payouts, missing documents, or contracts nearing maturity.</p>
                 </div>
-              ))}
+              ) : risk.alerts.map((alert) => {
+                const tone = alert.severity === 'High'
+                  ? { box: 'bg-red-50 border-red-200', badge: 'bg-red-600 text-white', icon: 'text-red-600' }
+                  : alert.severity === 'Medium'
+                  ? { box: 'bg-amber-50 border-amber-200', badge: 'bg-amber-600 text-white', icon: 'text-amber-600' }
+                  : { box: 'bg-blue-50 border-blue-200', badge: 'bg-blue-600 text-white', icon: 'text-blue-600' };
+                return (
+                  <div key={alert.id} className={`p-4 rounded-lg border ${tone.box}`}>
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="font-semibold text-stone-900">{alert.contract}</p>
+                      <span className={`text-xs font-bold px-2 py-1 rounded ${tone.badge}`}>{alert.severity}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <AlertTriangle className={`size-4 ${tone.icon}`} />
+                      <span className="font-medium">{alert.issue}</span>
+                    </div>
+                    <p className="text-sm text-stone-700 mt-2">{alert.description}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

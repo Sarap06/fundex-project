@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     // ── Fetch deals ────────────────────────────────────────────────────
     const { data: deals, error: dealsError } = await supabase
       .from('deals')
-      .select('id, name, deal_id, status, target_amount, raised_amount, interest_rate, term, close_date, milestone_type, investor_count')
+      .select('id, name, deal_id, status, target_amount, raised_amount, interest_rate, term, close_date, milestone_type, investor_count, document_status')
       .eq('company_id', companyId)
       .order('created_at', { ascending: false });
 
@@ -144,15 +144,54 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // ── Portfolio Risk ────────────────────────────────────────────────
-    const latePayments = overdue;
-    const contractsNearingMaturity = activeDeals.filter(d => {
+    // ── Portfolio Risk (real alerts, no hardcoded rows) ────────────────
+    const monthLabel = (iso: string) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+      return m
+        ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleString('en-US', { month: 'short', year: 'numeric' })
+        : iso;
+    };
+    const money = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
+
+    // Late-payment alerts — real overdue payouts, grouped per deal.
+    const lateAlerts = payoutOps.lateAlerts.map((a) => ({
+      id: `late-${a.dealId}`,
+      contract: a.dealName,
+      issue: 'Late Payment',
+      severity: 'High' as const,
+      description: `${a.count} overdue payout${a.count === 1 ? '' : 's'} · ${money(a.amount)} outstanding since ${monthLabel(a.since)}`,
+    }));
+
+    // Missing-document alerts — active deals whose document package is pending.
+    const docAlerts = activeDeals
+      .filter((d) => (d.document_status ?? '').toLowerCase() === 'pending')
+      .map((d) => ({
+        id: `docs-${d.id}`,
+        contract: d.name,
+        issue: 'Missing Documents',
+        severity: 'Medium' as const,
+        description: 'Required documents still pending',
+      }));
+
+    // Contracts nearing maturity — active deals closing within 90 days.
+    const ninetyDays = new Date();
+    ninetyDays.setDate(ninetyDays.getDate() + 90);
+    const maturityDeals = activeDeals.filter((d) => {
       if (!d.close_date) return false;
       const closeDate = new Date(d.close_date);
-      const ninetyDays = new Date();
-      ninetyDays.setDate(ninetyDays.getDate() + 90);
       return closeDate <= ninetyDays && closeDate >= now;
-    }).length;
+    });
+    const maturityAlerts = maturityDeals.map((d) => ({
+      id: `maturity-${d.id}`,
+      contract: d.name,
+      issue: 'Nearing Maturity',
+      severity: 'Low' as const,
+      description: `Closes ${monthLabel(d.close_date as string)}`,
+    }));
+
+    const alerts = [...lateAlerts, ...docAlerts, ...maturityAlerts];
+    const latePayments = lateAlerts.length;
+    const contractsNearingMaturity = maturityAlerts.length;
 
     return NextResponse.json({
       kpis: {
@@ -176,8 +215,9 @@ export async function GET(request: NextRequest) {
       capitalFlow,
       risk: {
         latePayments,
-        missingDocuments: allDeals.filter(d => d.milestone_type === 'attention').length,
+        missingDocuments: docAlerts.length,
         contractsNearingMaturity,
+        alerts,
       },
       contractPerformance,
       distributions: {

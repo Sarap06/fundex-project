@@ -26,6 +26,7 @@ interface ViewAllocationsModalProps {
   onClose: () => void;
   dealName: string;
   allocations: Allocation[];
+  onAddInvestor?: () => void;
 }
 
 function fmtM(n: number) {
@@ -33,7 +34,7 @@ function fmtM(n: number) {
   return `$${n.toLocaleString()}`;
 }
 
-export function ViewAllocationsModal({ isOpen, onClose, dealName, allocations }: ViewAllocationsModalProps) {
+export function ViewAllocationsModal({ isOpen, onClose, dealName, allocations, onAddInvestor }: ViewAllocationsModalProps) {
   const [paymentHistoryOpen, setPaymentHistoryOpen] = useState(false);
   const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
 
@@ -67,7 +68,7 @@ export function ViewAllocationsModal({ isOpen, onClose, dealName, allocations }:
                 <p className="mt-1 text-lg font-semibold text-stone-900">{allocs.length}</p>
               </div>
             </div>
-            <Button variant="outline" className="gap-2 text-sm">
+            <Button variant="outline" className="gap-2 text-sm" onClick={() => { onClose(); onAddInvestor?.(); }}>
               <UserPlus className="h-4 w-4" /> Add Investor
             </Button>
           </div>

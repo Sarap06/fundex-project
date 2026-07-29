@@ -19,9 +19,10 @@ interface OpenBroadcastModalProps {
   onClose: () => void;
   dealName: string;
   broadcasts?: BroadcastEntry[];
+  onSendNew?: () => void;
 }
 
-export function OpenBroadcastModal({ isOpen, onClose, dealName, broadcasts }: OpenBroadcastModalProps) {
+export function OpenBroadcastModal({ isOpen, onClose, dealName, broadcasts, onSendNew }: OpenBroadcastModalProps) {
   const entries = broadcasts ?? [];
 
   return (
@@ -34,7 +35,7 @@ export function OpenBroadcastModal({ isOpen, onClose, dealName, broadcasts }: Op
       footer={
         <div className="flex justify-between">
           <Button variant="outline" onClick={onClose}>Close</Button>
-          <Button className="gap-2 bg-fundex-forest hover:bg-fundex-green">
+          <Button className="gap-2 bg-fundex-forest hover:bg-fundex-green" onClick={() => { onClose(); onSendNew?.(); }}>
             <Send className="h-4 w-4" /> Send New Update
           </Button>
         </div>

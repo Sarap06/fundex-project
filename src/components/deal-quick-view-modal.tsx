@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  X, ExternalLink, MessageSquare, FileText, Users,
+  X, MessageSquare, FileText, Users,
   Megaphone, UserPlus, Upload, Edit, Lock, Calendar,
   CheckCircle, Clock, AlertCircle,
 } from 'lucide-react';
@@ -455,9 +455,6 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
           {/* Footer — Quick Actions */}
           <div className="shrink-0 border-t border-stone-100 bg-stone-50 p-5 space-y-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <Button className="flex-1 min-w-[140px] gap-2 bg-fundex-forest hover:bg-fundex-green">
-                <ExternalLink className="h-4 w-4" /> Open Full Deal
-              </Button>
               <Button variant="outline" className="flex-1 min-w-[140px] gap-2" onClick={() => setBroadcastOpen(true)}>
                 <MessageSquare className="h-4 w-4" /> Broadcast
               </Button>
@@ -493,9 +490,9 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
       </div>
 
       {/* Sub-modals */}
-      <OpenBroadcastModal isOpen={broadcastOpen} onClose={() => setBroadcastOpen(false)} dealName={deal.name} broadcasts={broadcastsData} />
-      <ViewDocumentsModal isOpen={documentsOpen} onClose={() => setDocumentsOpen(false)} dealName={deal.name} documents={documentsData} />
-      <ViewAllocationsModal isOpen={allocationsOpen} onClose={() => setAllocationsOpen(false)} dealName={deal.name} allocations={allocationsData} />
+      <OpenBroadcastModal isOpen={broadcastOpen} onClose={() => setBroadcastOpen(false)} dealName={deal.name} broadcasts={broadcastsData} onSendNew={() => setUpdateOpen(true)} />
+      <ViewDocumentsModal isOpen={documentsOpen} onClose={() => setDocumentsOpen(false)} dealName={deal.name} documents={documentsData} onUploadClick={() => setUploadDocOpen(true)} />
+      <ViewAllocationsModal isOpen={allocationsOpen} onClose={() => setAllocationsOpen(false)} dealName={deal.name} allocations={allocationsData} onAddInvestor={() => setAddAllocationOpen(true)} />
       <SendUpdateModal isOpen={updateOpen} onClose={() => setUpdateOpen(false)} dealName={deal.name} onSend={handleSendUpdate} />
       <AddInvestorAllocationModal isOpen={addAllocationOpen} onClose={() => setAddAllocationOpen(false)} dealName={deal.name} onAdd={handleAddInvestor} />
       <UploadDocumentModal isOpen={uploadDocOpen} onClose={() => setUploadDocOpen(false)} dealName={deal.name} onUpload={handleUploadDocument} />

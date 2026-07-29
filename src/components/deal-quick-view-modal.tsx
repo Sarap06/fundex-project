@@ -99,6 +99,9 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
   const [allocationsData, setAllocationsData] = useState<AllocationRow[]>([]);
   const [documentsData, setDocumentsData] = useState<DocumentRow[]>([]);
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentScheduleRow[]>([]);
+  const [broadcastsData, setBroadcastsData] = useState<
+    { title: string; content: string; date: string; audience: string; acknowledged: number; total: number }[]
+  >([]);
 
   const fetchDocuments = async (cid: string, dealId: string) => {
     const { data: docs } = await supabase
@@ -163,6 +166,39 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
     setPaymentSchedule(buildDealPaymentSchedule(allocs));
   };
 
+  // Fetch this deal's broadcast updates (title, content, date) with real
+  // acknowledged/total counts from the recipients table — no hardcoded samples.
+  const fetchBroadcasts = async (dealId: string) => {
+    const { data: updates } = await supabase
+      .from('broadcast_updates')
+      .select('id, title, message, sent_at, created_at, require_acknowledgment')
+      .eq('deal_id', dealId)
+      .order('created_at', { ascending: false });
+
+    if (!updates || updates.length === 0) { setBroadcastsData([]); return; }
+
+    const ids = updates.map((u) => u.id);
+    const total = new Map<string, number>();
+    const acked = new Map<string, number>();
+    const { data: recips } = await supabase
+      .from('broadcast_update_recipients')
+      .select('broadcast_update_id, acknowledged_at')
+      .in('broadcast_update_id', ids);
+    (recips || []).forEach((r) => {
+      total.set(r.broadcast_update_id, (total.get(r.broadcast_update_id) || 0) + 1);
+      if (r.acknowledged_at) acked.set(r.broadcast_update_id, (acked.get(r.broadcast_update_id) || 0) + 1);
+    });
+
+    setBroadcastsData(updates.map((u) => ({
+      title: u.title,
+      content: u.message,
+      date: new Date(u.sent_at || u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      audience: 'All Investors',
+      acknowledged: acked.get(u.id) || 0,
+      total: total.get(u.id) || 0,
+    })));
+  };
+
   useEffect(() => {
     if (!isOpen || !deal) return;
 
@@ -181,6 +217,7 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
 
       await fetchAllocations(profile.company_id, deal.id);
       await fetchDocuments(profile.company_id, deal.id);
+      await fetchBroadcasts(deal.id);
     })();
   }, [isOpen, deal]);
 
@@ -281,6 +318,7 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) { alert(json?.error || 'Failed to send update'); return; }
+      await fetchBroadcasts(deal.id);
     } catch {
       alert('Failed to send update. Please try again.');
     }
@@ -455,7 +493,7 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
       </div>
 
       {/* Sub-modals */}
-      <OpenBroadcastModal isOpen={broadcastOpen} onClose={() => setBroadcastOpen(false)} dealName={deal.name} />
+      <OpenBroadcastModal isOpen={broadcastOpen} onClose={() => setBroadcastOpen(false)} dealName={deal.name} broadcasts={broadcastsData} />
       <ViewDocumentsModal isOpen={documentsOpen} onClose={() => setDocumentsOpen(false)} dealName={deal.name} documents={documentsData} />
       <ViewAllocationsModal isOpen={allocationsOpen} onClose={() => setAllocationsOpen(false)} dealName={deal.name} allocations={allocationsData} />
       <SendUpdateModal isOpen={updateOpen} onClose={() => setUpdateOpen(false)} dealName={deal.name} onSend={handleSendUpdate} />

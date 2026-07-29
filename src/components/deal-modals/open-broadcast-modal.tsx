@@ -21,13 +21,8 @@ interface OpenBroadcastModalProps {
   broadcasts?: BroadcastEntry[];
 }
 
-const DEFAULT_BROADCASTS: BroadcastEntry[] = [
-  { title: 'Funding Milestone Reached', content: 'We are pleased to inform you that the funding milestone for this deal has been achieved...', date: 'Jun 15, 2026', audience: 'All Investors', acknowledged: 141, total: 184 },
-  { title: 'Quarterly Performance Update', content: 'Attached is the Q2 2026 performance report showing strong returns across all metrics...', date: 'Jun 1, 2026', audience: 'Allocated Investors', acknowledged: 120, total: 142 },
-];
-
 export function OpenBroadcastModal({ isOpen, onClose, dealName, broadcasts }: OpenBroadcastModalProps) {
-  const entries = broadcasts || DEFAULT_BROADCASTS;
+  const entries = broadcasts ?? [];
 
   return (
     <ModalShell
@@ -46,6 +41,12 @@ export function OpenBroadcastModal({ isOpen, onClose, dealName, broadcasts }: Op
       }
     >
       <div className="space-y-4">
+        {entries.length === 0 && (
+          <div className="py-10 text-center">
+            <p className="text-sm font-medium text-stone-600">No updates sent yet</p>
+            <p className="mt-1 text-sm text-stone-400">Use &quot;Send Update&quot; on the deal to broadcast to investors.</p>
+          </div>
+        )}
         {entries.map((entry) => {
           const pct = entry.total > 0 ? (entry.acknowledged / entry.total) * 100 : 0;
           return (

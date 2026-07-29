@@ -63,8 +63,11 @@ function todayIso(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-const STATUS_META: Record<PayoutStatus, { label: string; badge: string; icon: React.ReactNode }> = {
+// 'overdue' is a display-only status: a pending payout whose due date has passed.
+type DisplayStatus = PayoutStatus | 'overdue';
+const STATUS_META: Record<DisplayStatus, { label: string; badge: string; icon: React.ReactNode }> = {
   pending: { label: 'Pending', badge: 'fdx-badge fdx-badge-pending', icon: <Clock className="size-4 text-amber-600" /> },
+  overdue: { label: 'Overdue', badge: 'bg-red-100 text-red-700 border border-red-200', icon: <AlertTriangle className="size-4 text-red-600" /> },
   completed: { label: 'Completed', badge: 'fdx-badge fdx-badge-active', icon: <CheckCircle2 className="size-4 text-emerald-600" /> },
   missed: { label: 'Missed', badge: 'fdx-badge fdx-badge-info', icon: <XCircle className="size-4 text-red-600" /> },
 };
@@ -290,7 +293,11 @@ export default function PaymentsPage() {
             <StatCard label="Investors Due" value={summary.investors} icon={<Users className="text-stone-400" size={22} />} />
             <StatCard label="Total Expected" value={money(summary.totalExpected)} icon={<DollarSign className="text-stone-400" size={22} />} />
             <StatCard label="Total Paid" value={money(summary.totalPaid)} color="text-emerald-700" icon={<CheckCircle2 className="text-stone-400" size={22} />} />
-            <StatCard label="Pending" value={summary.pending} color="text-amber-700" icon={<Clock className="text-stone-400" size={22} />} />
+            {selectedDate && selectedDate < todayIso() ? (
+              <StatCard label="Overdue" value={summary.pending} color="text-red-700" icon={<AlertTriangle className="text-stone-400" size={22} />} />
+            ) : (
+              <StatCard label="Pending" value={summary.pending} color="text-amber-700" icon={<Clock className="text-stone-400" size={22} />} />
+            )}
             <StatCard label="Missed" value={summary.missed} color="text-red-700" icon={<XCircle className="text-stone-400" size={22} />} />
           </div>
         </StaggerItem>
@@ -314,7 +321,8 @@ export default function PaymentsPage() {
           ) : (
             <div className="space-y-3">
               {payouts.map((p) => {
-                const meta = STATUS_META[p.status];
+                const isOverdue = p.status === 'pending' && selectedDate < todayIso();
+                const meta = STATUS_META[isOverdue ? 'overdue' : p.status];
                 const isOpen = expanded.has(p.investorId);
                 return (
                   <div key={p.investorId} className="fdx-card overflow-hidden">

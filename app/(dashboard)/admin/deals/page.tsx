@@ -961,6 +961,7 @@ export default function DealsPage() {
         isOpen={!!quickViewDeal}
         onClose={() => setQuickViewDeal(null)}
         deal={quickViewDeal}
+        onDealUpdated={() => fetchDeals(companyId)}
       />
     </>
   );

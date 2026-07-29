@@ -41,6 +41,7 @@ interface DealQuickViewModalProps {
   isOpen: boolean;
   onClose: () => void;
   deal: DealQuickViewData | null;
+  onDealUpdated?: () => void;
 }
 
 interface AllocationRow {
@@ -81,8 +82,9 @@ function getStatusColor(status: string) {
   }
 }
 
-export function DealQuickViewModal({ isOpen, onClose, deal }: DealQuickViewModalProps) {
+export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: DealQuickViewModalProps) {
   const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [closingDeal, setClosingDeal] = useState(false);
   const [documentsOpen, setDocumentsOpen] = useState(false);
   const [allocationsOpen, setAllocationsOpen] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
@@ -232,6 +234,40 @@ export function DealQuickViewModal({ isOpen, onClose, deal }: DealQuickViewModal
     await fetchDocuments(companyId, deal.id);
   };
 
+  // Persist a deal patch via the tenant-scoped API, then refresh the parent list.
+  const patchDeal = async (body: Record<string, unknown>) => {
+    if (!deal) throw new Error('No deal');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('Your session expired. Please log in again.');
+
+    const res = await fetch(`/api/deals/${deal.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify(body),
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) throw new Error(json?.message || 'Request failed');
+    return json.deal;
+  };
+
+  const handleCloseDeal = async () => {
+    setClosingDeal(true);
+    try {
+      await patchDeal({ action: 'close' });
+      onDealUpdated?.();
+      onClose();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to close deal');
+    } finally {
+      setClosingDeal(false);
+    }
+  };
+
+  const handleSaveDeal = async (patch: Record<string, unknown>) => {
+    await patchDeal(patch);
+    onDealUpdated?.();
+  };
+
   if (!isOpen || !deal) return null;
 
   return (
@@ -376,8 +412,25 @@ export function DealQuickViewModal({ isOpen, onClose, deal }: DealQuickViewModal
         interestRate: deal.interestRate,
         term: deal.term,
         minimumInvestment: deal.minimumInvestment,
-      }} />
-      <CloseDealModal isOpen={closeDealOpen} onClose={() => setCloseDealOpen(false)} dealName={deal.name} />
+      }}
+        onSave={async (d) => {
+          const num = (s: string) => Number(String(s).replace(/[^0-9.]/g, '')) || 0;
+          await handleSaveDeal({
+            name: d.name,
+            target_amount: num(d.targetAmount),
+            interest_rate: num(d.interestRate),
+            term: d.term,
+            minimum_investment: num(d.minimumInvestment),
+          });
+        }}
+      />
+      <CloseDealModal
+        isOpen={closeDealOpen}
+        onClose={() => setCloseDealOpen(false)}
+        dealName={deal.name}
+        onConfirm={handleCloseDeal}
+        loading={closingDeal}
+      />
       <PaymentHistoryModal isOpen={paymentHistoryOpen} onClose={() => setPaymentHistoryOpen(false)} dealName={deal.name} payments={paymentSchedule} />
     </>
   );

@@ -36,6 +36,58 @@ export async function getDealByCompany(dealId: string, companyId: string) {
 }
 
 /**
+ * Fields a deal edit is allowed to change. Whitelisted so a request body can
+ * never write company_id, id, or other protected columns.
+ */
+const EDITABLE_DEAL_FIELDS = new Set([
+  'name', 'type', 'location', 'location_state', 'location_city', 'status',
+  'target_amount', 'interest_rate', 'term', 'term_length_months',
+  'minimum_investment', 'close_date', 'funding_close_date', 'first_payout_date',
+  'payout_cycle', 'property_type', 'loan_purpose', 'borrower_name', 'notes',
+  'next_milestone', 'milestone_type',
+]);
+
+/**
+ * Update a deal, scoped by company. Only whitelisted fields are written, and the
+ * WHERE clause is filtered by both id AND company_id (no cross-tenant writes).
+ */
+export async function updateDeal(
+  dealId: string,
+  companyId: string,
+  patch: Record<string, unknown>
+) {
+  const supabase = getServiceClient();
+
+  const clean: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(patch)) {
+    if (EDITABLE_DEAL_FIELDS.has(k)) clean[k] = v;
+  }
+  if (Object.keys(clean).length === 0) {
+    throw new Error('No updatable fields provided');
+  }
+  clean.updated_at = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from('deals')
+    .update(clean)
+    .eq('id', dealId)
+    .eq('company_id', companyId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Close a deal (status → 'Closed'), scoped by company. Locking of allocations is
+ * enforced downstream by allocation writes checking the deal's status.
+ */
+export async function closeDeal(dealId: string, companyId: string) {
+  return updateDeal(dealId, companyId, { status: 'Closed' });
+}
+
+/**
  * Get deal summary stats for a company.
  */
 export async function getDealSummary(companyId: string) {

@@ -9,6 +9,7 @@ interface ViewDocumentsModalProps {
   onClose: () => void;
   dealName: string;
   documents: { name: string; category: string; uploadDate: string; status: 'uploaded' | 'pending' | 'missing'; size: string }[];
+  onUploadClick?: () => void;
 }
 
 function getStatusIcon(status: string) {
@@ -34,7 +35,7 @@ function getStatusBadge(status: string) {
   );
 }
 
-export function ViewDocumentsModal({ isOpen, onClose, dealName, documents }: ViewDocumentsModalProps) {
+export function ViewDocumentsModal({ isOpen, onClose, dealName, documents, onUploadClick }: ViewDocumentsModalProps) {
   const docs = documents;
 
   return (
@@ -52,7 +53,7 @@ export function ViewDocumentsModal({ isOpen, onClose, dealName, documents }: Vie
     >
       <div className="space-y-4">
         <div className="flex justify-end">
-          <Button variant="outline" className="gap-2 text-sm">
+          <Button variant="outline" className="gap-2 text-sm" onClick={() => { onClose(); onUploadClick?.(); }}>
             <Upload className="h-4 w-4" /> Upload Document
           </Button>
         </div>

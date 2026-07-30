@@ -10,10 +10,11 @@ interface CloseDealModalProps {
   isOpen: boolean;
   onClose: () => void;
   dealName: string;
-  onConfirm?: () => void;
+  onConfirm?: () => void | Promise<void>;
+  loading?: boolean;
 }
 
-export function CloseDealModal({ isOpen, onClose, dealName, onConfirm }: CloseDealModalProps) {
+export function CloseDealModal({ isOpen, onClose, dealName, onConfirm, loading }: CloseDealModalProps) {
   const [confirmed, setConfirmed] = useState(false);
 
   return (
@@ -25,13 +26,13 @@ export function CloseDealModal({ isOpen, onClose, dealName, onConfirm }: CloseDe
       maxWidth="max-w-xl"
       footer={
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={loading}>Cancel</Button>
           <Button
-            disabled={!confirmed}
-            onClick={() => { onConfirm?.(); onClose(); }}
+            disabled={!confirmed || loading}
+            onClick={() => { if (onConfirm) { onConfirm(); } else { onClose(); } }}
             className="gap-2 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
           >
-            <Lock className="h-4 w-4" /> Close Deal
+            <Lock className="h-4 w-4" /> {loading ? 'Closing…' : 'Close Deal'}
           </Button>
         </div>
       }

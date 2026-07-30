@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Bell, Building2, CreditCard, Key, Loader2, Lock, LogOut, User,
-  Shield, ChevronRight, Smartphone,
+  Building2, Key, Loader2, Lock, LogOut, User,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -26,10 +25,6 @@ export default function AdminSettingsPage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  // Notification toggles
-  const [pushNotifs, setPushNotifs] = useState(true);
-  const [emailNotifs, setEmailNotifs] = useState(true);
 
   // Password
   const [currentPassword, setCurrentPassword] = useState('');
@@ -201,33 +196,6 @@ export default function AdminSettingsPage() {
         </div>
       </section>
 
-      {/* Notifications */}
-      <section className="fdx-card divide-y divide-stone-100">
-        <div className="flex items-center gap-3 p-5">
-          <Bell className="h-4 w-4 text-stone-400" />
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-stone-400">Preferences</h3>
-        </div>
-        <div className="space-y-4 p-5">
-          {[
-            { label: 'Push Notifications', checked: pushNotifs, onChange: setPushNotifs },
-            { label: 'Email Notifications', checked: emailNotifs, onChange: setEmailNotifs },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center justify-between">
-              <span className="text-sm text-stone-700">{item.label}</span>
-              <button
-                type="button"
-                onClick={() => item.onChange(!item.checked)}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
-                  item.checked ? 'bg-fundex-forest' : 'bg-stone-200'
-                }`}
-              >
-                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${item.checked ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Security */}
       <section className="fdx-card divide-y divide-stone-100">
         <div className="flex items-center gap-3 p-5">
@@ -253,68 +221,6 @@ export default function AdminSettingsPage() {
         </div>
       </section>
 
-      {/* Two-Factor Authentication */}
-      <section className="fdx-card p-6 space-y-4">
-        <div className="flex items-center gap-3 mb-2">
-          <Shield className="size-5 text-fundex-forest" />
-          <h2 className="text-lg font-semibold text-stone-900">Two-Factor Authentication</h2>
-        </div>
-        <div className="flex items-center justify-between p-4 bg-stone-50 rounded-lg">
-          <div className="flex items-center gap-3">
-            <Smartphone className="size-5 text-stone-500" />
-            <div>
-              <p className="text-sm font-medium text-stone-900">Authenticator App</p>
-              <p className="text-xs text-stone-500">Use an authenticator app to generate one-time codes</p>
-            </div>
-          </div>
-          <span className="text-xs font-medium px-2.5 py-1 bg-stone-200 text-stone-600 rounded-full">Not Enabled</span>
-        </div>
-        <Button variant="outline" className="w-full gap-2">
-          <Shield className="size-4" />
-          Enable Two-Factor Authentication
-        </Button>
-      </section>
-
-      {/* Billing */}
-      <section className="fdx-card p-6 space-y-4">
-        <div className="flex items-center gap-3 mb-2">
-          <CreditCard className="size-5 text-fundex-forest" />
-          <h2 className="text-lg font-semibold text-stone-900">Billing</h2>
-        </div>
-        <div className="space-y-3">
-          <button className="flex items-center justify-between w-full p-4 bg-stone-50 rounded-lg hover:bg-stone-100 transition-colors text-left">
-            <div>
-              <p className="text-sm font-medium text-stone-900">Subscription</p>
-              <p className="text-xs text-stone-500">Professional Plan</p>
-            </div>
-            <ChevronRight className="size-4 text-stone-400" />
-          </button>
-          <button className="flex items-center justify-between w-full p-4 bg-stone-50 rounded-lg hover:bg-stone-100 transition-colors text-left">
-            <div>
-              <p className="text-sm font-medium text-stone-900">Payment Method</p>
-              <p className="text-xs text-stone-500">&bull;&bull;&bull;&bull; 4242</p>
-            </div>
-            <ChevronRight className="size-4 text-stone-400" />
-          </button>
-        </div>
-      </section>
-
-      {/* Workspace */}
-      <section className="fdx-card p-5">
-        <button className="flex items-center justify-between w-full text-left">
-          <div className="flex items-center gap-3">
-            <div className="size-10 bg-gradient-to-br from-fundex-forest to-fundex-green rounded-lg flex items-center justify-center text-white font-bold text-sm">
-              {profile?.companyName?.charAt(0) || 'F'}
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-stone-900">{profile?.companyName || 'Fundex'}</p>
-              <p className="text-xs text-stone-500">Switch workspace</p>
-            </div>
-          </div>
-          <ChevronRight className="size-4 text-stone-400" />
-        </button>
-      </section>
-
       {/* Logout */}
       <button
         type="button"
@@ -324,8 +230,6 @@ export default function AdminSettingsPage() {
         <LogOut className="h-5 w-5" />
         <span className="text-sm font-medium">Log Out</span>
       </button>
-
-      <p className="text-center text-xs text-stone-400">Fundex v2.1.0</p>
     </div>
   );
 }

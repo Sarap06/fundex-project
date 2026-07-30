@@ -2,9 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, Search, Menu, LogOut } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
   SheetContent,
@@ -86,23 +85,6 @@ export function DashboardTopbar({ userName, userInitials, basePath, navLinks, po
 
         {/* Right — Actions */}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className=" p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600"
-            aria-label="Notifications"
-          >
-            <Bell className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            className=" p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600"
-            aria-label="Search"
-          >
-            <Search className="h-5 w-5" />
-          </button>
-
-          <Separator orientation="vertical" className="mx-1 hidden h-6 md:block" />
-
           <div className="hidden items-center gap-2.5 md:flex">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-fundex-gold/20 text-xs font-medium text-fundex-forest">

@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer,
 } from 'recharts';
 import {
   DollarSign, TrendingUp, AlertTriangle, CheckCircle2,
-  Clock, Calendar, ArrowUpRight, FileWarning, Download,
-  X, Info, PlayCircle, ArrowRightCircle, UserX, Eye,
+  Calendar, ArrowUpRight, FileWarning,
+  X, ArrowRightCircle, Eye,
 } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase';
 import { PageHeader } from '@/components/page-header';
@@ -51,7 +52,10 @@ interface PerformanceData {
     activeInvestors: number;
   };
   capitalFlow: { month: string; capitalIn: number; interestOut: number; principalReturned: number }[];
-  risk: { latePayments: number; missingDocuments: number; contractsNearingMaturity: number };
+  risk: {
+    latePayments: number; missingDocuments: number; contractsNearingMaturity: number;
+    alerts: { id: string; contract: string; issue: string; severity: 'High' | 'Medium' | 'Low'; description: string }[];
+  };
   contractPerformance: {
     id: string; dealId: string; name: string;
     principalDeployed: number; interestRate: number; monthlyInterest: number;
@@ -62,7 +66,7 @@ interface PerformanceData {
   distributions: {
     totalPaidYTD: number; nextDistributionDate: string | null;
     nextDistributionAmount: number; activeInvestors: number;
-    avgPayment: number; onTimeRate: number;
+    avgPayment: number; onTimeRate: number | null;
   };
 }
 
@@ -122,13 +126,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function PerformancePage() {
+  const router = useRouter();
   const [data, setData] = useState<PerformanceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [riskDetailsOpen, setRiskDetailsOpen] = useState(false);
-  const [paymentDetailsOpen, setPaymentDetailsOpen] = useState(false);
-  const [paymentDetailsType, setPaymentDetailsType] = useState<'paid' | 'pending' | 'overdue' | 'upcoming'>('paid');
-  const [payoutExecutionOpen, setPayoutExecutionOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -182,10 +184,6 @@ export default function PerformancePage() {
       <StaggerItem>
         <div className="flex items-center justify-between">
           <PageHeader title="Performance" subtitle="Financial command center for portfolio operations" />
-          <button className="fdx-btn-secondary gap-2 text-sm hidden md:flex">
-            <Download className="size-4" />
-            Export Report
-          </button>
         </div>
       </StaggerItem>
 
@@ -210,10 +208,10 @@ export default function PerformancePage() {
             <h2 className="fdx-section-title text-base mb-1">Payment Operations</h2>
             <p className="text-sm text-stone-400 mb-5">Current cycle payment tracking</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <PayCard label="Paid This Cycle" count={paymentOps.paidThisCycle} sub="Funded allocations" variant="green" onClick={() => { setPaymentDetailsType('paid'); setPaymentDetailsOpen(true); }} />
-              <PayCard label="Pending" count={paymentOps.pending} sub="Awaiting funding" variant="yellow" onClick={() => { setPaymentDetailsType('pending'); setPaymentDetailsOpen(true); }} />
-              <PayCard label="Overdue" count={paymentOps.overdue} sub="Action required" variant="red" onClick={() => { setPaymentDetailsType('overdue'); setPaymentDetailsOpen(true); }} />
-              <PayCard label="Upcoming" count={paymentOps.upcomingThisWeek} sub="Next 7 days" variant="blue" onClick={() => { setPaymentDetailsType('upcoming'); setPaymentDetailsOpen(true); }} />
+              <PayCard label="Paid This Cycle" count={paymentOps.paidThisCycle} sub="Completed payouts" variant="green" onClick={() => router.push('/admin/payments')} />
+              <PayCard label="Pending" count={paymentOps.pending} sub="Awaiting payout" variant="yellow" onClick={() => router.push('/admin/payments')} />
+              <PayCard label="Overdue" count={paymentOps.overdue} sub="Past due, unpaid" variant="red" onClick={() => router.push('/admin/payments')} />
+              <PayCard label="Upcoming" count={paymentOps.upcomingThisWeek} sub="Next 7 days" variant="blue" onClick={() => router.push('/admin/payments')} />
             </div>
           </div>
 
@@ -237,13 +235,13 @@ export default function PerformancePage() {
                 <span className="font-medium text-stone-900">{paymentOps.activeInvestors}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Status</span>
-                <Badge className="bg-emerald-100 text-emerald-700 border-0 text-xs">Ready</Badge>
+                <span className="text-stone-500">Pending</span>
+                <Badge className="bg-amber-100 text-amber-700 border-0 text-xs">{paymentOps.pending} to pay</Badge>
               </div>
             </div>
-            <button className="fdx-btn-primary w-full mt-auto gap-2 text-sm" onClick={() => setPayoutExecutionOpen(true)}>
-              <CheckCircle2 className="size-4" />
-              Execute Payout Batch
+            <button className="fdx-btn-primary w-full mt-auto gap-2 text-sm" onClick={() => router.push('/admin/payments')}>
+              <ArrowRightCircle className="size-4" />
+              Open in Payments
             </button>
           </div>
         </div>
@@ -281,14 +279,13 @@ export default function PerformancePage() {
             <p className="text-sm text-stone-400 mb-5">Active alerts and operational issues</p>
             <div className="space-y-3">
               {[
-                { label: 'Late Payments', desc: 'Requires immediate action', count: risk.latePayments, color: 'text-red-600 bg-red-50' },
+                { label: 'Late Payments', desc: 'Overdue investor payouts', count: risk.latePayments, color: 'text-red-600 bg-red-50' },
                 { label: 'Missing Documents', desc: 'Follow up required', count: risk.missingDocuments, color: 'text-amber-600 bg-amber-50' },
-                { label: 'Borrower Delinquent', desc: 'Under review', count: 1, color: 'text-orange-600 bg-orange-50', icon: <UserX className="size-4 text-orange-500" /> },
                 { label: 'Contracts Nearing Maturity', desc: 'Within 90 days', count: risk.contractsNearingMaturity, color: 'text-blue-600 bg-blue-50' },
-              ].map(({ label, desc, count, color, icon }) => (
+              ].map(({ label, desc, count, color }) => (
                 <div key={label} className="flex items-center justify-between p-3 border border-stone-100">
                   <div className="flex items-center gap-3">
-                    {icon || <FileWarning className="size-4 text-stone-400" />}
+                    <FileWarning className="size-4 text-stone-400" />
                     <div>
                       <p className="text-sm font-medium text-stone-900">{label}</p>
                       <p className="text-xs text-stone-400">{desc}</p>
@@ -326,7 +323,7 @@ export default function PerformancePage() {
               </div>
               <div className="text-center p-3 border border-stone-100">
                 <p className="text-xs text-stone-500">On-Time Rate</p>
-                <p className="text-lg font-bold text-fundex-forest">{distributions.onTimeRate}%</p>
+                <p className="text-lg font-bold text-fundex-forest">{distributions.onTimeRate != null ? `${distributions.onTimeRate}%` : '—'}</p>
               </div>
             </div>
           </div>
@@ -341,10 +338,6 @@ export default function PerformancePage() {
               <h2 className="fdx-section-title text-base mb-1">Contract Performance</h2>
               <p className="text-sm text-stone-400">Active lending contract operational details</p>
             </div>
-            <button className="fdx-btn-secondary text-sm gap-2 hidden md:flex">
-              <Download className="size-4" />
-              Export
-            </button>
           </div>
           {contractPerformance.length === 0 ? (
             <div className="py-12 text-center text-stone-400 text-sm">No active contracts yet.</div>
@@ -416,178 +409,32 @@ export default function PerformancePage() {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              {[
-                { id: 'R-001', contract: 'Office Building Acquisition', issue: 'Late Payment', severity: 'High' as const, daysLate: 11, amount: fmtM(kpis.monthlyInterestDue * 0.03) },
-                { id: 'R-002', contract: 'Mixed-Use Development', issue: 'Missing Documents', severity: 'Medium' as const, description: 'Borrower agreement pending' },
-                { id: 'R-003', contract: 'Hotel Acquisition', issue: 'Borrower Delinquent', severity: 'High' as const, description: 'Under legal review' },
-              ].map((risk) => (
-                <div key={risk.id} className={`p-4 rounded-lg border ${risk.severity === 'High' ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-semibold text-stone-900">{risk.contract}</p>
-                      <p className="text-sm text-stone-600 mt-0.5">{risk.id}</p>
+              {risk.alerts.length === 0 ? (
+                <div className="text-center py-10">
+                  <CheckCircle2 className="mx-auto size-8 text-emerald-400" />
+                  <p className="mt-3 text-stone-600 font-medium">No active alerts</p>
+                  <p className="mt-1 text-sm text-stone-500">No overdue payouts, missing documents, or contracts nearing maturity.</p>
+                </div>
+              ) : risk.alerts.map((alert) => {
+                const tone = alert.severity === 'High'
+                  ? { box: 'bg-red-50 border-red-200', badge: 'bg-red-600 text-white', icon: 'text-red-600' }
+                  : alert.severity === 'Medium'
+                  ? { box: 'bg-amber-50 border-amber-200', badge: 'bg-amber-600 text-white', icon: 'text-amber-600' }
+                  : { box: 'bg-blue-50 border-blue-200', badge: 'bg-blue-600 text-white', icon: 'text-blue-600' };
+                return (
+                  <div key={alert.id} className={`p-4 rounded-lg border ${tone.box}`}>
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="font-semibold text-stone-900">{alert.contract}</p>
+                      <span className={`text-xs font-bold px-2 py-1 rounded ${tone.badge}`}>{alert.severity}</span>
                     </div>
-                    <span className={`text-xs font-bold px-2 py-1 rounded ${risk.severity === 'High' ? 'bg-red-600 text-white' : 'bg-amber-600 text-white'}`}>
-                      {risk.severity}
-                    </span>
+                    <div className="flex items-center gap-2 text-sm">
+                      <AlertTriangle className={`size-4 ${tone.icon}`} />
+                      <span className="font-medium">{alert.issue}</span>
+                    </div>
+                    <p className="text-sm text-stone-700 mt-2">{alert.description}</p>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <AlertTriangle className={`size-4 ${risk.severity === 'High' ? 'text-red-600' : 'text-amber-600'}`} />
-                    <span className="font-medium">{risk.issue}</span>
-                  </div>
-                  {'daysLate' in risk && risk.daysLate && (
-                    <p className="text-sm text-red-700 mt-2">{risk.daysLate} days late &bull; Amount: {risk.amount}</p>
-                  )}
-                  {'description' in risk && risk.description && (
-                    <p className="text-sm text-stone-700 mt-2">{risk.description}</p>
-                  )}
-                  <div className="flex gap-2 mt-3">
-                    <button className="fdx-btn-primary text-xs px-3 py-1.5 gap-1">
-                      <ArrowRightCircle className="size-3" />
-                      Take Action
-                    </button>
-                    <button className="fdx-btn-outline text-xs px-3 py-1.5">View Contract</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Payment Details Modal */}
-      {paymentDetailsOpen && (() => {
-        const paymentData = {
-          paid: [
-            { id: 'P-001', investor: 'Sarah Johnson', amount: '$45,200', date: 'Jul 28, 2026', deal: 'Commercial Construction' },
-            { id: 'P-002', investor: 'Michael Chen', amount: '$32,800', date: 'Jul 27, 2026', deal: 'Multifamily Bridge Loan' },
-            { id: 'P-003', investor: 'Emma Williams', amount: '$58,900', date: 'Jul 26, 2026', deal: 'Industrial Property' },
-          ],
-          pending: [
-            { id: 'P-047', investor: 'David Martinez', amount: '$22,400', date: 'Aug 1, 2026', deal: 'Retail Center', status: 'Processing' },
-            { id: 'P-048', investor: 'Linda Garcia', amount: '$41,100', date: 'Aug 1, 2026', deal: 'Office Building', status: 'Pending Transfer' },
-          ],
-          overdue: [
-            { id: 'P-034', investor: 'Robert Kim', amount: '$38,500', date: 'Jul 15, 2026', deal: 'Mixed-Use Development', daysLate: 11 },
-            { id: 'P-041', investor: 'Jessica Lee', amount: '$29,700', date: 'Jul 20, 2026', deal: 'Hotel Acquisition', daysLate: 6 },
-          ],
-          upcoming: [
-            { id: 'P-049', investor: 'Thomas Anderson', amount: '$51,200', date: 'Aug 1, 2026', deal: 'Commercial Construction' },
-            { id: 'P-050', investor: 'Patricia Moore', amount: '$33,800', date: 'Aug 2, 2026', deal: 'Retail Strip Center' },
-            { id: 'P-051', investor: 'James Wilson', amount: '$44,600', date: 'Aug 3, 2026', deal: 'Industrial Property' },
-          ],
-        };
-        const titles = { paid: 'Paid This Cycle', pending: 'Pending Payments', overdue: 'Overdue Payments', upcoming: 'Upcoming Payments' };
-        const items = paymentData[paymentDetailsType];
-
-        return (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setPaymentDetailsOpen(false)}>
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <div className="sticky top-0 bg-white border-b border-stone-200 p-6 flex items-center justify-between z-10">
-                <div>
-                  <h2 className="text-xl font-semibold text-stone-900">{titles[paymentDetailsType]}</h2>
-                  <p className="text-sm text-stone-500 mt-1">{items.length} payments</p>
-                </div>
-                <button onClick={() => setPaymentDetailsOpen(false)} className="p-1 hover:bg-stone-100 rounded">
-                  <X className="size-5 text-stone-500" />
-                </button>
-              </div>
-              <div className="p-6">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr>
-                        <th className="fdx-table-header">Payment ID</th>
-                        <th className="fdx-table-header">Investor</th>
-                        <th className="fdx-table-header">Amount</th>
-                        <th className="fdx-table-header">{paymentDetailsType === 'overdue' ? 'Due Date' : 'Date'}</th>
-                        <th className="fdx-table-header">Deal</th>
-                        {paymentDetailsType === 'overdue' && <th className="fdx-table-header">Days Late</th>}
-                        {paymentDetailsType === 'pending' && <th className="fdx-table-header">Status</th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.map((payment: any) => (
-                        <tr key={payment.id} className="fdx-table-row">
-                          <td className="py-3 px-4 font-medium">{payment.id}</td>
-                          <td className="py-3 px-4">{payment.investor}</td>
-                          <td className="py-3 px-4 font-semibold text-emerald-600">{payment.amount}</td>
-                          <td className="py-3 px-4">{payment.date}</td>
-                          <td className="py-3 px-4">{payment.deal}</td>
-                          {payment.daysLate && <td className="py-3 px-4"><span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5">{payment.daysLate} days</span></td>}
-                          {payment.status && <td className="py-3 px-4"><span className="bg-amber-100 text-amber-700 text-xs font-medium px-2 py-0.5">{payment.status}</span></td>}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* Payout Execution Modal */}
-      {payoutExecutionOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setPayoutExecutionOpen(false)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-fundex-forest text-white p-6 rounded-t-xl">
-              <h2 className="text-xl font-semibold">Execute Payout Batch</h2>
-              <p className="text-sm text-emerald-100 mt-1">Review and confirm investor distribution</p>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="bg-stone-50 border border-stone-200 rounded-lg p-4">
-                <h3 className="font-semibold text-stone-900 mb-3">Payout Summary</h3>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-stone-600">Payout Date</p>
-                    <p className="font-semibold text-stone-900">{fmtDate(paymentOps.nextPayoutDate)}</p>
-                  </div>
-                  <div>
-                    <p className="text-stone-600">Total Amount</p>
-                    <p className="font-semibold text-emerald-600">{fmtM(paymentOps.nextPayoutAmount)}</p>
-                  </div>
-                  <div>
-                    <p className="text-stone-600">Number of Investors</p>
-                    <p className="font-semibold text-stone-900">{paymentOps.activeInvestors}</p>
-                  </div>
-                  <div>
-                    <p className="text-stone-600">Available Cash</p>
-                    <p className="font-semibold text-blue-600">{fmtM(kpis.availableCash)}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <Info className="size-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-semibold text-blue-900 mb-1">Pre-Execution Checks</p>
-                    <ul className="space-y-1 text-blue-800">
-                      <li>&#10003; Sufficient liquidity confirmed</li>
-                      <li>&#10003; All investor bank details verified</li>
-                      <li>&#10003; Payment schedules validated</li>
-                      <li>&#10003; Compliance requirements met</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  className="fdx-btn-primary flex-1 gap-2 py-2.5"
-                  onClick={() => setPayoutExecutionOpen(false)}
-                >
-                  <PlayCircle className="size-4" />
-                  Confirm & Execute
-                </button>
-                <button
-                  className="fdx-btn-outline flex-1 py-2.5"
-                  onClick={() => setPayoutExecutionOpen(false)}
-                >
-                  Cancel
-                </button>
-              </div>
+                );
+              })}
             </div>
           </div>
         </div>

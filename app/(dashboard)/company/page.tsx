@@ -256,7 +256,7 @@ export default function CompanyDashboard() {
           <CapitalFlowChart data={displayFlow} />
         )}
 
-        {loading ? (
+        {loading || !company ? (
           <div className=" border border-stone-100 bg-white shadow-sm">
             <div className="p-6">
               <Skeleton className="h-5 w-24" />
@@ -272,9 +272,9 @@ export default function CompanyDashboard() {
           </div>
         ) : (
           <CompanyOverview
-            company={company || { id: '', name: 'Demo Company', company_code: 'DEMO01', admin_id: '', created_at: '' }}
+            company={company}
             stats={displayStats}
-            memberCount={memberCount || 3}
+            memberCount={memberCount}
           />
         )}
       </div>

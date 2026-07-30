@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, Eye, FileText, Filter, Loader2, Search, X } from 'lucide-react';
+import { Download, Eye, FileText, Loader2, Search, X } from 'lucide-react';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
@@ -81,6 +81,7 @@ type DocumentRowData = {
   deals: string[];
   date: string;
   fileSize?: string;
+  fileUrl?: string;
 };
 
 function DocumentPreviewModal({
@@ -176,20 +177,28 @@ function DocumentPreviewModal({
             >
               Close
             </button>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2  border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-700 shadow-sm transition hover:bg-stone-50 sm:justify-self-center"
-            >
-              <Eye className="h-4 w-4" />
-              Open Full Document
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2  bg-fundex-gold px-5 py-2.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 sm:justify-self-end"
-            >
-              <Download className="h-4 w-4" />
-              Download
-            </button>
+            {doc.fileUrl ? (
+              <button
+                type="button"
+                onClick={() => window.open(doc.fileUrl, '_blank', 'noopener,noreferrer')}
+                className="inline-flex items-center justify-center gap-2  border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-700 shadow-sm transition hover:bg-stone-50 sm:justify-self-center"
+              >
+                <Eye className="h-4 w-4" />
+                Open Full Document
+              </button>
+            ) : null}
+            {doc.fileUrl ? (
+              <a
+                href={doc.fileUrl}
+                download
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2  bg-fundex-gold px-5 py-2.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 sm:justify-self-end"
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </a>
+            ) : null}
           </div>
         </div>
       </div>
@@ -230,13 +239,18 @@ function DocumentRow({ doc, onView }: { doc: DocumentRowData; onView: (doc: Docu
           >
             <Eye className="h-4 w-4" />
           </button>
-          <button
-            type="button"
-            aria-label="Download document"
-            className=" border border-stone-200 bg-white p-2 text-stone-500 shadow-sm transition hover:bg-stone-50"
-          >
-            <Download className="h-4 w-4" />
-          </button>
+          {doc.fileUrl ? (
+            <a
+              href={doc.fileUrl}
+              download
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Download document"
+              className=" border border-stone-200 bg-white p-2 text-stone-500 shadow-sm transition hover:bg-stone-50"
+            >
+              <Download className="h-4 w-4" />
+            </a>
+          ) : null}
         </div>
       </td>
     </tr>
@@ -316,6 +330,7 @@ export default function DocumentsPage() {
         deals: d.linkedDeal ? [d.linkedDeal] : [],
         date: formatDateShort(d.uploadDate),
         fileSize: d.fileSize || undefined,
+        fileUrl: d.fileUrl || undefined,
       }));
   }, [documents, searchQuery, dealPill]);
 
@@ -365,14 +380,7 @@ export default function DocumentsPage() {
 
             {activeTab === 'all' ? (
               <div className="space-y-5 px-6 py-6 md:px-8 md:py-8">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <button
-                    type="button"
-                    className="inline-flex w-fit items-center gap-2 border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-medium text-stone-700 shadow-sm transition hover:bg-stone-100"
-                  >
-                    <Filter className="h-4 w-4 text-stone-500" />
-                    Deal Status
-                  </button>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
                   <div className="flex flex-wrap gap-2">
                     {([
                       { id: 'active' as const, label: 'Active' },

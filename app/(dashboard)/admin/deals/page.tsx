@@ -31,6 +31,7 @@ interface Deal {
   status: string;
   target_amount: number;
   raised_amount: number;
+  minimum_investment: number | null;
   progress: number;
   investor_count: number;
   term: string;
@@ -911,8 +912,8 @@ export default function DealsPage() {
                           raisedAmount: deal.raised_amount,
                           progress: deal.progress,
                           interestRate: deal.interest_rate,
-                          monthlyInterest: deal.target_amount * (deal.interest_rate / 100) / 12,
-                          minimumInvestment: 0,
+                          monthlyInterest: (deal.raised_amount || 0) * (deal.interest_rate / 100) / 12,
+                          minimumInvestment: deal.minimum_investment ?? 0,
                           term: deal.term || '',
                           investorCount: deal.dealInvestors?.length ?? deal.investor_count,
                         })}
@@ -961,6 +962,7 @@ export default function DealsPage() {
         isOpen={!!quickViewDeal}
         onClose={() => setQuickViewDeal(null)}
         deal={quickViewDeal}
+        onDealUpdated={() => fetchDeals(companyId)}
       />
     </>
   );

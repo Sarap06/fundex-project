@@ -10,7 +10,6 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
-import { ChevronDown } from 'lucide-react';
 import { formatCurrency } from '@/services/allocation-service';
 
 interface FlowDataPoint {
@@ -74,14 +73,6 @@ export function CapitalFlowChart({ data }: CapitalFlowChartProps) {
             <span className="h-2.5 w-2.5  bg-stone-800" />
             <span className="text-xs text-stone-500">Distributions</span>
           </div>
-          {/* Date range dropdown */}
-          <button
-            type="button"
-            className="flex items-center gap-1.5 border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-50"
-          >
-            Last 6 Months
-            <ChevronDown className="h-3 w-3 text-stone-400" />
-          </button>
         </div>
       </div>
 
@@ -90,12 +81,6 @@ export function CapitalFlowChart({ data }: CapitalFlowChartProps) {
         <p className="text-3xl font-semibold tabular-nums tracking-tight text-stone-900">
           {formatCurrency(totalInflows)}
         </p>
-        {totalInflows > 0 && (
-          <span className="text-sm">
-            <span className="font-medium text-emerald-500">+18%</span>
-            <span className="ml-1 text-stone-400">from last month</span>
-          </span>
-        )}
       </div>
 
       {/* Chart */}

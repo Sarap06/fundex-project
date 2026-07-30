@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
-import { ManageCommsPanel } from '@/components/manage-comms-panel';
 import {
   Send,
   FileText,
@@ -418,7 +417,6 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
   const [previousView, setPreviousView] = useState<ViewState>('channels');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'deals' | 'inbox'>('deals');
-  const [isCommsPanelOpen, setIsCommsPanelOpen] = useState(false);
 
   // State for deal detail view
   const [dealUpdates, setDealUpdates] = useState<BroadcastUpdate[]>([]);
@@ -697,12 +695,6 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               <h1 className="text-2xl font-display font-semibold text-stone-900">Deal Communications</h1>
               <p className="text-sm text-stone-500 mt-1">Official updates from your active deals.</p>
             </div>
-            <button
-              onClick={() => setIsCommsPanelOpen(true)}
-              className="px-4 py-2 bg-white border border-stone-100 text-sm font-medium transition text-stone-700 hover:bg-stone-50 cursor-pointer"
-            >
-              Manage Communications
-            </button>
           </div>
 
           {/* Tab Buttons */}
@@ -1332,7 +1324,6 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
   const baseView = isModalOpen ? previousView : currentView;
 
   return (
-    <>
     <div className="space-y-6 pt-6">
       {baseView === 'channels' && renderChannelsView()}
       {baseView === 'deal-detail' && renderDealDetailView()}
@@ -1341,7 +1332,5 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
       {currentView === 'send-update' && renderSendUpdateView()}
       {currentView === 'schedule-update' && renderScheduleUpdateView()}
     </div>
-    <ManageCommsPanel isOpen={isCommsPanelOpen} onClose={() => setIsCommsPanelOpen(false)} />
-    </>
   );
 }

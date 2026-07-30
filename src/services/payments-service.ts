@@ -218,6 +218,147 @@ export async function revertPayout(
   if (error) throw error;
 }
 
+// ─── OPERATIONS SUMMARY (for the Performance dashboard) ───────────────
+
+export interface PayoutOperationsSummary {
+  nextPayoutDate: string | null;
+  nextPayoutAmount: number; // total expected on the reference cycle date
+  nextPayoutInvestors: number;
+  paidThisCycle: number; // completed payouts on the reference cycle date
+  pending: number; // pending payouts on the reference cycle date
+  overdue: number; // payouts on past dates not marked completed
+  upcomingThisWeek: number; // payouts due within the next 7 days
+  totalPaidYTD: number; // sum of actual amounts of completed payouts paid this year
+  avgPaymentThisCycle: number;
+  onTimeRate: number | null; // completed / (completed + missed), across all resolved payouts
+  lateAlerts: LatePaymentAlert[]; // per-deal overdue payouts (real risk alerts)
+}
+
+export interface LatePaymentAlert {
+  dealId: string;
+  dealName: string;
+  count: number; // number of overdue payout line-items
+  amount: number; // total overdue amount
+  since: string; // oldest overdue payroll date (ISO)
+}
+
+// Add whole days to a 'YYYY-MM-DD' string using local calendar parts.
+function addDaysIso(iso: string, days: number): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return iso;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]) + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Real payout operations summary for a company — the honest replacement for the
+ * allocation-proxy / mock numbers the Performance dashboard used to show.
+ * Computes expected payouts across every scheduled date and overlays saved status.
+ */
+export async function getPayoutOperationsSummary(
+  companyId: string,
+  nowIso: string
+): Promise<PayoutOperationsSummary> {
+  const supabase = getServiceClient();
+  const inputs = await gatherPayoutInputs(companyId);
+
+  // Every scheduled payroll date across the company's deals.
+  const dateSet = new Set<string>();
+  for (const a of inputs) {
+    for (const d of dealPayoutDates(a.dealFirstPayoutDate, a.dealPayoutCycle, a.dealTermMonths)) {
+      dateSet.add(d);
+    }
+  }
+  const dates = Array.from(dateSet).sort();
+
+  // All saved status rows for the company, keyed by investor + date.
+  const { data: saved, error } = await supabase
+    .from('investor_payouts')
+    .select('investor_id, due_date, status, actual_amount, paid_date')
+    .eq('company_id', companyId);
+  if (error) throw error;
+  const savedByKey = new Map((saved ?? []).map((r) => [`${r.investor_id}:${r.due_date}`, r]));
+
+  const today = nowIso.slice(0, 10);
+  const weekEnd = addDaysIso(today, 7);
+  const yearPrefix = today.slice(0, 4);
+
+  // Reference cycle: the next upcoming payroll date, else the most recent past one.
+  const referenceDate = dates.find((d) => d >= today) ?? (dates.length ? dates[dates.length - 1] : null);
+
+  let nextPayoutAmount = 0;
+  let nextPayoutInvestors = 0;
+  let paidThisCycle = 0;
+  let pending = 0;
+  let overdue = 0;
+  let upcomingThisWeek = 0;
+  let totalPaidYTD = 0;
+  let completed = 0;
+  let missed = 0;
+  const lateByDeal = new Map<string, LatePaymentAlert>();
+
+  for (const date of dates) {
+    const payouts = computePayoutsForDate(inputs, date);
+    for (const p of payouts) {
+      const row = savedByKey.get(`${p.investorId}:${date}`);
+      const status = (row?.status as PayoutStatus) ?? 'pending';
+
+      if (date === referenceDate) {
+        nextPayoutInvestors += 1;
+        nextPayoutAmount += p.expectedTotal;
+        if (status === 'completed') paidThisCycle += 1;
+        if (status === 'pending') pending += 1;
+      }
+      if (date < today && status !== 'completed') {
+        overdue += 1;
+        // Accumulate per-deal overdue detail for the risk alerts.
+        for (const line of p.deals) {
+          const a = lateByDeal.get(line.dealId);
+          if (a) {
+            a.count += 1;
+            a.amount += line.amount;
+            if (date < a.since) a.since = date;
+          } else {
+            lateByDeal.set(line.dealId, {
+              dealId: line.dealId,
+              dealName: line.dealName,
+              count: 1,
+              amount: line.amount,
+              since: date,
+            });
+          }
+        }
+      }
+      if (date >= today && date <= weekEnd) upcomingThisWeek += 1;
+
+      if (status === 'completed') {
+        completed += 1;
+        const paid = row?.paid_date ?? date;
+        if (paid.slice(0, 4) === yearPrefix) {
+          totalPaidYTD += row?.actual_amount != null ? Number(row.actual_amount) : p.expectedTotal;
+        }
+      } else if (status === 'missed') {
+        missed += 1;
+      }
+    }
+  }
+
+  const resolved = completed + missed;
+  return {
+    nextPayoutDate: referenceDate,
+    nextPayoutAmount,
+    nextPayoutInvestors,
+    paidThisCycle,
+    pending,
+    overdue,
+    upcomingThisWeek,
+    totalPaidYTD,
+    avgPaymentThisCycle: nextPayoutInvestors > 0 ? nextPayoutAmount / nextPayoutInvestors : 0,
+    onTimeRate: resolved > 0 ? Math.round((completed / resolved) * 1000) / 10 : null,
+    lateAlerts: Array.from(lateByDeal.values()).sort((a, b) => a.since.localeCompare(b.since)),
+  };
+}
+
 export class PaymentsError extends Error {
   status: number;
   constructor(message: string, status = 400) {

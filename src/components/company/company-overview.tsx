@@ -1,7 +1,7 @@
 'use client';
 
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { MoreHorizontal, Zap, Copy, Check } from 'lucide-react';
+import { Zap, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import type { Company } from '@/lib/types';
 
@@ -56,12 +56,6 @@ export function CompanyOverview({ company, stats, memberCount }: CompanyOverview
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-6">
         <h3 className="text-base font-medium text-stone-900">Portfolio</h3>
-        <button
-          type="button"
-          className="p-1 text-stone-300 transition-colors hover:bg-stone-100 hover:text-stone-500"
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
       </div>
 
       {/* Company insight banner */}

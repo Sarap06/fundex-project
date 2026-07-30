@@ -8,6 +8,7 @@ import {
   projectUpcomingPayments,
   weightedAverageAnnualRate,
 } from '@/services/portfolio-metrics';
+import { getPayoutOperationsSummary } from '@/services/payments-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     // ── Fetch deals ────────────────────────────────────────────────────
     const { data: deals, error: dealsError } = await supabase
       .from('deals')
-      .select('id, name, deal_id, status, target_amount, raised_amount, interest_rate, term, close_date, milestone_type, investor_count')
+      .select('id, name, deal_id, status, target_amount, raised_amount, interest_rate, term, close_date, milestone_type, investor_count, document_status')
       .eq('company_id', companyId)
       .order('created_at', { ascending: false });
 
@@ -50,7 +51,6 @@ export async function GET(request: NextRequest) {
     // ── KPI Calculations ──────────────────────────────────────────────
     const activeDeals = allDeals.filter(d => d.status === 'Active');
     const fundedAllocs = allAllocs.filter(a => a.funding_status === 'Funded');
-    const pendingAllocs = allAllocs.filter(a => a.funding_status === 'Pending' || a.funding_status === 'Review');
 
     // Normalized (firm layer):
     // - Total Active Principal = active deployed capital (active deals, funded, confirmed)
@@ -68,27 +68,16 @@ export async function GET(request: NextRequest) {
       d.milestone_type === 'urgent' || d.milestone_type === 'attention'
     ).length;
 
-    // Total Paid Out YTD: monthly_interest × months elapsed this year for funded allocs
-    const yearStart = new Date(new Date().getFullYear(), 0, 1);
     const now = new Date();
-    const totalPaidYTD = fundedAllocs.reduce((s, a) => {
-      if (!a.payment_start_date) return s;
-      const start = new Date(a.payment_start_date) > yearStart ? new Date(a.payment_start_date) : yearStart;
-      const monthsElapsed = Math.max(0, (now.getFullYear() - start.getFullYear()) * 12 + now.getMonth() - start.getMonth());
-      return s + Number(a.monthly_interest || 0) * monthsElapsed;
-    }, 0);
 
-    // ── Payment Operations (schedule-based proxy) ──────────────────────
-    const weekFromNow = new Date();
-    weekFromNow.setDate(weekFromNow.getDate() + 7);
-    const todayStr = now.toISOString().slice(0, 10);
-    const weekStr = weekFromNow.toISOString().slice(0, 10);
+    // ── Payment Operations (real payout data) ──────────────────────────
+    // Sourced from the payments backend — the schedule/allocation proxy and the
+    // hardcoded drill-down that used to live here are gone.
+    const payoutOps = await getPayoutOperationsSummary(companyId, now.toISOString());
+    const totalPaidYTD = payoutOps.totalPaidYTD;
+    const overdue = payoutOps.overdue;
 
-    const overdue = pendingAllocs.filter(a => a.expected_funding_date && a.expected_funding_date < todayStr).length;
-    const upcomingThisWeek = pendingAllocs.filter(a =>
-      a.expected_funding_date && a.expected_funding_date >= todayStr && a.expected_funding_date <= weekStr
-    ).length;
-
+    // Kept only for the contract table's "next payment" column and capital chart.
     const payoutProjection = projectUpcomingPayments(allAllocsForMetrics, { windowDays: 30, now });
     const nextPayoutDate = payoutProjection.nextPaymentDate;
 
@@ -155,15 +144,54 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // ── Portfolio Risk ────────────────────────────────────────────────
-    const latePayments = overdue;
-    const contractsNearingMaturity = activeDeals.filter(d => {
+    // ── Portfolio Risk (real alerts, no hardcoded rows) ────────────────
+    const monthLabel = (iso: string) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+      return m
+        ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleString('en-US', { month: 'short', year: 'numeric' })
+        : iso;
+    };
+    const money = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
+
+    // Late-payment alerts — real overdue payouts, grouped per deal.
+    const lateAlerts = payoutOps.lateAlerts.map((a) => ({
+      id: `late-${a.dealId}`,
+      contract: a.dealName,
+      issue: 'Late Payment',
+      severity: 'High' as const,
+      description: `${a.count} overdue payout${a.count === 1 ? '' : 's'} · ${money(a.amount)} outstanding since ${monthLabel(a.since)}`,
+    }));
+
+    // Missing-document alerts — active deals whose document package is pending.
+    const docAlerts = activeDeals
+      .filter((d) => (d.document_status ?? '').toLowerCase() === 'pending')
+      .map((d) => ({
+        id: `docs-${d.id}`,
+        contract: d.name,
+        issue: 'Missing Documents',
+        severity: 'Medium' as const,
+        description: 'Required documents still pending',
+      }));
+
+    // Contracts nearing maturity — active deals closing within 90 days.
+    const ninetyDays = new Date();
+    ninetyDays.setDate(ninetyDays.getDate() + 90);
+    const maturityDeals = activeDeals.filter((d) => {
       if (!d.close_date) return false;
       const closeDate = new Date(d.close_date);
-      const ninetyDays = new Date();
-      ninetyDays.setDate(ninetyDays.getDate() + 90);
       return closeDate <= ninetyDays && closeDate >= now;
-    }).length;
+    });
+    const maturityAlerts = maturityDeals.map((d) => ({
+      id: `maturity-${d.id}`,
+      contract: d.name,
+      issue: 'Nearing Maturity',
+      severity: 'Low' as const,
+      description: `Closes ${monthLabel(d.close_date as string)}`,
+    }));
+
+    const alerts = [...lateAlerts, ...docAlerts, ...maturityAlerts];
+    const latePayments = lateAlerts.length;
+    const contractsNearingMaturity = maturityAlerts.length;
 
     return NextResponse.json({
       kpis: {
@@ -176,28 +204,29 @@ export async function GET(request: NextRequest) {
         avgRate: Math.round(avgRate * 100) / 100,
       },
       paymentOps: {
-        paidThisCycle: fundedAllocs.length, // still allocation-based until a payments table exists
-        pending: pendingAllocs.length,
-        overdue,
-        upcomingThisWeek,
-        nextPayoutDate,
-        nextPayoutAmount: payoutProjection.totalAmount,
-        activeInvestors: allDeals.reduce((s, d) => s + (d.investor_count ?? 0), 0),
+        paidThisCycle: payoutOps.paidThisCycle,
+        pending: payoutOps.pending,
+        overdue: payoutOps.overdue,
+        upcomingThisWeek: payoutOps.upcomingThisWeek,
+        nextPayoutDate: payoutOps.nextPayoutDate,
+        nextPayoutAmount: payoutOps.nextPayoutAmount,
+        activeInvestors: payoutOps.nextPayoutInvestors,
       },
       capitalFlow,
       risk: {
         latePayments,
-        missingDocuments: allDeals.filter(d => d.milestone_type === 'attention').length,
+        missingDocuments: docAlerts.length,
         contractsNearingMaturity,
+        alerts,
       },
       contractPerformance,
       distributions: {
         totalPaidYTD,
-        nextDistributionDate: nextPayoutDate,
-        nextDistributionAmount: payoutProjection.totalAmount,
-        activeInvestors: allDeals.reduce((s, d) => s + (d.investor_count ?? 0), 0),
-        avgPayment: fundedAllocs.length > 0 ? monthlyInterestDue / fundedAllocs.length : 0,
-        onTimeRate: 98.2, // placeholder until payment records exist
+        nextDistributionDate: payoutOps.nextPayoutDate,
+        nextDistributionAmount: payoutOps.nextPayoutAmount,
+        activeInvestors: payoutOps.nextPayoutInvestors,
+        avgPayment: payoutOps.avgPaymentThisCycle,
+        onTimeRate: payoutOps.onTimeRate,
       },
     });
   } catch (error: any) {

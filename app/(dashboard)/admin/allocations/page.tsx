@@ -23,11 +23,8 @@ import {
   Plus,
   Eye,
   Edit,
-  MessageSquare,
   X,
-  Upload,
   Check,
-  Send,
   User as UserIcon,
   Building2,
   Trash2
@@ -37,17 +34,27 @@ import type { User } from '@supabase/supabase-js';
 interface Allocation {
   id: string;
   investor_name: string;
+  investor_email: string;
   deal_name: string;
   amount: number;
   percentage: number;
   status: 'Funded' | 'Pending' | 'Review';
   commit_date: string;
+  commit_date_raw: string;
   funded_date: string | null;
+  funded_date_raw: string;
   monthly_interest: number;
-  payments_completed: number;
-  total_payments: number;
-  payment_status: 'on-schedule' | 'upcoming' | 'late' | 'pending';
-  deal_funding_progress: number;
+  payment_start_date: string | null;
+  term_length: number | null;
+  annual_rate: number | null;
+  notes: string;
+}
+
+interface EditForm {
+  amount: string;
+  status: 'Funded' | 'Pending' | 'Review';
+  commit_date: string;
+  funded_date: string;
 }
 
 interface StatCard {
@@ -56,6 +63,36 @@ interface StatCard {
   subtext?: string;
   icon: React.ReactNode;
   color?: string;
+}
+
+function addMonthsIso(iso: string, months: number): string {
+  const d = new Date(iso + 'T00:00:00');
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().slice(0, 10);
+}
+
+// Real projected interest schedule for a single allocation, derived from its terms.
+function buildAllocationSchedule(startIso: string | null, termMonths: number | null, monthlyInterest: number) {
+  if (!startIso || !termMonths || termMonths <= 0) return [] as { n: number; dateIso: string; amount: number }[];
+  return Array.from({ length: termMonths }, (_, i) => ({
+    n: i + 1,
+    dateIso: addMonthsIso(startIso, i),
+    amount: monthlyInterest,
+  }));
+}
+
+// Soonest upcoming payout date across a set of allocations (today or later).
+function computeNextPayout(allocs: Allocation[]): string {
+  const today = new Date().toISOString().slice(0, 10);
+  let soonest: string | null = null;
+  for (const a of allocs) {
+    for (const p of buildAllocationSchedule(a.payment_start_date, a.term_length, a.monthly_interest)) {
+      if (p.dateIso >= today && (soonest === null || p.dateIso < soonest)) soonest = p.dateIso;
+    }
+  }
+  return soonest
+    ? new Date(soonest + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    : '-';
 }
 
 export default function AllocationsPage() {
@@ -71,12 +108,12 @@ export default function AllocationsPage() {
   const [isAddAllocationOpen, setIsAddAllocationOpen] = useState(false);
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [messageModalOpen, setMessageModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
   const [deletingAllocationId, setDeletingAllocationId] = useState<string | null>(null);
-  const [messageType, setMessageType] = useState('');
-  const [customMessage, setCustomMessage] = useState('');
+  const [editForm, setEditForm] = useState<EditForm>({ amount: '', status: 'Pending', commit_date: '', funded_date: '' });
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [confirmingFunds, setConfirmingFunds] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebarExpanded');
@@ -141,6 +178,10 @@ export default function AllocationsPage() {
           commit_date,
           expected_funding_date,
           funding_status,
+          payment_start_date,
+          term_length,
+          annual_rate,
+          notes,
           deals(name)
         `)
         .eq('company_id', company_id)
@@ -152,16 +193,17 @@ export default function AllocationsPage() {
         return;
       }
 
-      // Build investor name map from both sources
+      // Build investor name + email map from both sources
       const investorIds = [...new Set((data || []).map((a: any) => a.investor_id))];
       const nameMap = new Map<string, string>();
+      const emailMap = new Map<string, string>();
       if (investorIds.length > 0) {
         const [{ data: manualInvs }, { data: profileInvs }] = await Promise.all([
-          supabase.from('investors').select('id, full_name').in('id', investorIds),
-          supabase.from('user_profiles').select('user_id, full_name').in('user_id', investorIds),
+          supabase.from('investors').select('id, full_name, email').in('id', investorIds),
+          supabase.from('user_profiles').select('user_id, full_name, email').in('user_id', investorIds),
         ]);
-        (manualInvs || []).forEach((i: any) => nameMap.set(i.id, i.full_name));
-        (profileInvs || []).forEach((p: any) => nameMap.set(p.user_id, p.full_name));
+        (manualInvs || []).forEach((i: any) => { nameMap.set(i.id, i.full_name); if (i.email) emailMap.set(i.id, i.email); });
+        (profileInvs || []).forEach((p: any) => { nameMap.set(p.user_id, p.full_name); if (p.email) emailMap.set(p.user_id, p.email); });
       }
 
       if (!data || data.length === 0) {
@@ -206,31 +248,29 @@ export default function AllocationsPage() {
         return;
       }
 
-      // Transform data to match Allocation interface
+      // Transform data to match Allocation interface (all fields real, from DB)
+      const fmtDate = (v: string | null) => v
+        ? new Date(v).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+        : '';
+      const rawDate = (v: string | null) => (v ? String(v).slice(0, 10) : '');
+
       const transformedAllocations: Allocation[] = data.map((alloc: any) => ({
         id: alloc.id,
         investor_name: nameMap.get(alloc.investor_id) || 'Unknown',
+        investor_email: emailMap.get(alloc.investor_id) || '',
         deal_name: alloc.deals?.name || 'Unknown',
         amount: Number(alloc.allocation_amount) || 0,
         percentage: alloc.allocation_percentage || 0,
         status: alloc.funding_status || 'Pending',
-        commit_date: new Date(alloc.commit_date).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        }),
-        funded_date: alloc.funding_status === 'Funded'
-          ? new Date(alloc.expected_funding_date).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            })
-          : null,
+        commit_date: fmtDate(alloc.commit_date),
+        commit_date_raw: rawDate(alloc.commit_date),
+        funded_date: alloc.funding_status === 'Funded' ? fmtDate(alloc.expected_funding_date) : null,
+        funded_date_raw: rawDate(alloc.expected_funding_date),
         monthly_interest: Number(alloc.monthly_interest) || 0,
-        payments_completed: 0,
-        total_payments: 12,
-        payment_status: 'pending' as const,
-        deal_funding_progress: 0,
+        payment_start_date: rawDate(alloc.payment_start_date) || null,
+        term_length: alloc.term_length != null ? Number(alloc.term_length) : null,
+        annual_rate: alloc.annual_rate != null ? Number(alloc.annual_rate) : null,
+        notes: alloc.notes || '',
       }));
 
       setAllocations(transformedAllocations);
@@ -281,7 +321,7 @@ export default function AllocationsPage() {
         },
         nextPayout: {
           label: 'Next Payout Date',
-          value: 'Aug 1, 2026',
+          value: computeNextPayout(transformedAllocations),
           icon: <Calendar className="text-stone-400" size={24} />,
         },
       });
@@ -301,21 +341,6 @@ export default function AllocationsPage() {
         return <AlertCircle className="size-4 text-stone-500" />;
       default:
         return null;
-    }
-  };
-
-  const getPaymentProgressColor = (status: string) => {
-    switch (status) {
-      case 'on-schedule':
-        return 'bg-fundex-gold';
-      case 'upcoming':
-        return 'bg-amber-500';
-      case 'late':
-        return 'bg-red-600';
-      case 'pending':
-        return 'bg-stone-300';
-      default:
-        return 'bg-stone-300';
     }
   };
 
@@ -339,14 +364,62 @@ export default function AllocationsPage() {
 
   const handleEditAllocation = (allocation: Allocation) => {
     setSelectedAllocation(allocation);
+    setEditForm({
+      amount: String(allocation.amount || ''),
+      status: allocation.status,
+      commit_date: allocation.commit_date_raw,
+      funded_date: allocation.funded_date_raw,
+    });
     setEditModalOpen(true);
   };
 
-  const handleMessageInvestor = (allocation: Allocation) => {
-    setSelectedAllocation(allocation);
-    setMessageType('');
-    setCustomMessage('');
-    setMessageModalOpen(true);
+  const patchAllocation = async (id: string, body: Record<string, unknown>) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { alert('Your session expired. Please log in again.'); return false; }
+    const response = await fetch(`/api/allocations/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify(body),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || !result?.success) {
+      alert(result?.message || 'Failed to update allocation.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedAllocation) return;
+    setSavingEdit(true);
+    try {
+      const body: Record<string, unknown> = { funding_status: editForm.status };
+      const amt = parseFloat(editForm.amount);
+      if (!Number.isNaN(amt)) body.allocation_amount = amt;
+      if (editForm.commit_date) body.commit_date = editForm.commit_date;
+      if (editForm.funded_date) body.expected_funding_date = editForm.funded_date;
+      const ok = await patchAllocation(selectedAllocation.id, body);
+      if (ok) {
+        setEditModalOpen(false);
+        await loadAllocationsData();
+      }
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleConfirmFunds = async () => {
+    if (!selectedAllocation) return;
+    setConfirmingFunds(true);
+    try {
+      const ok = await patchAllocation(selectedAllocation.id, { funding_status: 'Funded' });
+      if (ok) {
+        setViewDrawerOpen(false);
+        await loadAllocationsData();
+      }
+    } finally {
+      setConfirmingFunds(false);
+    }
   };
 
   const handlePaymentSchedule = (allocation: Allocation) => {
@@ -385,25 +458,6 @@ export default function AllocationsPage() {
       alert('Failed to delete allocation.');
     } finally {
       setDeletingAllocationId(null);
-    }
-  };
-
-  const getMessageTemplate = (type: string) => {
-    if (!selectedAllocation) return '';
-    const name = selectedAllocation.investor_name;
-    const amount = `$${(selectedAllocation.amount / 1000000).toFixed(2)}M`;
-    const deal = selectedAllocation.deal_name;
-    const interest = `$${(selectedAllocation.monthly_interest / 1000).toFixed(1)}K`;
-
-    switch (type) {
-      case 'request-funding':
-        return `Dear ${name},\n\nThis is a friendly reminder that your allocation of ${amount} for ${deal} is pending funding.\n\nPlease transfer funds at your earliest convenience.\n\nThank you,\nFundex Team`;
-      case 'payment-confirmation':
-        return `Dear ${name},\n\nWe are pleased to confirm that your payment of ${interest} for ${deal} has been processed successfully.\n\nThank you for your continued investment.\n\nBest regards,\nFundex Team`;
-      case 'reminder':
-        return `Dear ${name},\n\nThis is a reminder about your allocation for ${deal}.\n\nAmount: ${amount}\nMonthly Interest: ${interest}\n\nPlease contact us if you have any questions.\n\nBest regards,\nFundex Team`;
-      default:
-        return '';
     }
   };
 
@@ -603,7 +657,6 @@ export default function AllocationsPage() {
                       <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Amount</th>
                       <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">% of Deal</th>
                       <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Monthly Interest</th>
-                      <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Payment Progress</th>
                       <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Status</th>
                       <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Commit Date</th>
                       <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Funded Date</th>
@@ -630,19 +683,6 @@ export default function AllocationsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <span className="font-medium text-stone-900">${(allocation.monthly_interest / 1000).toFixed(1)}K</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="space-y-1 min-w-[120px]">
-                            <div className="text-sm font-medium text-stone-900">
-                              {allocation.payments_completed} / {allocation.total_payments}
-                            </div>
-                            <div className="w-full h-2 bg-stone-100 overflow-hidden">
-                              <div
-                                className={`h-full transition-all ${getPaymentProgressColor(allocation.payment_status)}`}
-                                style={{ width: `${(allocation.payments_completed / allocation.total_payments) * 100}%` }}
-                              />
-                            </div>
-                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
@@ -673,13 +713,6 @@ export default function AllocationsPage() {
                               onClick={() => handleEditAllocation(allocation)}
                             >
                               <Edit className="size-4" />
-                            </button>
-                            <button
-                              className="h-8 w-8 inline-flex items-center justify-center rounded text-stone-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                              title="Message Investor"
-                              onClick={() => handleMessageInvestor(allocation)}
-                            >
-                              <MessageSquare className="size-4" />
                             </button>
                             <button
                               className="h-8 w-8 inline-flex items-center justify-center rounded text-stone-500 hover:text-purple-600 hover:bg-purple-50 transition-colors"
@@ -749,7 +782,7 @@ export default function AllocationsPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-stone-900">{selectedAllocation.investor_name}</p>
-                      <p className="text-sm text-stone-500">investor@example.com</p>
+                      <p className="text-sm text-stone-500">{selectedAllocation.investor_email || '—'}</p>
                     </div>
                   </div>
                 </div>
@@ -808,86 +841,31 @@ export default function AllocationsPage() {
                 </div>
               </div>
 
-              {/* Payment Progress */}
+              {/* Notes */}
               <div>
-                <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-3">Payment Progress</h3>
+                <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-3">Notes</h3>
                 <div className="fdx-card p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm text-stone-600">Completed</p>
-                    <p className="font-semibold text-stone-900">
-                      {selectedAllocation.payments_completed} / {selectedAllocation.total_payments}
-                    </p>
-                  </div>
-                  <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${getPaymentProgressColor(selectedAllocation.payment_status)}`}
-                      style={{ width: `${(selectedAllocation.payments_completed / selectedAllocation.total_payments) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Recent Payment History */}
-              <div>
-                <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-3">Recent Payment History</h3>
-                <div className="fdx-card p-4 space-y-3">
-                  {selectedAllocation.payments_completed > 0 ? (
-                    Array.from({ length: Math.min(selectedAllocation.payments_completed, 3) }).map((_, i) => (
-                      <div key={i} className="flex items-center justify-between py-2 border-b border-stone-100 last:border-0">
-                        <div>
-                          <p className="font-medium text-stone-900">Payment #{i + 1}</p>
-                          <p className="text-xs text-stone-500">Mar {i + 1}, 2026</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-stone-900">${(selectedAllocation.monthly_interest / 1000).toFixed(1)}K</p>
-                          <span className="fdx-badge fdx-badge-active text-xs">Paid</span>
-                        </div>
-                      </div>
-                    ))
+                  {selectedAllocation.notes ? (
+                    <p className="text-sm text-stone-700 whitespace-pre-wrap">{selectedAllocation.notes}</p>
                   ) : (
-                    <p className="text-sm text-stone-500 text-center py-2">No payments yet</p>
+                    <p className="text-sm text-stone-400 italic">No notes for this allocation.</p>
                   )}
                 </div>
               </div>
 
-              {/* Notes */}
-              <div>
-                <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-3">Notes</h3>
-                <textarea
-                  placeholder="Add notes about this allocation..."
-                  className="fdx-input w-full min-h-[100px] p-3"
-                  defaultValue="No issues. Payments are on schedule."
-                />
-              </div>
-
               {/* Quick Actions */}
-              <div className="sticky bottom-0 bg-white border-t border-stone-200 pt-4 space-y-2">
-                {selectedAllocation.status === 'Pending' && (
+              {selectedAllocation.status === 'Pending' && (
+                <div className="sticky bottom-0 bg-white border-t border-stone-200 pt-4">
                   <button
-                    className="fdx-btn-primary w-full flex items-center justify-center gap-2 py-2"
-                    onClick={() => setViewDrawerOpen(false)}
+                    className="fdx-btn-primary w-full flex items-center justify-center gap-2 py-2 disabled:opacity-60"
+                    onClick={handleConfirmFunds}
+                    disabled={confirmingFunds}
                   >
                     <Check className="size-4" />
-                    Confirm Funds Received
-                  </button>
-                )}
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    className="fdx-btn-outline flex items-center justify-center gap-2 py-2"
-                    onClick={() => {
-                      setViewDrawerOpen(false);
-                      handleMessageInvestor(selectedAllocation);
-                    }}
-                  >
-                    <Send className="size-4" />
-                    Send Message
-                  </button>
-                  <button className="fdx-btn-outline flex items-center justify-center gap-2 py-2">
-                    <Upload className="size-4" />
-                    Upload Proof
+                    {confirmingFunds ? 'Confirming…' : 'Confirm Funds Received'}
                   </button>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -912,19 +890,23 @@ export default function AllocationsPage() {
 
               <div>
                 <label className="text-sm font-medium text-stone-700">Investor</label>
-                <input defaultValue={selectedAllocation.investor_name} className="fdx-input w-full mt-1.5" />
+                <input value={selectedAllocation.investor_name} disabled className="fdx-input w-full mt-1.5 bg-stone-50" />
               </div>
 
               <div>
                 <label className="text-sm font-medium text-stone-700">Deal</label>
-                <input defaultValue={selectedAllocation.deal_name} className="fdx-input w-full mt-1.5" />
+                <input value={selectedAllocation.deal_name} disabled className="fdx-input w-full mt-1.5 bg-stone-50" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-stone-700">Amount</label>
-                  <input defaultValue={`$${(selectedAllocation.amount / 1000000).toFixed(2)}M`} className="fdx-input w-full mt-1.5" />
-                  <p className="text-xs text-stone-500 mt-1">Updating amount will recalculate % of deal</p>
+                  <label className="text-sm font-medium text-stone-700">Amount ($)</label>
+                  <input
+                    type="number"
+                    value={editForm.amount}
+                    onChange={(e) => setEditForm((f) => ({ ...f, amount: e.target.value }))}
+                    className="fdx-input w-full mt-1.5"
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-stone-700">% of Deal</label>
@@ -934,7 +916,11 @@ export default function AllocationsPage() {
 
               <div>
                 <label className="text-sm font-medium text-stone-700">Status</label>
-                <select defaultValue={selectedAllocation.status} className="fdx-input w-full mt-1.5">
+                <select
+                  value={editForm.status}
+                  onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value as EditForm['status'] }))}
+                  className="fdx-input w-full mt-1.5"
+                >
                   <option value="Pending">Pending</option>
                   <option value="Funded">Funded</option>
                   <option value="Review">In Review</option>
@@ -944,16 +930,28 @@ export default function AllocationsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-stone-700">Commit Date</label>
-                  <input type="date" defaultValue="2026-03-01" className="fdx-input w-full mt-1.5" />
+                  <input
+                    type="date"
+                    value={editForm.commit_date}
+                    onChange={(e) => setEditForm((f) => ({ ...f, commit_date: e.target.value }))}
+                    className="fdx-input w-full mt-1.5"
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-stone-700">Funded Date</label>
-                  <input type="date" defaultValue="2026-03-05" className="fdx-input w-full mt-1.5" />
+                  <input
+                    type="date"
+                    value={editForm.funded_date}
+                    onChange={(e) => setEditForm((f) => ({ ...f, funded_date: e.target.value }))}
+                    className="fdx-input w-full mt-1.5"
+                  />
                 </div>
               </div>
 
               <div className="flex gap-3 pt-4">
-                <button className="fdx-btn-primary flex-1 py-2">Save Changes</button>
+                <button className="fdx-btn-primary flex-1 py-2 disabled:opacity-60" onClick={handleSaveEdit} disabled={savingEdit}>
+                  {savingEdit ? 'Saving…' : 'Save Changes'}
+                </button>
                 <button className="fdx-btn-outline flex-1 py-2" onClick={() => setEditModalOpen(false)}>Cancel</button>
               </div>
             </div>
@@ -961,137 +959,86 @@ export default function AllocationsPage() {
         </div>
       )}
 
-      {/* Message Modal */}
-      {messageModalOpen && selectedAllocation && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setMessageModalOpen(false)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-white border-b border-stone-200 p-6 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-stone-900">Message Investor</h2>
-              <button onClick={() => setMessageModalOpen(false)} className="p-1 hover:bg-stone-100 rounded">
-                <X className="size-5 text-stone-500" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="text-sm font-medium text-stone-700">Message Type</label>
-                <select
-                  value={messageType}
-                  onChange={(e) => {
-                    setMessageType(e.target.value);
-                    setCustomMessage(getMessageTemplate(e.target.value));
-                  }}
-                  className="fdx-input w-full mt-1.5"
-                >
-                  <option value="">Select message type</option>
-                  <option value="request-funding">Request Funding</option>
-                  <option value="payment-confirmation">Send Payment Confirmation</option>
-                  <option value="reminder">Send Reminder</option>
-                  <option value="custom">Custom Message</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-stone-700">Message</label>
-                <textarea
-                  placeholder="Type your message here..."
-                  className="fdx-input w-full mt-1.5 min-h-[200px] p-3"
-                  value={customMessage}
-                  onChange={(e) => setCustomMessage(e.target.value)}
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <button className="fdx-btn-primary flex-1 flex items-center justify-center gap-2 py-2">
-                  <Send className="size-4" />
-                  Send Message
-                </button>
-                <button className="fdx-btn-outline flex-1 py-2" onClick={() => setMessageModalOpen(false)}>Cancel</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Payment Schedule Modal */}
-      {paymentModalOpen && selectedAllocation && (
+      {/* Payment Schedule Modal — real projected interest schedule from allocation terms */}
+      {paymentModalOpen && selectedAllocation && (() => {
+        const schedule = buildAllocationSchedule(
+          selectedAllocation.payment_start_date,
+          selectedAllocation.term_length,
+          selectedAllocation.monthly_interest,
+        );
+        const todayIso = new Date().toISOString().slice(0, 10);
+        const totalInterest = schedule.reduce((s, p) => s + p.amount, 0);
+        return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setPaymentModalOpen(false)}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-stone-200 p-6 flex items-center justify-between z-10">
-              <h2 className="text-xl font-semibold text-stone-900">Payment Schedule</h2>
+              <div>
+                <h2 className="text-xl font-semibold text-stone-900">Projected Payment Schedule</h2>
+                <p className="text-sm text-stone-500 mt-0.5">Interest projection based on this allocation&apos;s terms</p>
+              </div>
               <button onClick={() => setPaymentModalOpen(false)} className="p-1 hover:bg-stone-100 rounded">
                 <X className="size-5 text-stone-500" />
               </button>
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="fdx-card p-4">
-                  <p className="text-sm text-stone-600">Total Payments</p>
-                  <p className="text-2xl font-semibold text-stone-900 mt-1">{selectedAllocation.total_payments}</p>
+              {schedule.length === 0 ? (
+                <div className="py-10 text-center text-sm text-stone-500">
+                  No schedule available — this allocation has no payment start date or term set.
                 </div>
-                <div className="fdx-card p-4">
-                  <p className="text-sm text-stone-600">Completed</p>
-                  <p className="text-2xl font-semibold text-emerald-600 mt-1">{selectedAllocation.payments_completed}</p>
-                </div>
-                <div className="fdx-card p-4">
-                  <p className="text-sm text-stone-600">Remaining</p>
-                  <p className="text-2xl font-semibold text-amber-600 mt-1">{selectedAllocation.total_payments - selectedAllocation.payments_completed}</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {Array.from({ length: selectedAllocation.total_payments }).map((_, i) => {
-                  const isPaid = i < selectedAllocation.payments_completed;
-                  const isUpcoming = i === selectedAllocation.payments_completed;
-
-                  return (
-                    <div key={i} className="flex items-center justify-between p-4 bg-stone-50 rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          isPaid ? 'bg-emerald-100' : isUpcoming ? 'bg-amber-100' : 'bg-stone-200'
-                        }`}>
-                          {isPaid ? (
-                            <CheckCircle2 className="size-5 text-emerald-600" />
-                          ) : isUpcoming ? (
-                            <Clock className="size-5 text-amber-600" />
-                          ) : (
-                            <span className="text-sm font-semibold text-stone-500">{i + 1}</span>
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium text-stone-900">Payment #{i + 1}</p>
-                          <p className="text-sm text-stone-500">Apr {i + 1}, 2026</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <p className="font-semibold text-stone-900">${(selectedAllocation.monthly_interest / 1000).toFixed(1)}K</p>
-                        {isPaid ? (
-                          <span className="fdx-badge fdx-badge-active text-xs">Paid</span>
-                        ) : isUpcoming ? (
-                          <span className="fdx-badge fdx-badge-pending text-xs">Upcoming</span>
-                        ) : (
-                          <span className="fdx-badge fdx-badge-info text-xs">Scheduled</span>
-                        )}
-                        {!isPaid && (
-                          <button className="fdx-btn-outline text-xs px-2 py-1">Mark as Paid</button>
-                        )}
-                      </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="fdx-card p-4">
+                      <p className="text-sm text-stone-600">Total Payments</p>
+                      <p className="text-2xl font-semibold text-stone-900 mt-1">{schedule.length}</p>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="fdx-card p-4">
+                      <p className="text-sm text-stone-600">Monthly Interest</p>
+                      <p className="text-2xl font-semibold text-purple-600 mt-1">${(selectedAllocation.monthly_interest / 1000).toFixed(1)}K</p>
+                    </div>
+                    <div className="fdx-card p-4">
+                      <p className="text-sm text-stone-600">Total Interest</p>
+                      <p className="text-2xl font-semibold text-stone-900 mt-1">${(totalInterest / 1000).toFixed(1)}K</p>
+                    </div>
+                  </div>
 
-              <div className="pt-4 border-t border-stone-200">
-                <button className="fdx-btn-outline w-full flex items-center justify-center gap-2 py-2">
-                  <Upload className="size-4" />
-                  Upload Payment Proof
-                </button>
-              </div>
+                  <div className="space-y-3">
+                    {schedule.map((p) => {
+                      const isPast = p.dateIso < todayIso;
+                      return (
+                        <div key={p.n} className="flex items-center justify-between p-4 bg-stone-50 rounded-lg">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-stone-200">
+                              <span className="text-sm font-semibold text-stone-500">{p.n}</span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-stone-900">Payment #{p.n}</p>
+                              <p className="text-sm text-stone-500">
+                                {new Date(p.dateIso + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <p className="font-semibold text-stone-900">${(p.amount / 1000).toFixed(1)}K</p>
+                            <span className={`fdx-badge text-xs ${isPast ? 'fdx-badge-info' : 'fdx-badge-pending'}`}>
+                              {isPast ? 'Elapsed' : 'Scheduled'}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-stone-400 pt-2">
+                    Payment tracking and marking payouts as paid is handled on the Payments page.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
     </>
   );
 }

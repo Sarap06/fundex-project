@@ -13,7 +13,6 @@ import {
   ChevronRight,
   ArrowLeft,
   Search,
-  ChevronDown,
 } from 'lucide-react';
 import { StaggerContainer } from '@/components/motion-wrapper';
 import { CompanyStatCard } from '@/components/company/stat-card';
@@ -357,13 +356,6 @@ export function Broadcasts({
             <p className="mt-1 text-sm text-stone-400">Today is {getTodayString()}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              className="flex items-center gap-1.5 border border-stone-200 bg-white px-4 py-2 text-sm font-normal text-stone-600 transition-colors hover:bg-stone-50"
-            >
-              Last Month
-              <ChevronDown className="h-3.5 w-3.5 text-stone-400" />
-            </button>
             {isAdmin && (
               <button
                 type="button"
@@ -429,14 +421,6 @@ export function Broadcasts({
               >
                 All
               </TabsTrigger>
-              {!isAdmin && (
-                <TabsTrigger
-                  value="unread"
-                  className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 text-sm font-normal text-stone-400 shadow-none hover:text-stone-600 data-[state=active]:border-fundex-gold data-[state=active]:bg-transparent data-[state=active]:text-stone-900 data-[state=active]:shadow-none"
-                >
-                  Unread
-                </TabsTrigger>
-              )}
             </TabsList>
           </div>
 

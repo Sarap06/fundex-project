@@ -2,12 +2,8 @@
 
 import {
   Banknote,
-  Bell,
   BriefcaseBusiness,
   ChevronDown,
-  DollarSign,
-  Download,
-  FileText,
   Filter,
   Loader2,
   PieChart,
@@ -203,89 +199,57 @@ function InvestmentDetailsDrawer({ open, onClose, investment }: { open: boolean;
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-7">
 
-            {/* Payments Tab */}
+            {/* Payments Tab — projected schedule derived from the position's own terms */}
             {drawerTab === 'payments' && (
               <div className="space-y-4">
-                <h3 className="text-sm font-medium text-stone-900">Payment Schedule</h3>
-                <div className="space-y-2">
-                  {Array.from({ length: investment.totalPayments }).map((_, i) => {
-                    const isPaid = i < investment.paymentsCompleted;
-                    const isNext = i === investment.paymentsCompleted;
-                    const startDate = new Date(investment.commitDate);
-                    const payDate = new Date(startDate);
-                    payDate.setMonth(payDate.getMonth() + i);
-                    return (
-                      <div key={i} className={`flex items-center justify-between p-3 rounded-lg border ${isPaid ? 'bg-emerald-50/50 border-emerald-100' : isNext ? 'bg-amber-50/50 border-amber-100' : 'bg-stone-50 border-stone-100'}`}>
-                        <div className="flex items-center gap-3">
-                          <div className={`size-8 rounded-full flex items-center justify-center text-xs font-bold ${isPaid ? 'bg-emerald-100 text-emerald-700' : isNext ? 'bg-amber-100 text-amber-700' : 'bg-stone-200 text-stone-500'}`}>
-                            {isPaid ? '✓' : i + 1}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-stone-900">Payment #{i + 1}</p>
-                            <p className="text-xs text-stone-500">{payDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className={`text-sm font-semibold tabular-nums ${isPaid ? 'text-emerald-700' : 'text-stone-900'}`}>{formatCurrency(investment.monthlyInterest)}</p>
-                          <span className={`text-[10px] font-medium px-1.5 py-0.5 ${isPaid ? 'bg-emerald-100 text-emerald-700' : isNext ? 'bg-amber-100 text-amber-700' : 'bg-stone-100 text-stone-500'}`}>
-                            {isPaid ? 'Paid' : isNext ? 'Upcoming' : 'Scheduled'}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div>
+                  <h3 className="text-sm font-medium text-stone-900">Projected payment schedule</h3>
+                  <p className="mt-1 text-xs text-stone-500">Projection based on your commitment terms — actual payment dates and amounts may vary.</p>
                 </div>
+                {investment.commitDate && investment.monthlyInterest > 0 && investment.totalPayments > 0 ? (
+                  <div className="space-y-2">
+                    {Array.from({ length: investment.totalPayments }).map((_, i) => {
+                      const startDate = new Date(investment.commitDate);
+                      const payDate = new Date(startDate);
+                      payDate.setMonth(payDate.getMonth() + i);
+                      return (
+                        <div key={i} className="flex items-center justify-between p-3 rounded-lg border bg-stone-50 border-stone-100">
+                          <div className="flex items-center gap-3">
+                            <div className="size-8 rounded-full flex items-center justify-center text-xs font-bold bg-stone-200 text-stone-500">
+                              {i + 1}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-stone-900">Payment #{i + 1}</p>
+                              <p className="text-xs text-stone-500">{payDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold tabular-nums text-stone-900">{formatCurrency(investment.monthlyInterest)}</p>
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 bg-stone-100 text-stone-500">Projected</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-stone-400">No payment schedule available</p>
+                )}
               </div>
             )}
 
-            {/* Documents Tab */}
+            {/* Documents Tab — no real per-investment document source yet */}
             {drawerTab === 'documents' && (
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-stone-900">Related Documents</h3>
-                {[
-                  { name: `Subscription Agreement - ${investment.dealName}`, date: formatDate(investment.commitDate) },
-                  { name: `${investment.dealName} - Deal Summary`, date: formatDate(investment.commitDate) },
-                  { name: `${investment.dealName} - Payment Schedule`, date: formatDate(investment.commitDate) },
-                ].map((doc, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 border border-stone-100 rounded-lg hover:border-fundex-gold/40 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <div className="size-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                        <FileText className="size-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-stone-900">{doc.name}</p>
-                        <p className="text-xs text-stone-500">Uploaded {doc.date}</p>
-                      </div>
-                    </div>
-                    <button className="p-2 text-stone-400 hover:text-stone-600">
-                      <Download className="size-4" />
-                    </button>
-                  </div>
-                ))}
+                <p className="text-sm text-stone-400">No documents available</p>
               </div>
             )}
 
-            {/* Activity Tab */}
+            {/* Activity Tab — no real per-investment activity feed yet */}
             {drawerTab === 'activity' && (
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-stone-900">Activity Updates</h3>
-                {[
-                  { type: 'payment', title: 'Payment Processed', desc: `Monthly interest payment of ${formatCurrency(investment.monthlyInterest)} sent to your account.`, date: 'Jul 1, 2026', time: '9:30 AM' },
-                  { type: 'update', title: 'Deal Update', desc: `${investment.dealName} remains on schedule. All borrower obligations current.`, date: 'Jun 15, 2026', time: '2:00 PM' },
-                  { type: 'document', title: 'Document Uploaded', desc: 'Monthly performance report is now available.', date: 'Jun 1, 2026', time: '10:15 AM' },
-                  { type: 'payment', title: 'Investment Confirmed', desc: `Your investment of ${formatCurrency(investment.investedAmount)} has been confirmed.`, date: formatDate(investment.commitDate), time: '2:15 PM' },
-                ].map((item, i) => (
-                  <div key={i} className="flex gap-3 p-4 border border-stone-100 rounded-lg">
-                    <div className={`size-9 shrink-0 rounded-lg flex items-center justify-center ${item.type === 'payment' ? 'bg-emerald-50 text-emerald-600' : item.type === 'document' ? 'bg-blue-50 text-blue-600' : 'bg-fundex-cream text-fundex-forest'}`}>
-                      {item.type === 'payment' ? <DollarSign className="size-4" /> : item.type === 'document' ? <FileText className="size-4" /> : <Bell className="size-4" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-stone-900">{item.title}</p>
-                      <p className="text-xs text-stone-600 mt-0.5">{item.desc}</p>
-                      <p className="text-[10px] text-stone-400 mt-1">{item.date} &bull; {item.time}</p>
-                    </div>
-                  </div>
-                ))}
+                <p className="text-sm text-stone-400">No activity yet</p>
               </div>
             )}
 
@@ -354,20 +318,6 @@ function InvestmentDetailsDrawer({ open, onClose, investment }: { open: boolean;
                 </div>
               </div>
             </div>}
-
-            {/* Action Buttons — visible on all tabs when investment is active */}
-            {(investment.fundingStatus === 'Funded' && investment.dealStatus === 'Active') && (
-              <div className="grid grid-cols-2 gap-3 pt-6 mt-6 border-t border-stone-100">
-                <button className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium border border-fundex-gold/30 text-fundex-forest bg-fundex-cream/30 hover:bg-fundex-cream/60 transition-colors">
-                  <svg className="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
-                  Reinvest at Maturity
-                </button>
-                <button className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium border border-red-200 text-red-700 hover:bg-red-50 transition-colors">
-                  <svg className="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-                  Request Withdrawal
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -574,7 +524,6 @@ function MaturingTable({ positions }: { positions: Investment[] }) {
               <th className="whitespace-nowrap px-4 py-3">Amount</th>
               <th className="whitespace-nowrap px-4 py-3">Maturity Date</th>
               <th className="whitespace-nowrap px-4 py-3">Status</th>
-              <th className="whitespace-nowrap px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-50">
@@ -590,16 +539,6 @@ function MaturingTable({ positions }: { positions: Investment[] }) {
                 <td className="whitespace-nowrap px-4 py-4 tabular-nums text-stone-700">{formatDate(pos.maturityDate)}</td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <span className="inline-flex bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-700">Maturing Soon</span>
-                </td>
-                <td className="whitespace-nowrap px-4 py-4 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button type="button" className="bg-fundex-forest px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-fundex-green">
-                      Reinvest
-                    </button>
-                    <button type="button" className="border border-fundex-gold/30 bg-white px-3 py-1.5 text-xs font-medium text-fundex-forest shadow-sm transition hover:bg-stone-50">
-                      Withdraw
-                    </button>
-                  </div>
                 </td>
               </tr>
             ))}

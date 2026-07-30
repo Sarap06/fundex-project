@@ -488,6 +488,9 @@ export default function InvestorsPage() {
     else if (filters.sortBy === 'name_az') result = [...result].sort((a, b) => a.full_name.localeCompare(b.full_name));
     else if (filters.sortBy === 'name_za') result = [...result].sort((a, b) => b.full_name.localeCompare(a.full_name));
     else if (filters.sortBy === 'oldest') result = [...result].sort((a, b) => (a.onboarded_date_raw ?? '').localeCompare(b.onboarded_date_raw ?? ''));
+    else if (filters.sortBy === 'recently_onboarded') result = [...result].sort((a, b) => (b.onboarded_date_raw ?? '').localeCompare(a.onboarded_date_raw ?? ''));
+    else if (filters.sortBy === 'highest_return') result = [...result].sort((a, b) => (b.average_return ?? 0) - (a.average_return ?? 0));
+    else if (filters.sortBy === 'most_active') result = [...result].sort((a, b) => b.number_of_investments - a.number_of_investments);
 
     return result;
   })();

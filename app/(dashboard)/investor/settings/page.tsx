@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Loader2, Lock, User } from 'lucide-react';
+import { Loader2, Lock, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -16,12 +16,6 @@ export default function InvestorSettingsPage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  // Notification preferences (local state — would need a table for persistence)
-  const [emailNotifs, setEmailNotifs] = useState(true);
-  const [paymentNotifs, setPaymentNotifs] = useState(true);
-  const [dealUpdates, setDealUpdates] = useState(true);
-  const [marketingComms, setMarketingComms] = useState(false);
 
   // Password fields
   const [currentPassword, setCurrentPassword] = useState('');
@@ -188,58 +182,6 @@ export default function InvestorSettingsPage() {
             className="bg-fundex-gold px-6 py-2.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90 disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-      </section>
-
-      {/* Notification Preferences */}
-      <section className="border border-stone-100 bg-white p-6 shadow-sm md:p-8">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center bg-blue-50 text-blue-600">
-            <Bell className="h-5 w-5" />
-          </div>
-          <h2 className="text-lg font-medium text-stone-900">Notification Preferences</h2>
-        </div>
-
-        <div className="space-y-4">
-          {[
-            { label: 'Email Notifications', desc: 'Receive email updates about your investments', checked: emailNotifs, onChange: setEmailNotifs },
-            { label: 'Payment Notifications', desc: 'Get notified when payments are received', checked: paymentNotifs, onChange: setPaymentNotifs },
-            { label: 'Deal Updates', desc: 'Receive updates about deals you are invested in', checked: dealUpdates, onChange: setDealUpdates },
-            { label: 'Marketing Communications', desc: 'Receive newsletters and promotional content', checked: marketingComms, onChange: setMarketingComms },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className="flex items-center justify-between border border-stone-100 bg-white px-5 py-4"
-            >
-              <div>
-                <p className="text-sm font-medium text-stone-900">{item.label}</p>
-                <p className="mt-0.5 text-sm text-stone-500">{item.desc}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => item.onChange(!item.checked)}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
-                  item.checked ? 'bg-fundex-forest' : 'bg-stone-200'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                    item.checked ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-6 flex justify-end">
-          <button
-            type="button"
-            onClick={() => toast.success('Preferences saved')}
-            className="bg-fundex-gold px-6 py-2.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90"
-          >
-            Save Preferences
           </button>
         </div>
       </section>

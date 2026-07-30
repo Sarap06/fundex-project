@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  AlertCircle, Archive, ArrowLeft, Bell, Calendar, CheckCircle2, Clock,
-  FileDown, FileText, Link2, Loader2, Megaphone, Pause, Radio, Send,
-  Settings, Shield, Trash2, Upload, Users, X, Download, Eye, MessageSquare,
+  AlertCircle, ArrowLeft, Calendar, CheckCircle2, Clock,
+  FileText, Loader2, Megaphone, Send,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -107,7 +106,8 @@ export default function BroadcastDetailPage() {
   const [linkedDocsOpen, setLinkedDocsOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [pendingActionsOpen, setPendingActionsOpen] = useState(false);
-  const [manageChannelOpen, setManageChannelOpen] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({ title: '', message: '', date: '', time: '' });
+  const [scheduling, setScheduling] = useState(false);
 
   // Acknowledgment filter
   const [statusFilter, setStatusFilter] = useState<'all' | 'opened' | 'pending' | 'acknowledged'>('all');
@@ -116,16 +116,10 @@ export default function BroadcastDetailPage() {
     { name: string; category: string; uploadDate: string; status: 'uploaded' | 'pending' | 'missing'; size: string }[]
   >([]);
 
-  // Manage channel form states
-  const [channelStatus, setChannelStatus] = useState<'active' | 'paused' | 'archived'>('active');
-  const [whoCanSend, setWhoCanSend] = useState<'admin-only' | 'designated-users' | 'all-users'>('admin-only');
-  const [investorsCanReply, setInvestorsCanReply] = useState(false);
-  const [requireAckByDefault, setRequireAckByDefault] = useState(true);
-  const [internalNotifications, setInternalNotifications] = useState(true);
-  const [autoReminders, setAutoReminders] = useState(true);
+  // New updates require acknowledgment by default
+  const requireAckByDefault = true;
 
-  useEffect(() => {
-    (async () => {
+  const loadData = useCallback(async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) { router.push('/auth/login'); return; }
@@ -142,7 +136,7 @@ export default function BroadcastDetailPage() {
         // Fetch deal
         const { data: dealData } = await supabase
           .from('deals')
-          .select('id, deal_id, name, status, target_amount, interest_rate, term, investor_count, collateral, collateral_value, start_date, maturity_date, first_payout')
+          .select('id, deal_id, name, status, target_amount, interest_rate, term, investor_count, collateral_type, estimated_property_value, first_payout_date')
           .eq('id', dealId)
           .eq('company_id', companyId)
           .single();
@@ -158,11 +152,11 @@ export default function BroadcastDetailPage() {
           interestRate: Number(dealData.interest_rate || 0),
           term: dealData.term || '',
           investorCount: dealData.investor_count || 0,
-          collateral: dealData.collateral || '',
-          collateralValue: Number(dealData.collateral_value || 0),
-          startDate: dealData.start_date || '',
-          maturityDate: dealData.maturity_date || '',
-          firstPayout: dealData.first_payout || '',
+          collateral: dealData.collateral_type || '',
+          collateralValue: Number(dealData.estimated_property_value || 0),
+          startDate: '',
+          maturityDate: '',
+          firstPayout: dealData.first_payout_date || '',
         });
 
         // Fetch broadcast updates
@@ -305,8 +299,60 @@ export default function BroadcastDetailPage() {
       } finally {
         setLoading(false);
       }
-    })();
   }, [dealId, router]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const handleSendUpdate = async (data: { title: string; message: string; audience: string; sendEmail: boolean }) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { alert('Your session expired. Please log in again.'); return; }
+      const res = await fetch(`/api/broadcasts/deals/${dealId}/send-update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ title: data.title, message: data.message, requireAcknowledgment: requireAckByDefault }),
+      });
+      const result = await res.json().catch(() => null);
+      if (!res.ok) { alert(result?.error || 'Failed to send update.'); return; }
+      setSendUpdateOpen(false);
+      await loadData();
+    } catch (err) {
+      console.error('[BROADCAST_DETAIL] send update error:', err);
+      alert('Failed to send update.');
+    }
+  };
+
+  const handleScheduleUpdate = async () => {
+    if (!scheduleForm.title || !scheduleForm.message || !scheduleForm.date || !scheduleForm.time) {
+      alert('Please fill in the title, message, date and time.');
+      return;
+    }
+    setScheduling(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { alert('Your session expired. Please log in again.'); return; }
+      const res = await fetch(`/api/broadcasts/deals/${dealId}/schedule-update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          title: scheduleForm.title,
+          message: scheduleForm.message,
+          scheduledDate: scheduleForm.date,
+          scheduledEstTime: scheduleForm.time,
+        }),
+      });
+      const result = await res.json().catch(() => null);
+      if (!res.ok) { alert(result?.error || 'Failed to schedule update.'); return; }
+      setScheduleForm({ title: '', message: '', date: '', time: '' });
+      setScheduleOpen(false);
+      await loadData();
+    } catch (err) {
+      console.error('[BROADCAST_DETAIL] schedule update error:', err);
+      alert('Failed to schedule update.');
+    } finally {
+      setScheduling(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -363,22 +409,12 @@ export default function BroadcastDetailPage() {
           {/* Info row + Manage button */}
           <div className="flex items-center gap-4 text-sm text-stone-500">
             <span className="font-medium text-stone-900">{deal.investorCount} Investors</span>
-            <span className="text-stone-300">·</span>
-            <span className="text-fundex-forest font-semibold">Admin Only</span>
             {latestUpdate && (
               <>
                 <span className="text-stone-300">·</span>
                 <span>Last update {formatRelative(latestUpdate.sentAt)}</span>
               </>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-2 font-semibold"
-              onClick={() => setManageChannelOpen(true)}
-            >
-              Manage
-            </Button>
           </div>
         </div>
 
@@ -411,11 +447,7 @@ export default function BroadcastDetailPage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-stone-500 mb-2">Published {formatRelative(latestUpdate.sentAt)}</p>
-                  <Button variant="ghost" size="sm" className="text-stone-600 hover:text-stone-900 text-xs h-8 px-3">
-                    <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
-                    View Communication Log
-                  </Button>
+                  <p className="text-sm text-stone-500">Published {formatRelative(latestUpdate.sentAt)}</p>
                 </div>
               </div>
 
@@ -564,9 +596,6 @@ export default function BroadcastDetailPage() {
             <div className="p-6">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="font-bold text-stone-900">Acknowledgment Status</h3>
-                <Button variant="outline" size="sm" className="font-medium">
-                  Send Reminder
-                </Button>
               </div>
 
               {/* Filter Tabs */}
@@ -691,15 +720,8 @@ export default function BroadcastDetailPage() {
                       </div>
                       <p className="text-sm font-semibold text-stone-900 mb-1.5">{event.title}</p>
                       {event.description && (
-                        <p className="text-xs text-stone-600 leading-relaxed mb-3">{event.description}</p>
+                        <p className="text-xs text-stone-600 leading-relaxed">{event.description}</p>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-stone-600 hover:text-stone-900 hover:bg-stone-100 font-medium text-xs h-7 px-2 -ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        View Details
-                      </Button>
                     </div>
                   </div>
                 );
@@ -727,6 +749,7 @@ export default function BroadcastDetailPage() {
         isOpen={sendUpdateOpen}
         onClose={() => setSendUpdateOpen(false)}
         dealName={deal.name}
+        onSend={handleSendUpdate}
       />
 
       <ViewDocumentsModal
@@ -745,8 +768,8 @@ export default function BroadcastDetailPage() {
         footer={
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setScheduleOpen(false)}>Cancel</Button>
-            <Button onClick={() => setScheduleOpen(false)} className="gap-2 bg-fundex-forest hover:bg-fundex-green">
-              <Calendar className="h-4 w-4" /> Schedule Update
+            <Button onClick={handleScheduleUpdate} disabled={scheduling} className="gap-2 bg-fundex-forest hover:bg-fundex-green disabled:opacity-60">
+              <Calendar className="h-4 w-4" /> {scheduling ? 'Scheduling…' : 'Schedule Update'}
             </Button>
           </div>
         }
@@ -754,7 +777,12 @@ export default function BroadcastDetailPage() {
         <div className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-stone-700">Update Title</label>
-            <Input placeholder="e.g., Q3 Performance Report" className="mt-1.5" />
+            <Input
+              placeholder="e.g., Q3 Performance Report"
+              className="mt-1.5"
+              value={scheduleForm.title}
+              onChange={(e) => setScheduleForm((f) => ({ ...f, title: e.target.value }))}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-stone-700">Message Body</label>
@@ -762,16 +790,18 @@ export default function BroadcastDetailPage() {
               placeholder="Enter your scheduled message..."
               rows={6}
               className="mt-1.5 w-full resize-none border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 shadow-sm outline-none placeholder:text-stone-400 focus:border-fundex-forest focus:ring-1 focus:ring-fundex-forest/30"
+              value={scheduleForm.message}
+              onChange={(e) => setScheduleForm((f) => ({ ...f, message: e.target.value }))}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-stone-700">Send Date</label>
-              <Input type="date" className="mt-1.5" />
+              <Input type="date" className="mt-1.5" value={scheduleForm.date} onChange={(e) => setScheduleForm((f) => ({ ...f, date: e.target.value }))} />
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700">Send Time</label>
-              <Input type="time" className="mt-1.5" />
+              <Input type="time" className="mt-1.5" value={scheduleForm.time} onChange={(e) => setScheduleForm((f) => ({ ...f, time: e.target.value }))} />
             </div>
           </div>
           <div className="flex items-center gap-2 border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
@@ -795,21 +825,13 @@ export default function BroadcastDetailPage() {
         }
       >
         <div className="space-y-5">
-          {/* Summary cards */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* Summary card */}
+          <div className="grid grid-cols-1 gap-3">
             <div className="border border-red-100 bg-red-50 p-4 text-center">
               <p className="text-2xl font-semibold text-red-700">
                 {updates.reduce((s, u) => s + (u.recipientCount - u.acknowledgedCount), 0)}
               </p>
-              <p className="mt-1 text-xs text-red-600">Pending Acks</p>
-            </div>
-            <div className="border border-blue-100 bg-blue-50 p-4 text-center">
-              <p className="text-2xl font-semibold text-blue-700">0</p>
-              <p className="mt-1 text-xs text-blue-600">Doc Confirmations</p>
-            </div>
-            <div className="border border-purple-100 bg-purple-50 p-4 text-center">
-              <p className="text-2xl font-semibold text-purple-700">0</p>
-              <p className="mt-1 text-xs text-purple-600">Unanswered Messages</p>
+              <p className="mt-1 text-xs text-red-600">Pending Acknowledgments</p>
             </div>
           </div>
 
@@ -826,7 +848,6 @@ export default function BroadcastDetailPage() {
                     {u.recipientCount - u.acknowledgedCount} of {u.recipientCount} investors haven&apos;t acknowledged
                   </p>
                 </div>
-                <Button variant="outline" size="sm" className="shrink-0 text-xs">Send Reminder</Button>
               </div>
             ))}
             {updates.filter(u => u.requireAcknowledgment && u.acknowledgedCount < u.recipientCount).length === 0 && (
@@ -836,362 +857,6 @@ export default function BroadcastDetailPage() {
         </div>
       </ModalShell>
 
-      {/* ─── Manage Channel Settings Panel (Side Drawer) ─── */}
-      {manageChannelOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-stretch justify-end z-50">
-          <div className="bg-white h-full w-full max-w-2xl shadow-2xl overflow-y-auto">
-            {/* Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-fundex-forest to-fundex-green px-6 py-5 z-10 shadow-md">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                    <Settings className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">Channel Settings</h3>
-                    <p className="text-sm text-white/80">Communication Control Center</p>
-                  </div>
-                </div>
-                <button
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                  onClick={() => setManageChannelOpen(false)}
-                >
-                  <X className="h-5 w-5 text-white" />
-                </button>
-              </div>
-              {/* Channel Identity */}
-              <div className="bg-white/10 rounded-lg px-4 py-3 backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-fundex-forest font-bold text-sm">{deal.name.slice(0, 2).toUpperCase()}</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-white">{deal.name}</p>
-                    <p className="text-xs text-white/70">Deal #{deal.dealId} · Broadcast Channel</p>
-                  </div>
-                  <Badge className="bg-white text-fundex-forest hover:bg-white font-semibold shadow-sm">
-                    {deal.status.toUpperCase()}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
-            {/* Body */}
-            <div className="px-6 py-6 space-y-8">
-              {/* Section 1: Channel Details */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                    <Settings className="h-4 w-4 text-fundex-forest" />
-                  </div>
-                  <h4 className="text-base font-bold text-stone-900">Channel Details</h4>
-                </div>
-                <div className="bg-stone-50 border border-stone-200 p-5 space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wide mb-2">Channel Name</label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-2.5 bg-white border border-stone-300 text-sm font-semibold text-stone-900 focus:outline-none focus:ring-2 focus:ring-fundex-forest focus:border-transparent"
-                      value={deal.name}
-                      readOnly
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wide mb-2">Channel Type</label>
-                      <div className="px-4 py-2.5 bg-white border border-stone-300">
-                        <p className="text-sm font-semibold text-stone-900">Broadcast Channel</p>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wide mb-2">Related Deal ID</label>
-                      <div className="px-4 py-2.5 bg-white border border-stone-300">
-                        <p className="text-sm font-semibold text-stone-900">#{deal.dealId}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wide mb-2">Channel Status</label>
-                    <select
-                      className="w-full px-4 py-2.5 bg-white border border-stone-300 text-sm font-semibold text-stone-900 focus:outline-none focus:ring-2 focus:ring-fundex-forest focus:border-transparent"
-                      value={channelStatus}
-                      onChange={(e) => setChannelStatus(e.target.value as any)}
-                    >
-                      <option value="active">Active - Channel is operational</option>
-                      <option value="paused">Paused - Temporarily suspended</option>
-                      <option value="archived">Archived - Closed permanently</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 2: Audience Settings */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Users className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <h4 className="text-base font-bold text-stone-900">Audience Settings</h4>
-                </div>
-                <div className="bg-stone-50 border border-stone-200 p-5 space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wide mb-2">Default Audience</label>
-                    <select className="w-full px-4 py-2.5 bg-white border border-stone-300 text-sm font-semibold text-stone-900 focus:outline-none focus:ring-2 focus:ring-fundex-forest focus:border-transparent">
-                      <option>All Investors in this Deal</option>
-                      <option>Accredited Investors Only</option>
-                      <option>Specific Investor Groups</option>
-                      <option>Custom Audience</option>
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white border border-stone-300 p-4">
-                      <p className="text-xs font-semibold text-stone-600 uppercase tracking-wide mb-1">Current Recipients</p>
-                      <p className="text-2xl font-bold text-fundex-forest">{deal.investorCount}</p>
-                      <p className="text-xs text-stone-500 mt-1">Active investors</p>
-                    </div>
-                    <div className="bg-white border border-stone-300 p-4">
-                      <p className="text-xs font-semibold text-stone-600 uppercase tracking-wide mb-1">Investor Groups</p>
-                      <p className="text-2xl font-bold text-blue-600">3</p>
-                      <p className="text-xs text-stone-500 mt-1">Linked groups</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full font-semibold">
-                    <Users className="h-4 w-4 mr-2" /> Manage Recipient Scope
-                  </Button>
-                </div>
-              </div>
-
-              {/* Section 3: Permissions & Communication Rules */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Shield className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <h4 className="text-base font-bold text-stone-900">Permissions & Communication Rules</h4>
-                </div>
-                <div className="bg-stone-50 border border-stone-200 p-5 space-y-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wide mb-2">Who Can Send Updates</label>
-                    <select
-                      className="w-full px-4 py-2.5 bg-white border border-stone-300 text-sm font-semibold text-stone-900 focus:outline-none focus:ring-2 focus:ring-fundex-forest focus:border-transparent"
-                      value={whoCanSend}
-                      onChange={(e) => setWhoCanSend(e.target.value as any)}
-                    >
-                      <option value="admin-only">Admin Only - Restricted access</option>
-                      <option value="designated-users">Designated Users - Selected team members</option>
-                      <option value="all-users">All Users - Any team member</option>
-                    </select>
-                  </div>
-                  <div className="border-t border-stone-200 pt-4">
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="checkbox"
-                        id="investorsCanReplyPanel"
-                        className="mt-1 w-4 h-4 accent-fundex-forest"
-                        checked={investorsCanReply}
-                        onChange={(e) => setInvestorsCanReply(e.target.checked)}
-                      />
-                      <div className="flex-1">
-                        <label htmlFor="investorsCanReplyPanel" className="block text-sm font-bold text-stone-900 cursor-pointer">
-                          Allow investor replies & contact
-                        </label>
-                        <p className="text-xs text-stone-600 mt-1 leading-relaxed">
-                          Enable two-way communication. Investors can reply to updates and send direct messages to your team.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="border-t border-stone-200 pt-4">
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="checkbox"
-                        id="requireAckByDefaultPanel"
-                        className="mt-1 w-4 h-4 accent-fundex-forest"
-                        checked={requireAckByDefault}
-                        onChange={(e) => setRequireAckByDefault(e.target.checked)}
-                      />
-                      <div className="flex-1">
-                        <label htmlFor="requireAckByDefaultPanel" className="block text-sm font-bold text-stone-900 cursor-pointer">
-                          Require acknowledgment by default
-                        </label>
-                        <p className="text-xs text-stone-600 mt-1 leading-relaxed">
-                          All updates will require investor acknowledgment. Track who has read and confirmed each message.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Communication Mode indicator */}
-                  <div className="bg-blue-50 border border-blue-200 p-4">
-                    <div className="flex items-start gap-2">
-                      <Radio className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs font-bold text-blue-900 uppercase tracking-wide mb-1">Communication Mode</p>
-                        <p className="text-sm font-semibold text-blue-900">
-                          {investorsCanReply ? 'Reply-Enabled Channel' : 'Broadcast-Only Channel'}
-                        </p>
-                        <p className="text-xs text-blue-700 mt-1">
-                          {investorsCanReply
-                            ? 'Investors can send replies and engage in conversation'
-                            : 'One-way communication - investors receive updates only'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 4: Notification & Reminder Settings */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <Bell className="h-4 w-4 text-yellow-600" />
-                  </div>
-                  <h4 className="text-base font-bold text-stone-900">Notification & Reminder Settings</h4>
-                </div>
-                <div className="bg-stone-50 border border-stone-200 p-5 space-y-5">
-                  <div className="flex items-start gap-3">
-                    <input
-                      type="checkbox"
-                      id="internalNotifsPanel"
-                      className="mt-1 w-4 h-4 accent-fundex-forest"
-                      checked={internalNotifications}
-                      onChange={(e) => setInternalNotifications(e.target.checked)}
-                    />
-                    <div className="flex-1">
-                      <label htmlFor="internalNotifsPanel" className="block text-sm font-bold text-stone-900 cursor-pointer">
-                        Internal team notifications
-                      </label>
-                      <p className="text-xs text-stone-600 mt-1 leading-relaxed">
-                        Notify team members about new investor messages, pending acknowledgments, and channel activity.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="border-t border-stone-200 pt-4">
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="checkbox"
-                        id="autoRemindersPanel"
-                        className="mt-1 w-4 h-4 accent-fundex-forest"
-                        checked={autoReminders}
-                        onChange={(e) => setAutoReminders(e.target.checked)}
-                      />
-                      <div className="flex-1">
-                        <label htmlFor="autoRemindersPanel" className="block text-sm font-bold text-stone-900 cursor-pointer">
-                          Automated reminder system
-                        </label>
-                        <p className="text-xs text-stone-600 mt-1 leading-relaxed mb-3">
-                          Automatically send follow-up reminders to investors with pending acknowledgments.
-                        </p>
-                        {autoReminders && (
-                          <div className="bg-white border border-stone-300 p-3 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-semibold text-stone-700">First Reminder</span>
-                              <select className="text-xs font-semibold text-stone-900 bg-stone-50 border border-stone-200 px-2 py-1">
-                                <option>24 hours after send</option>
-                                <option>48 hours after send</option>
-                                <option>72 hours after send</option>
-                              </select>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-semibold text-stone-700">Second Reminder</span>
-                              <select className="text-xs font-semibold text-stone-900 bg-stone-50 border border-stone-200 px-2 py-1">
-                                <option>48 hours after first</option>
-                                <option>72 hours after first</option>
-                                <option>7 days after first</option>
-                              </select>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 5: Linked Resources */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <Link2 className="h-4 w-4 text-indigo-600" />
-                  </div>
-                  <h4 className="text-base font-bold text-stone-900">Linked Resources</h4>
-                </div>
-                <div className="bg-stone-50 border border-stone-200 p-5 space-y-4">
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-white border border-stone-300 p-3 text-center">
-                      <FileText className="h-5 w-5 text-fundex-forest mx-auto mb-2" />
-                      <p className="text-lg font-bold text-stone-900">4</p>
-                      <p className="text-xs text-stone-600 font-semibold">Documents</p>
-                    </div>
-                    <div className="bg-white border border-stone-300 p-3 text-center">
-                      <Calendar className="h-5 w-5 text-blue-600 mx-auto mb-2" />
-                      <p className="text-lg font-bold text-stone-900">2</p>
-                      <p className="text-xs text-stone-600 font-semibold">Scheduled</p>
-                    </div>
-                    <div className="bg-white border border-stone-300 p-3 text-center">
-                      <Users className="h-5 w-5 text-purple-600 mx-auto mb-2" />
-                      <p className="text-lg font-bold text-stone-900">3</p>
-                      <p className="text-xs text-stone-600 font-semibold">Groups</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Button variant="outline" size="sm" className="w-full font-semibold text-left justify-start">
-                      <FileText className="h-4 w-4 mr-2" /> View Linked Documents
-                    </Button>
-                    <Button variant="outline" size="sm" className="w-full font-semibold text-left justify-start">
-                      <Calendar className="h-4 w-4 mr-2" /> Manage Scheduled Updates
-                    </Button>
-                    <Button variant="outline" size="sm" className="w-full font-semibold text-left justify-start">
-                      <Users className="h-4 w-4 mr-2" /> Edit Investor Groups
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 6: Channel Actions */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                  </div>
-                  <h4 className="text-base font-bold text-stone-900">Channel Actions</h4>
-                </div>
-                <div className="bg-stone-50 border border-stone-200 p-5 space-y-3">
-                  <Button variant="outline" size="sm" className="w-full border-yellow-300 bg-yellow-50 hover:bg-yellow-100 text-yellow-800 font-semibold text-left justify-start">
-                    <Pause className="h-4 w-4 mr-2" /> Pause Channel Temporarily
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full font-semibold text-left justify-start">
-                    <FileDown className="h-4 w-4 mr-2" /> Export Communication Log
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-semibold text-left justify-start">
-                    <Archive className="h-4 w-4 mr-2" /> Archive Channel Permanently
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="sticky bottom-0 bg-white border-t border-stone-200 px-6 py-5 shadow-lg">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-xs text-stone-600 flex-1">
-                  Changes will apply immediately to all future communications in this channel.
-                </p>
-                <div className="flex items-center gap-3">
-                  <Button variant="outline" onClick={() => setManageChannelOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button
-                    className="bg-fundex-forest hover:bg-fundex-green text-white shadow-md font-semibold px-6"
-                    onClick={() => setManageChannelOpen(false)}
-                  >
-                    <CheckCircle2 className="h-4 w-4 mr-2" /> Save Settings
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

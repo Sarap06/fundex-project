@@ -189,14 +189,17 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
       if (r.acknowledged_at) acked.set(r.broadcast_update_id, (acked.get(r.broadcast_update_id) || 0) + 1);
     });
 
-    setBroadcastsData(updates.map((u) => ({
-      title: u.title,
-      content: u.message,
-      date: new Date(u.sent_at || u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      audience: 'All Investors',
-      acknowledged: acked.get(u.id) || 0,
-      total: total.get(u.id) || 0,
-    })));
+    setBroadcastsData(updates.map((u) => {
+      const recipients = total.get(u.id) || 0;
+      return {
+        title: u.title,
+        content: u.message,
+        date: new Date(u.sent_at || u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        audience: recipients > 0 ? `${recipients} investor${recipients === 1 ? '' : 's'}` : 'All investors',
+        acknowledged: acked.get(u.id) || 0,
+        total: recipients,
+      };
+    }));
   };
 
   useEffect(() => {

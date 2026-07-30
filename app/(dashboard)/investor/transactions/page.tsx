@@ -5,8 +5,6 @@ import {
   ArrowUp,
   ChevronDown,
   DollarSign,
-  Download,
-  ExternalLink,
   Loader2,
   RefreshCw,
   Search,
@@ -17,7 +15,23 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 
-function FilterBar() {
+type FilterBarProps = {
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  typeFilter: string;
+  onTypeChange: (value: string) => void;
+  statusFilter: string;
+  onStatusChange: (value: string) => void;
+};
+
+function FilterBar({
+  searchQuery,
+  onSearchChange,
+  typeFilter,
+  onTypeChange,
+  statusFilter,
+  onStatusChange,
+}: FilterBarProps) {
   return (
     <div className=" border border-stone-100 bg-white p-4 shadow-sm md:p-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:gap-3">
@@ -26,6 +40,8 @@ function FilterBar() {
           <input
             type="search"
             placeholder="Search transactions..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
             className="w-full  border border-stone-200 bg-white py-2.5 pl-9 pr-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
           />
         </div>
@@ -34,7 +50,8 @@ function FilterBar() {
           <select
             aria-label="Transaction type"
             className="w-full appearance-none  border border-stone-200 bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-stone-600 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
-            defaultValue="all-types"
+            value={typeFilter}
+            onChange={(e) => onTypeChange(e.target.value)}
           >
             <option value="all-types">All Types</option>
             <option value="contribution">Contribution</option>
@@ -49,7 +66,8 @@ function FilterBar() {
           <select
             aria-label="Status"
             className="w-full appearance-none  border border-stone-200 bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-stone-600 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
-            defaultValue="all-status"
+            value={statusFilter}
+            onChange={(e) => onStatusChange(e.target.value)}
           >
             <option value="all-status">All Status</option>
             <option value="completed">Completed</option>
@@ -58,37 +76,6 @@ function FilterBar() {
             <option value="failed">Failed</option>
           </select>
           <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-        </div>
-
-        <div className="relative w-full lg:w-44">
-          <select
-            aria-label="Date range"
-            className="w-full appearance-none  border border-stone-200 bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-stone-600 shadow-sm outline-none focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30"
-            defaultValue="30d"
-          >
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="year">Last year</option>
-            <option value="all">All time</option>
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-        </div>
-
-        <div className="flex w-full flex-col gap-2 sm:flex-row lg:ml-auto lg:w-auto">
-          <button
-            type="button"
-            className="inline-flex items-center justify-center gap-2  border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-600 shadow-sm transition hover:bg-stone-50"
-          >
-            <Download className="h-4 w-4 text-stone-600" />
-            Export CSV
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center justify-center gap-2  bg-fundex-gold px-4 py-2.5 text-sm font-medium text-fundex-forest shadow-sm transition hover:bg-fundex-gold/90"
-          >
-            <Download className="h-4 w-4" />
-            Download Statement
-          </button>
         </div>
       </div>
     </div>
@@ -197,12 +184,6 @@ function formatAmount(value: number): string {
   return `${sign}$${n.toLocaleString("en-US")}`;
 }
 
-/** Long-form display ID (Figma sample style when applicable). */
-function displayTransactionId(tx: Transaction): string {
-  if (tx.id === "TXN-9284") return "TXN-2026-08-015";
-  return tx.id;
-}
-
 function expandProcessedDate(shortDate: string): string {
   const parts = shortDate.replace(",", "").split(" ");
   if (parts.length < 3) return shortDate;
@@ -223,19 +204,6 @@ function expandProcessedDate(shortDate: string): string {
   };
   const full = months[mon] ?? mon;
   return `${full} ${day}, ${year}`;
-}
-
-function drawerNotesFor(tx: Transaction): string {
-  if (tx.type === "Interest Income") {
-    return "Monthly interest payment for August 2026";
-  }
-  if (tx.type === "Contribution") {
-    return "Capital contribution to investment account.";
-  }
-  if (tx.type === "Distribution") {
-    return "Distribution payment to investor.";
-  }
-  return "Transaction processed per fund administration.";
 }
 
 function DrawerTypeRow({ type }: { type: TxType }) {
@@ -327,7 +295,7 @@ function TransactionDetailsDrawer({
             <section className="space-y-5">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-stone-500">Transaction ID</p>
-                <p className="mt-1 font-mono text-sm font-semibold text-stone-900">{displayTransactionId(transaction)}</p>
+                <p className="mt-1 font-mono text-sm font-semibold text-stone-900">{transaction.id}</p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -345,88 +313,33 @@ function TransactionDetailsDrawer({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className=" border border-stone-100 bg-stone-50/50 p-4 shadow-sm">
-                  <p className="text-xs font-medium text-stone-500">Amount</p>
-                  <p
-                    className={`mt-2 text-lg font-semibold tabular-nums ${positive ? "text-fundex-forest" : "text-red-600"}`}
-                  >
-                    {formatAmount(transaction.amount)}
-                  </p>
-                </div>
-                <div className=" border border-stone-100 bg-stone-50/50 p-4 shadow-sm">
-                  <p className="text-xs font-medium text-stone-500">Net Position After</p>
-                  <p className="mt-2 text-lg font-semibold tabular-nums text-stone-900">$1,975,000</p>
-                </div>
+              <div className=" border border-stone-100 bg-stone-50/50 p-4 shadow-sm">
+                <p className="text-xs font-medium text-stone-500">Amount</p>
+                <p
+                  className={`mt-2 text-lg font-semibold tabular-nums ${positive ? "text-fundex-forest" : "text-red-600"}`}
+                >
+                  {formatAmount(transaction.amount)}
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 border-t border-stone-100 pt-5 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs font-medium text-stone-500">Date Processed</p>
-                  <p className="mt-1 text-sm font-semibold text-stone-900">
-                    {expandProcessedDate(transaction.date)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-stone-500">Payment Method</p>
-                  <p className="mt-1 text-sm font-semibold text-stone-900">ACH</p>
-                </div>
+              <div className="border-t border-stone-100 pt-5">
+                <p className="text-xs font-medium text-stone-500">Date Processed</p>
+                <p className="mt-1 text-sm font-semibold text-stone-900">
+                  {expandProcessedDate(transaction.date)}
+                </p>
               </div>
             </section>
 
             <section className="mt-8 border-t border-stone-100 pt-8">
               <h3 className="text-sm font-medium text-stone-900">Deal Information</h3>
-              <div className="mt-4 flex items-center justify-between gap-3  border border-fundex-gold/20 bg-fundex-gold/5 px-4 py-4 shadow-sm">
+              <div className="mt-4  border border-fundex-gold/20 bg-fundex-gold/5 px-4 py-4 shadow-sm">
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-stone-500">Deal Name</p>
                   <p className="mt-1 text-sm font-semibold text-stone-900">{transaction.deal}</p>
                 </div>
-                <button
-                  type="button"
-                  aria-label="Open deal"
-                  className="shrink-0  p-2 text-fundex-forest transition hover:bg-fundex-gold/10"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </button>
               </div>
             </section>
 
-            <section className="mt-8 border-t border-stone-100 pt-8">
-              <h3 className="text-sm font-medium text-stone-900">Flow of Funds</h3>
-              <div className="mt-4 space-y-0">
-                <div className=" border border-stone-100 bg-white p-4 shadow-sm">
-                  <p className="text-xs font-medium text-stone-500">Source</p>
-                  <p className="mt-1 text-sm font-semibold leading-snug text-stone-900">
-                    IHIG Operating Account (Wells Fargo)
-                  </p>
-                </div>
-                <div className="flex justify-center py-2">
-                  <div className="flex h-9 w-9 items-center justify-center  border border-stone-200 bg-stone-50 text-stone-500">
-                    <ArrowDown className="h-4 w-4" />
-                  </div>
-                </div>
-                <div className=" border border-stone-100 bg-white p-4 shadow-sm">
-                  <p className="text-xs font-medium text-stone-500">Destination</p>
-                  <p className="mt-1 text-sm font-semibold text-stone-900">Investor Capital Account</p>
-                  <p className="mt-2 text-xs text-stone-500">Bank Account: ****4832</p>
-                </div>
-              </div>
-            </section>
-
-            <section className="mt-8 border-t border-stone-100 pt-8">
-              <h3 className="text-sm font-medium text-stone-900">Notes</h3>
-              <p className="mt-3 text-sm leading-relaxed text-stone-600">{drawerNotesFor(transaction)}</p>
-            </section>
-
-            <div className="mt-10 border-t border-stone-100 pt-6">
-              <button
-                type="button"
-                className="flex w-full items-center justify-center gap-2  border border-stone-200 bg-white py-3 text-sm font-medium text-stone-600 shadow-sm transition hover:bg-stone-50"
-              >
-                <Download className="h-4 w-4 text-stone-600" />
-                Download Receipt
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -586,7 +499,14 @@ export default function TransactionsPage() {
             <p className="mt-2 text-sm font-normal text-stone-400">Capital activity and payment history</p>
           </header>
 
-          <FilterBar />
+          <FilterBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            typeFilter={typeFilter}
+            onTypeChange={setTypeFilter}
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+          />
 
           <TransactionTable rows={filteredTransactions} onViewTransaction={(tx) => { setSelectedTransaction(tx); setIsDrawerOpen(true); }} />
       </div>

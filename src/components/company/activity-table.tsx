@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Search, SlidersHorizontal, DollarSign, FileText, TrendingUp, Users, MoreHorizontal } from 'lucide-react';
+import { Search, DollarSign, FileText, TrendingUp, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -99,13 +99,6 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
               className="h-9 w-full  border border-stone-200 bg-white pl-9 pr-3 text-sm text-stone-700 outline-none placeholder:text-stone-400 focus:border-fundex-gold focus:ring-1 focus:ring-fundex-gold/30 sm:w-60"
             />
           </div>
-          <button
-            type="button"
-            className="flex h-9 items-center gap-1.5  border border-stone-200 bg-white px-3 text-sm font-normal text-stone-600 transition-colors hover:bg-stone-50"
-          >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            Filter
-          </button>
         </div>
       </div>
 
@@ -115,7 +108,6 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
           <div className="space-y-0 px-6">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4 border-b border-stone-50 py-4">
-                <Skeleton className="h-4 w-4" />
                 <Skeleton className="h-8 w-8 " />
                 <div className="flex-1 space-y-1.5">
                   <Skeleton className="h-4 w-48" />
@@ -123,7 +115,6 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
                 <Skeleton className="h-5 w-16 " />
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-4" />
               </div>
             ))}
           </div>
@@ -135,10 +126,7 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
           <table className="w-full">
             <thead>
               <tr className="border-b border-stone-100">
-                <th className="w-10 py-3 pl-6 pr-2">
-                  <input type="checkbox" disabled className="h-4 w-4 border-stone-300 opacity-40" />
-                </th>
-                <th className="py-3 pl-2 pr-4 text-left text-xs font-medium text-stone-400">
+                <th className="py-3 pl-6 pr-4 text-left text-xs font-medium text-stone-400">
                   Transaction
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-stone-400">
@@ -147,10 +135,9 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
                 <th className="px-4 py-3 text-left text-xs font-medium text-stone-400">
                   Date
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-stone-400">
+                <th className="px-4 py-3 pr-6 text-left text-xs font-medium text-stone-400">
                   Amount
                 </th>
-                <th className="w-10 py-3 pl-4 pr-6" />
               </tr>
             </thead>
             <tbody>
@@ -163,12 +150,8 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
                     key={activity.id}
                     className="border-b border-stone-50 transition-colors last:border-0 hover:bg-stone-50/50"
                   >
-                    {/* Checkbox */}
-                    <td className="py-3.5 pl-6 pr-2">
-                      <input type="checkbox" className="h-4 w-4 border-stone-300 text-fundex-gold focus:ring-fundex-gold/30" />
-                    </td>
                     {/* Transaction: icon + description */}
-                    <td className="py-3.5 pl-2 pr-4">
+                    <td className="py-3.5 pl-6 pr-4">
                       <div className="flex items-center gap-3">
                         <div className={`flex h-9 w-9 shrink-0 items-center justify-center  ${config.bg}`}>
                           <Icon className={`h-4 w-4 ${config.text}`} />
@@ -192,17 +175,8 @@ export function ActivityTable({ companyId }: ActivityTableProps) {
                       {formatDate(activity.timestamp)}
                     </td>
                     {/* Amount */}
-                    <td className={`px-4 py-3.5 text-sm font-normal tabular-nums ${amount.color}`}>
+                    <td className={`px-4 py-3.5 pr-6 text-sm font-normal tabular-nums ${amount.color}`}>
                       {amount.text}
-                    </td>
-                    {/* Menu */}
-                    <td className="py-3.5 pl-4 pr-6">
-                      <button
-                        type="button"
-                        className="p-1 text-stone-300 transition-colors hover:bg-stone-100 hover:text-stone-500"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
                     </td>
                   </tr>
                 );

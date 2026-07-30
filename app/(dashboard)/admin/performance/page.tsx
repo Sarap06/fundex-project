@@ -8,7 +8,7 @@ import {
 } from 'recharts';
 import {
   DollarSign, TrendingUp, AlertTriangle, CheckCircle2,
-  Calendar, ArrowUpRight, FileWarning, Download,
+  Calendar, ArrowUpRight, FileWarning,
   X, ArrowRightCircle, Eye,
 } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase';
@@ -184,10 +184,6 @@ export default function PerformancePage() {
       <StaggerItem>
         <div className="flex items-center justify-between">
           <PageHeader title="Performance" subtitle="Financial command center for portfolio operations" />
-          <button className="fdx-btn-secondary gap-2 text-sm hidden md:flex">
-            <Download className="size-4" />
-            Export Report
-          </button>
         </div>
       </StaggerItem>
 
@@ -342,10 +338,6 @@ export default function PerformancePage() {
               <h2 className="fdx-section-title text-base mb-1">Contract Performance</h2>
               <p className="text-sm text-stone-400">Active lending contract operational details</p>
             </div>
-            <button className="fdx-btn-secondary text-sm gap-2 hidden md:flex">
-              <Download className="size-4" />
-              Export
-            </button>
           </div>
           {contractPerformance.length === 0 ? (
             <div className="py-12 text-center text-stone-400 text-sm">No active contracts yet.</div>

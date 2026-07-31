@@ -14,16 +14,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileText, Download, Eye, Plus, X, Filter, Search, Trash2, Upload, LogOut } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import { getCurrentUserCompanyId, logOut } from '@/lib/auth';
 import { PageHeader } from '@/components/page-header';
 import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
 import { DOCUMENT_TYPES, DOCUMENT_CATEGORIES, DOCUMENT_STATUSES, DOCUMENT_ACCEPT_EXTENSIONS } from '@/config/documents';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface Document {
   id: string;

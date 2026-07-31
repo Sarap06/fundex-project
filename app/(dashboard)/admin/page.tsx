@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { activeDeployedCapital } from '@/services/portfolio-metrics';
 import { UserProfile, Company } from '@/lib/types';
 import { logOut } from '@/lib/auth';
 import { ActivityIcon } from '@/components/activity-icon';
@@ -121,29 +122,18 @@ export default function AdminDashboard() {
 
   const loadMembers = async (companyId: string) => {
     try {
-      // Fetch signed-up users (admins, partners, investors who registered)
+      // Team Members = admins and partners only. Investors are a separate concept:
+      // manually-added ones live in the `investors` table, and investors who
+      // registered via invite have a user_profiles row with role 'investor' — neither
+      // must appear here, otherwise creating/onboarding an investor wrongly shows a
+      // team member.
       const { data: memberData } = await supabase
         .from('user_profiles')
         .select('id, email, full_name, role')
-        .eq('company_id', companyId);
+        .eq('company_id', companyId)
+        .in('role', ['admin', 'partner']);
 
-      // Fetch manually-added investors
-      const { data: manualInvestors } = await supabase
-        .from('investors')
-        .select('id, email, full_name')
-        .eq('company_id', companyId);
-
-      const combined = [...(memberData || [])];
-
-      // Add manual investors that aren't already in user_profiles (by email)
-      const existingEmails = new Set((memberData || []).map(m => m.email.toLowerCase()));
-      for (const inv of manualInvestors || []) {
-        if (!existingEmails.has(inv.email.toLowerCase())) {
-          combined.push({ id: inv.id, email: inv.email, full_name: inv.full_name, role: 'investor' });
-        }
-      }
-
-      setMembers(combined);
+      setMembers(memberData || []);
     } catch (error) {
       console.error('Error loading members:', error);
     }
@@ -430,39 +420,23 @@ export default function AdminDashboard() {
         console.error('Error fetching active deals:', dealsError);
       }
 
-      // Fetch allocations with deal status (for AUM and allocated capital calculations)
+      // Fetch allocations with deal status, shaped for the shared portfolio-metrics
+      // helpers (same select the Performance page uses) so headline numbers agree.
       const { data: allocationsData, error: allocationsError } = await supabase
         .from('allocations')
-        .select('allocation_amount, funding_status, deal_id')
+        .select('allocation_amount, funding_status, status, deals (id, status)')
         .eq('company_id', companyId);
 
       if (allocationsError) {
         console.error('Error fetching allocations:', allocationsError);
       }
 
-      // Fetch all deals to get their status
-      const { data: dealsData, error: allDealsError } = await supabase
-        .from('deals')
-        .select('id, status')
-        .eq('company_id', companyId);
-
-      if (allDealsError) {
-        console.error('Error fetching deals:', allDealsError);
-      }
-
       const investorCount = activeInvestorsCount || 0;
       const dealCount = activeDealsCountValue || 0;
 
-      // Create a map of deal IDs to their status for quick lookup
-      const dealStatusMap = new Map((dealsData || []).map(deal => [deal.id, deal.status]));
-
-      // Calculate AUM: SUM(allocation_amount) WHERE funding_status = 'Funded' AND deal.status = 'Active'
-      const totalAUMValue = (allocationsData || [])
-        .filter(alloc => {
-          const dealStatus = dealStatusMap.get(alloc.deal_id);
-          return alloc.funding_status === 'Funded' && dealStatus === 'Active';
-        })
-        .reduce((sum, alloc) => sum + (Number(alloc.allocation_amount) || 0), 0);
+      // Total AUM == Performance "Active Principal": route through the SAME canonical
+      // helper (active deals, funded, confirmed) so the two headline numbers never diverge.
+      const totalAUMValue = activeDeployedCapital(allocationsData || []);
 
       // Committed Capital: capital committed on investor records — moves as soon
       // as an investor is created with capital, before any deal allocation exists

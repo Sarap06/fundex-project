@@ -48,6 +48,57 @@ const EDITABLE_DEAL_FIELDS = new Set([
 ]);
 
 /**
+ * Fields a deal creation is allowed to set. company_id, created_by, id, and
+ * timestamps are forced from the session/server — never taken from the body.
+ */
+const CREATABLE_DEAL_FIELDS = new Set([
+  'deal_id', 'name', 'type', 'location', 'location_state', 'location_city', 'status',
+  'target_amount', 'raised_amount', 'progress', 'interest_rate', 'term', 'close_date',
+  'next_milestone', 'milestone_type', 'borrower_name', 'borrower_contact',
+  'property_address', 'property_type', 'loan_purpose', 'documents_status', 'notes',
+  'investor_notes', 'tags', 'investor_count', 'minimum_investment', 'term_length_months',
+  'funding_close_date', 'first_payout_date', 'payout_cycle', 'collateral_type',
+  'collateral_address', 'estimated_property_value', 'loan_to_value_ratio', 'asset_notes',
+  'default_investor_audience', 'enable_broadcast_channel', 'enable_investor_inbox',
+  'require_investor_acknowledgment', 'automated_investor_message', 'send_automated_message',
+  'internal_approval_deadline', 'milestone_notes', 'document_status',
+]);
+
+/**
+ * Create a deal for a company. company_id and created_by come from the session,
+ * never the request body. Only whitelisted fields are written. Throws on error so
+ * the API route can surface the real message.
+ */
+export async function createDeal(
+  companyId: string,
+  userId: string,
+  payload: Record<string, unknown>
+) {
+  const supabase = getServiceClient();
+
+  const clean: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(payload)) {
+    if (CREATABLE_DEAL_FIELDS.has(k)) clean[k] = v;
+  }
+
+  if (!clean.name) throw new Error('Deal name is required');
+  if (!clean.deal_id) {
+    clean.deal_id = `D-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 11).toUpperCase()}`;
+  }
+  clean.company_id = companyId;
+  clean.created_by = userId;
+
+  const { data, error } = await supabase
+    .from('deals')
+    .insert([clean])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
  * Update a deal, scoped by company. Only whitelisted fields are written, and the
  * WHERE clause is filtered by both id AND company_id (no cross-tenant writes).
  */

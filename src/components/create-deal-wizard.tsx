@@ -44,6 +44,7 @@ interface Investor {
 interface SelectedInvestor {
   id: string;
   source: 'user_profiles' | 'investors';
+  amount?: string;
 }
 
 interface DealFormData {
@@ -776,7 +777,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                                             ? prev.selectedInvestors.filter(
                                                 sel => !(sel.id === investor.id && sel.source === investor.source)
                                               )
-                                            : [...prev.selectedInvestors, { id: investor.id, source: investor.source || 'user_profiles' }]
+                                            : [...prev.selectedInvestors, { id: investor.id, source: investor.source || 'user_profiles', amount: '' }]
                                         };
                                       });
                                       setInvestorSearch('');
@@ -832,15 +833,39 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                         )}
                       </div>
 
-                      {/* Selected Investors Tags */}
+                      {/* Selected Investors — each with an allocation amount */}
                       {formData.selectedInvestors.length > 0 && (
-                        <div className="flex flex-wrap gap-2 pt-2">
+                        <div className="space-y-2 pt-2">
+                          <p className="text-xs text-muted-foreground">
+                            Enter each investor&apos;s allocation amount. Allocations are created as Funded and inherit the deal&apos;s rate, term, payout cycle and first-payout date.
+                          </p>
                           {formData.selectedInvestors.map(selected => {
                             const investor = investors.find(inv => inv.id === selected.id && inv.source === selected.source);
                             return investor ? (
-                              <div key={`${selected.source}-${selected.id}`} className="bg-fundex-gold/10 text-fundex-forest px-3 py-2  text-sm font-medium flex items-center gap-2">
-                                <span>{investor.full_name}</span>
+                              <div key={`${selected.source}-${selected.id}`} className="flex items-center gap-3 bg-fundex-gold/5 border border-fundex-gold/20 px-3 py-2">
+                                <span className="flex-1 text-sm font-medium text-fundex-forest truncate">{investor.full_name}</span>
+                                <div className="relative w-40">
+                                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                                  <Input
+                                    type="number"
+                                    placeholder="Allocation amount"
+                                    className="pl-5 h-9"
+                                    value={selected.amount ?? ''}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        selectedInvestors: prev.selectedInvestors.map(sel =>
+                                          sel.id === selected.id && sel.source === selected.source
+                                            ? { ...sel, amount: val }
+                                            : sel
+                                        )
+                                      }));
+                                    }}
+                                  />
+                                </div>
                                 <button
+                                  type="button"
                                   onClick={() => {
                                     setFormData(prev => ({
                                       ...prev,
@@ -849,7 +874,8 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                                       )
                                     }));
                                   }}
-                                  className="text-primary hover:text-primary font-bold"
+                                  className="text-stone-400 hover:text-red-500 font-bold px-1"
+                                  aria-label={`Remove ${investor.full_name}`}
                                 >
                                   ×
                                 </button>

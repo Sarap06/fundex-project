@@ -48,6 +48,9 @@ interface Allocation {
   term_length: number | null;
   annual_rate: number | null;
   notes: string;
+  payments_completed: number;
+  total_payments: number;
+  payout_cycle: number | null;
 }
 
 interface EditForm {
@@ -182,7 +185,7 @@ export default function AllocationsPage() {
           term_length,
           annual_rate,
           notes,
-          deals(name)
+          deals(name, payout_cycle, term_length_months)
         `)
         .eq('company_id', company_id)
         .order('created_at', { ascending: false });
@@ -204,6 +207,22 @@ export default function AllocationsPage() {
         ]);
         (manualInvs || []).forEach((i: any) => { nameMap.set(i.id, i.full_name); if (i.email) emailMap.set(i.id, i.email); });
         (profileInvs || []).forEach((p: any) => { nameMap.set(p.user_id, p.full_name); if (p.email) emailMap.set(p.user_id, p.email); });
+      }
+
+      // Count REAL completed payouts per investor (company-scoped). investor_payouts
+      // holds one row per (company, investor, payroll date); a 'completed' row means
+      // that investor's payout for that date was paid. There is no per-deal column, so
+      // completed payouts are counted per investor and shown against the deal's term.
+      const completedByInvestor = new Map<string, number>();
+      {
+        const { data: payouts } = await supabase
+          .from('investor_payouts')
+          .select('investor_id')
+          .eq('company_id', company_id)
+          .eq('status', 'completed');
+        (payouts || []).forEach((p: any) => {
+          completedByInvestor.set(p.investor_id, (completedByInvestor.get(p.investor_id) || 0) + 1);
+        });
       }
 
       if (!data || data.length === 0) {
@@ -271,6 +290,9 @@ export default function AllocationsPage() {
         term_length: alloc.term_length != null ? Number(alloc.term_length) : null,
         annual_rate: alloc.annual_rate != null ? Number(alloc.annual_rate) : null,
         notes: alloc.notes || '',
+        payments_completed: completedByInvestor.get(alloc.investor_id) || 0,
+        total_payments: alloc.deals?.term_length_months != null ? Number(alloc.deals.term_length_months) : 0,
+        payout_cycle: alloc.deals?.payout_cycle != null ? Number(alloc.deals.payout_cycle) : null,
       }));
 
       setAllocations(transformedAllocations);
@@ -657,6 +679,8 @@ export default function AllocationsPage() {
                       <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Amount</th>
                       <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">% of Deal</th>
                       <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Monthly Interest</th>
+                      <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Payments</th>
+                      <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Payout Cycle</th>
                       <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Status</th>
                       <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Commit Date</th>
                       <th className="px-6 py-3 text-left font-medium text-stone-400 uppercase tracking-wide">Funded Date</th>
@@ -683,6 +707,30 @@ export default function AllocationsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <span className="font-medium text-stone-900">${(allocation.monthly_interest / 1000).toFixed(1)}K</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {allocation.total_payments > 0 ? (
+                            <div className="min-w-[6rem]">
+                              <span className="text-stone-900 font-medium">
+                                {allocation.payments_completed} / {allocation.total_payments}
+                              </span>
+                              <div className="mt-1.5 h-1.5 w-full rounded-full bg-stone-100 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-fundex-forest"
+                                  style={{
+                                    width: `${Math.min(100, (allocation.payments_completed / allocation.total_payments) * 100)}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-stone-400">—</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-stone-500">
+                            {allocation.payout_cycle != null ? `Cycle ${allocation.payout_cycle}` : '—'}
+                          </span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">

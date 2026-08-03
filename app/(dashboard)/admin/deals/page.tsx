@@ -10,15 +10,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/page-header';
 import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
 import { TrendingUp, DollarSign, AlertCircle, Plus, X, Filter, Search, Trash2, Edit, Eye } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import { getCurrentUserCompanyId, logOut } from '@/lib/auth';
 import { CreateDealWizard } from '@/components/create-deal-wizard';
 import { DealQuickViewModal, type DealQuickViewData } from '@/components/deal-quick-view-modal';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface Deal {
   id: string;
@@ -331,47 +326,42 @@ export default function DealsPage() {
 
         if (dealError) {
           console.error('Error updating deal:', dealError);
-          alert('Failed to update deal');
+          alert(`Failed to update deal: ${dealError.message}`);
           return;
         }
         newDeal = updatedDeal;
       } else {
-        // Insert new deal
-        const { data: createdDeal, error: dealError } = await supabase
-          .from('deals')
-          .insert([dealPayload])
-          .select()
-          .single();
-
-        if (dealError) {
-          console.error('Error creating deal:', dealError);
-          alert('Failed to create deal');
+        // Create new deal server-side (tenant-scoped). The API also links selected
+        // investors AND creates a Funded allocation per investor amount, so the deal
+        // immediately shows correct allocations/payments/metrics. Activity is logged
+        // server-side too.
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          alert('Your session expired. Please log in again.');
           return;
         }
-        newDeal = createdDeal;
-
-        // Log activity for new deal
-        try {
-          await fetch('/api/activities/log', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              companyId,
-              activityType: 'deal_created',
-              title: `New deal: ${newDeal.name}`,
-              description: 'A new deal has been created',
-              dealId: newDeal.id,
-              dealName: newDeal.name,
-              createdByName: creatorName,
-              metadata: {
-                targetAmount: newDeal.target_amount,
-                status: newDeal.status,
-              },
-            }),
-          });
-        } catch (err) {
-          console.error('Error logging deal creation activity:', err);
+        const res = await fetch('/api/deals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            deal: dealPayload,
+            investors: (wizardData.selectedInvestors || []).map((s: any) => ({
+              id: s.id,
+              source: s.source,
+              amount: s.amount,
+            })),
+          }),
+        });
+        const result = await res.json().catch(() => null);
+        if (!res.ok || !result?.success) {
+          console.error('Error creating deal:', result);
+          alert(result?.message || 'Failed to create deal. Please try again.');
+          return;
         }
+        newDeal = result.deal;
       }
 
       // Handle file uploads if any
@@ -441,11 +431,14 @@ export default function DealsPage() {
         }
       }
 
-      if (wizardData.selectedInvestors && wizardData.selectedInvestors.length > 0) {
+      // For NEW deals, investor links + allocations are created server-side by
+      // POST /api/deals. Only the edit path re-links here (delete above + re-insert).
+      if (isEdit && wizardData.selectedInvestors && wizardData.selectedInvestors.length > 0) {
         const investorRecords = wizardData.selectedInvestors.map((selected: any) => ({
           deal_id: newDeal.id,
           investor_id: selected.id,
           investor_source: selected.source || 'user_profiles',
+          company_id: companyId,
         }));
 
         const { error: investorError } = await supabase
@@ -454,7 +447,7 @@ export default function DealsPage() {
 
         if (investorError) {
           console.error('Error linking investors to deal:', investorError);
-          // Don't alert here as the deal was already created
+          // Don't alert here as the deal was already updated
         }
       }
 

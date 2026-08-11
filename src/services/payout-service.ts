@@ -94,8 +94,14 @@ export function payoutDueOn(
   // Cycle defines the day of month — the payroll date must land on it.
   if (payroll.d !== cycle) return null;
 
-  // Which payout number does this month correspond to? (start month = payout 1)
-  const monthIndex = payroll.y * 12 + payroll.m - (start.y * 12 + start.m);
+  // The first payout is the first cycle-day on/after first_payout_date: if the
+  // cycle day already passed in the start month, the schedule rolls to the next
+  // month so a payout is never generated before the deal's start date.
+  const startOffset = cycle >= start.d ? 0 : 1;
+  const firstMonthAbs = start.y * 12 + start.m + startOffset;
+
+  // Which payout number does this month correspond to? (first month = payout 1)
+  const monthIndex = payroll.y * 12 + payroll.m - firstMonthAbs;
   if (monthIndex < 0 || monthIndex >= term) return null;
 
   return {
@@ -157,9 +163,14 @@ export function dealPayoutDates(
   const term = Math.floor(num(termMonths));
   if (!start || (cycle !== 1 && cycle !== 15) || term <= 0) return [];
 
+  // If the cycle day already passed in the start month, roll to the next month
+  // so the first payout is never before first_payout_date. Keeps this in lockstep
+  // with payoutDueOn's monthIndex anchoring.
+  const startOffset = cycle >= start.d ? 0 : 1;
+
   const dates: string[] = [];
   for (let i = 0; i < term; i++) {
-    const absMonth = start.m + i;
+    const absMonth = start.m + startOffset + i;
     const y = start.y + Math.floor(absMonth / 12);
     const m = ((absMonth % 12) + 12) % 12;
     dates.push(`${y}-${String(m + 1).padStart(2, '0')}-${String(cycle).padStart(2, '0')}`);

@@ -117,6 +117,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Link the investor to the deal so it surfaces in every investor-facing
+    // view (Deals, Performance, Broadcast, investor dashboard) — all of which
+    // resolve "my deals" through deal_investors, not allocations. Without this
+    // the allocation exists but the deal is invisible to the investor.
+    // investor_source mirrors which table the investor was resolved from above.
+    const investorSource = manualInvestor ? 'investors' : 'user_profiles';
+    const { error: linkError } = await supabase
+      .from('deal_investors')
+      .upsert(
+        {
+          deal_id,
+          investor_id,
+          investor_source: investorSource,
+          company_id,
+        },
+        { onConflict: 'deal_id,investor_id,investor_source' }
+      );
+
+    if (linkError) {
+      // Non-fatal: the allocation was created; log so the link gap is traceable.
+      console.error('Error linking investor to deal (deal_investors):', linkError);
+    }
+
     await recalcDealRaisedAmount(deal_id, company_id);
 
     // Log activity (investor name resolved above, scoped to this company)

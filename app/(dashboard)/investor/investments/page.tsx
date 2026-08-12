@@ -31,6 +31,7 @@ interface Investment {
   annualRate: number;
   paymentsCompleted: number;
   totalPayments: number;
+  paymentSchedule: string[];
   nextPaymentDate: string | null;
   maturityDate: string | null;
   ltv: number;
@@ -203,29 +204,44 @@ function InvestmentDetailsDrawer({ open, onClose, investment }: { open: boolean;
             {drawerTab === 'payments' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-medium text-stone-900">Projected payment schedule</h3>
-                  <p className="mt-1 text-xs text-stone-500">Projection based on your commitment terms — actual payment dates and amounts may vary.</p>
+                  <h3 className="text-sm font-medium text-stone-900">Payment schedule</h3>
+                  <p className="mt-1 text-xs text-stone-500">
+                    {investment.totalPayments} payments over the contract term
+                    {investment.paymentSchedule.length > 0 && (
+                      <> · {new Date(`${investment.paymentSchedule[0]}T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} – {new Date(`${investment.paymentSchedule[investment.paymentSchedule.length - 1]}T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</>
+                    )}
+                  </p>
                 </div>
-                {investment.commitDate && investment.monthlyInterest > 0 && investment.totalPayments > 0 ? (
+                {investment.paymentSchedule.length > 0 || investment.totalPayments > 0 ? (
                   <div className="space-y-2">
-                    {Array.from({ length: investment.totalPayments }).map((_, i) => {
-                      const startDate = new Date(investment.commitDate);
-                      const payDate = new Date(startDate);
-                      payDate.setMonth(payDate.getMonth() + i);
+                    {(investment.paymentSchedule.length > 0
+                      ? investment.paymentSchedule
+                      : Array.from({ length: investment.totalPayments }, () => '')
+                    ).map((iso, i) => {
+                      // Prefer completed-count for "paid"; otherwise fall back to whether the date has passed.
+                      const payDate = iso ? new Date(`${iso}T00:00:00`) : null;
+                      const isPaid = investment.paymentsCompleted > 0
+                        ? i < investment.paymentsCompleted
+                        : !!(payDate && payDate < new Date());
+                      const isNext = !isPaid && (investment.paymentsCompleted > 0
+                        ? i === investment.paymentsCompleted
+                        : !!(payDate && payDate >= new Date() && (i === 0 || (investment.paymentSchedule[i - 1] && new Date(`${investment.paymentSchedule[i - 1]}T00:00:00`) < new Date()))));
                       return (
-                        <div key={i} className="flex items-center justify-between p-3 rounded-lg border bg-stone-50 border-stone-100">
+                        <div key={i} className={`flex items-center justify-between p-3 rounded-lg border ${isPaid ? 'bg-emerald-50/50 border-emerald-100' : isNext ? 'bg-amber-50/50 border-amber-100' : 'bg-stone-50 border-stone-100'}`}>
                           <div className="flex items-center gap-3">
-                            <div className="size-8 rounded-full flex items-center justify-center text-xs font-bold bg-stone-200 text-stone-500">
-                              {i + 1}
+                            <div className={`size-8 rounded-full flex items-center justify-center text-xs font-bold ${isPaid ? 'bg-emerald-100 text-emerald-700' : isNext ? 'bg-amber-100 text-amber-700' : 'bg-stone-200 text-stone-500'}`}>
+                              {isPaid ? '✓' : i + 1}
                             </div>
                             <div>
                               <p className="text-sm font-medium text-stone-900">Payment #{i + 1}</p>
-                              <p className="text-xs text-stone-500">{payDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                              <p className="text-xs text-stone-500">{payDate ? payDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Date TBD'}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-semibold tabular-nums text-stone-900">{formatCurrency(investment.monthlyInterest)}</p>
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 bg-stone-100 text-stone-500">Projected</span>
+                            <p className={`text-sm font-semibold tabular-nums ${isPaid ? 'text-emerald-700' : 'text-stone-900'}`}>{formatCurrency(investment.monthlyInterest)}</p>
+                            <span className={`text-[10px] font-medium px-1.5 py-0.5 ${isPaid ? 'bg-emerald-100 text-emerald-700' : isNext ? 'bg-amber-100 text-amber-700' : 'bg-stone-100 text-stone-500'}`}>
+                              {isPaid ? 'Paid' : isNext ? 'Upcoming' : 'Scheduled'}
+                            </span>
                           </div>
                         </div>
                       );

@@ -35,6 +35,7 @@ interface Investment {
   annualRate: number;
   paymentsCompleted: number;
   totalPayments: number;
+  paymentSchedule: string[];
   nextPaymentDate: string | null;
   maturityDate: string | null;
   ltv: number;
@@ -207,13 +208,25 @@ function InvestmentDetailsDrawer({ open, onClose, investment }: { open: boolean;
             {drawerTab === 'payments' && (
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-stone-900">Payment Schedule</h3>
+                <p className="text-xs text-stone-500">
+                  {investment.totalPayments} payments over the contract term
+                  {investment.paymentSchedule.length > 0 && (
+                    <> · {new Date(`${investment.paymentSchedule[0]}T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} – {new Date(`${investment.paymentSchedule[investment.paymentSchedule.length - 1]}T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</>
+                  )}
+                </p>
                 <div className="space-y-2">
-                  {Array.from({ length: investment.totalPayments }).map((_, i) => {
-                    const isPaid = i < investment.paymentsCompleted;
-                    const isNext = i === investment.paymentsCompleted;
-                    const startDate = new Date(investment.commitDate);
-                    const payDate = new Date(startDate);
-                    payDate.setMonth(payDate.getMonth() + i);
+                  {(investment.paymentSchedule.length > 0
+                    ? investment.paymentSchedule
+                    : Array.from({ length: investment.totalPayments }, () => '')
+                  ).map((iso, i) => {
+                    // Prefer completed-count for "paid"; otherwise fall back to whether the date has passed.
+                    const payDate = iso ? new Date(`${iso}T00:00:00`) : null;
+                    const isPaid = investment.paymentsCompleted > 0
+                      ? i < investment.paymentsCompleted
+                      : !!(payDate && payDate < new Date());
+                    const isNext = !isPaid && (investment.paymentsCompleted > 0
+                      ? i === investment.paymentsCompleted
+                      : !!(payDate && payDate >= new Date() && (i === 0 || (investment.paymentSchedule[i - 1] && new Date(`${investment.paymentSchedule[i - 1]}T00:00:00`) < new Date()))));
                     return (
                       <div key={i} className={`flex items-center justify-between p-3 rounded-lg border ${isPaid ? 'bg-emerald-50/50 border-emerald-100' : isNext ? 'bg-amber-50/50 border-amber-100' : 'bg-stone-50 border-stone-100'}`}>
                         <div className="flex items-center gap-3">
@@ -222,7 +235,7 @@ function InvestmentDetailsDrawer({ open, onClose, investment }: { open: boolean;
                           </div>
                           <div>
                             <p className="text-sm font-medium text-stone-900">Payment #{i + 1}</p>
-                            <p className="text-xs text-stone-500">{payDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                            <p className="text-xs text-stone-500">{payDate ? payDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Date TBD'}</p>
                           </div>
                         </div>
                         <div className="text-right">

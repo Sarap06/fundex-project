@@ -457,6 +457,22 @@ export default function DealsPage() {
         }
       }
 
+      // Run Communication-step side effects for new deals: auto-link the
+      // 'all' audience and send the automated investor message (inbox + email).
+      if (!isEdit) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          await fetch(`/api/deals/${newDeal.id}/communication`, {
+            method: 'POST',
+            headers: session?.access_token
+              ? { Authorization: `Bearer ${session.access_token}` }
+              : {},
+          });
+        } catch (err) {
+          console.error('Error running deal communication side effects:', err);
+        }
+      }
+
       setIsDrawerOpen(false);
       setEditingDeal(null);
       fetchDeals(companyId);

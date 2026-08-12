@@ -1,26 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { requireAuth } from '@/services/access';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 /**
  * GET /api/broadcasts/deals
- * Returns all deals with broadcast_channel or inbox_channel enabled
+ * Returns all broadcast-enabled deals for the authenticated user's company.
+ *
+ * NOTE: this route previously used the anon Supabase client with no session,
+ * so RLS silently returned zero deals — the admin "Deal Channels" tab was always
+ * empty. It also trusted `companyId` from the query string (IDOR). Both are fixed
+ * here: the company is derived from the session and reads use the service role.
  */
 export async function GET(request: NextRequest) {
   try {
-    const companyId = request.nextUrl.searchParams.get('companyId');
+    const ctx = await requireAuth(request);
+    const supabase = getSupabaseAdmin();
     const status = request.nextUrl.searchParams.get('status');
-
-    if (!companyId) {
-      return NextResponse.json(
-        { error: 'Company ID is required' },
-        { status: 400 }
-      );
-    }
 
     let query = supabase
       .from('deals')
@@ -59,7 +54,7 @@ export async function GET(request: NextRequest) {
         { count: 'exact' }
       )
       .eq('enable_broadcast_channel', true)
-      .eq('company_id', companyId)
+      .eq('company_id', ctx.companyId)
       .order('created_at', { ascending: false });
 
     if (status) {
@@ -76,13 +71,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Calculate actual investor count for each deal
+    // Calculate actual investor count for each deal (tenant-scoped).
     const dealsWithInvestorCount = await Promise.all(
       (deals || []).map(async (deal) => {
         const { count: investorCount, error: countError } = await supabase
           .from('deal_investors')
           .select('*', { count: 'exact', head: true })
-          .eq('deal_id', deal.id);
+          .eq('deal_id', deal.id)
+          .eq('company_id', ctx.companyId);
 
         if (countError) {
           console.error(`Error counting investors for deal ${deal.id}:`, countError);
@@ -102,7 +98,10 @@ export async function GET(request: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('Error in get deals:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

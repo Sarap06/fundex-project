@@ -240,8 +240,22 @@ export async function POST(
       return NextResponse.json({ error: 'Update not found' }, { status: 404 });
     }
 
-    // Update the recipient record for this investor
-    const { error: updateRecipientError } = await supabase
+    // A logged-in investor authenticates as their user_profiles user, but the
+    // recipient row may have been created under the manual `investors` source
+    // (same human, different id). Resolve both identities by email so either
+    // source can be acknowledged — otherwise investors-source rows are stuck
+    // permanently "action required".
+    const recipientIds = new Set<string>([user.id]);
+    if (user.email) {
+      const { data: manualMatches } = await supabase
+        .from('investors')
+        .select('id')
+        .ilike('email', user.email);
+      for (const m of manualMatches ?? []) recipientIds.add(m.id);
+    }
+
+    // Update the recipient record(s) for this investor across both sources.
+    const { data: acked, error: updateRecipientError } = await supabase
       .from('broadcast_update_recipients')
       .update({
         acknowledged_at: new Date().toISOString(),
@@ -249,8 +263,8 @@ export async function POST(
         updated_at: new Date().toISOString(),
       })
       .eq('broadcast_update_id', updateId)
-      .eq('investor_id', user.id)
-      .eq('investor_source', 'user_profiles');
+      .in('investor_id', Array.from(recipientIds))
+      .select('id');
 
     if (updateRecipientError) {
       console.error('[ACK_API] Error updating recipient:', updateRecipientError);

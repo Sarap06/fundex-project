@@ -110,7 +110,15 @@ export async function GET(request: NextRequest) {
       allocsByDeal.get(a.deal_id)!.push(a);
     });
 
-    const contractPerformance = activeDeals.map(deal => {
+    // Show any deal that is Active OR has at least one allocation — an allocated
+    // deal must be visible here even while still in "Funding" (previously this
+    // filtered to status === 'Active' only, so allocated Funding deals vanished
+    // from the contracts table). Unfunded allocations render as zeros below.
+    const contractDeals = allDeals.filter(
+      d => d.status === 'Active' || (allocsByDeal.get(d.id)?.length ?? 0) > 0
+    );
+
+    const contractPerformance = contractDeals.map(deal => {
       const dealAllocs = allocsByDeal.get(deal.id) ?? [];
       const fundedDealAllocs = dealAllocs.filter(a => a.funding_status === 'Funded' && (a.status ?? '').toLowerCase() === 'confirmed');
       const principalDeployed = fundedDealAllocs.reduce((s, a) => s + Number(a.allocation_amount || 0), 0);

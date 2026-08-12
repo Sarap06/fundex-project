@@ -1211,10 +1211,40 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                       </div>
                       <Switch
                         checked={formData.sendAutomatedMessage}
-                        onCheckedChange={() => handleCheckboxChange('sendAutomatedMessage')}
+                        onCheckedChange={() => {
+                          const enabling = !formData.sendAutomatedMessage;
+                          setFormData(prev => ({
+                            ...prev,
+                            sendAutomatedMessage: enabling,
+                            // Prefill an editable default template the first time it's enabled.
+                            automatedInvestorMessage:
+                              enabling && !prev.automatedInvestorMessage?.trim()
+                                ? `You've been added to a new deal${prev.name ? `: ${prev.name}` : ''}. Log in to Fundex to review the details and documents.`
+                                : prev.automatedInvestorMessage,
+                          }));
+                        }}
                         className="data-[state=checked]:bg-fundex-gold"
                       />
                     </div>
+
+                    {formData.sendAutomatedMessage && (
+                      <div>
+                        <Label htmlFor="automatedInvestorMessage" className="text-sm font-semibold text-foreground">
+                          Message to investors
+                        </Label>
+                        <p className="text-xs text-muted-foreground mt-1 mb-2">
+                          Sent to every investor on this deal via their inbox and email when the deal is created.
+                        </p>
+                        <Textarea
+                          id="automatedInvestorMessage"
+                          name="automatedInvestorMessage"
+                          value={formData.automatedInvestorMessage}
+                          onChange={handleInputChange}
+                          rows={4}
+                          placeholder="Write the message investors will receive…"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

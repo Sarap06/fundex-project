@@ -116,7 +116,10 @@ function AdminInboxPanel({ companyId, currentUserId }: { companyId: string; curr
     // Fetch full deal details for this investor's deals
     if (thread.deals && thread.deals.length > 0) {
       try {
-        const res = await fetch(`/api/broadcasts/deals?companyId=${companyId}`);
+        const token = await getToken();
+        const res = await fetch(`/api/broadcasts/deals`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (res.ok) {
           const json = await res.json();
           const dealIds = new Set(thread.deals.map(d => d.id));
@@ -464,7 +467,12 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
   const loadDeals = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/broadcasts/deals?companyId=${companyId}`);
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`/api/broadcasts/deals`, {
+        headers: session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {},
+      });
       const data = await response.json();
 
       if (data.deals) {

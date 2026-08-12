@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Service-role client for reads/writes. This route previously used an anon
+// client, which RLS blocked from reading `deals` — so the deal lookup 404'd for
+// every deal and no update could ever be sent. Reads now use the service role,
+// with an explicit company check below to preserve tenant isolation.
+const supabase = getSupabaseAdmin();
 
 interface SendUpdateRequest {
   dealId: string;
@@ -100,11 +102,24 @@ export async function POST(
       );
     }
 
-    // Verify deal exists
+    // Resolve the caller's company so the deal can be tenant-scoped (the route
+    // now uses the service role, so we must scope explicitly to avoid an IDOR).
+    const { data: callerProfile } = await supabase
+      .from('user_profiles')
+      .select('company_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!callerProfile?.company_id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    // Verify deal exists and belongs to the caller's company
     const { data: deal, error: dealError } = await supabase
       .from('deals')
-      .select('id')
+      .select('id, require_investor_acknowledgment')
       .eq('id', dealId)
+      .eq('company_id', callerProfile.company_id)
       .single();
 
     if (dealError || !deal) {
@@ -112,6 +127,12 @@ export async function POST(
         { error: 'Deal not found' },
         { status: 404 }
       );
+    }
+
+    // If the deal mandates acknowledgment, every update requires it — the admin
+    // can additionally opt-in per update, but can't opt out of a deal-level rule.
+    if (deal.require_investor_acknowledgment) {
+      requireAcknowledgment = true;
     }
 
     let fileUrl: string | null = null;
@@ -158,7 +179,7 @@ export async function POST(
     }
 
     // Create broadcast update record
-    const { data: broadcastUpdate, error: updateError } = await authSupabase
+    const { data: broadcastUpdate, error: updateError } = await supabase
       .from('broadcast_updates')
       .insert({
         deal_id: dealId,
@@ -267,7 +288,7 @@ export async function POST(
 
       console.log(`[Broadcast] Inserting ${recipientRecords.length} recipient records`);
 
-      const { error: recipientError } = await authSupabase
+      const { error: recipientError } = await supabase
         .from('broadcast_update_recipients')
         .insert(recipientRecords);
 
@@ -279,7 +300,7 @@ export async function POST(
     }
 
     // Create timeline entry
-    const { error: timelineError } = await authSupabase.from('broadcast_communication_timeline').insert({
+    const { error: timelineError } = await supabase.from('broadcast_communication_timeline').insert({
       deal_id: dealId,
       broadcast_update_id: broadcastUpdate.id,
       event_type: 'update_sent',

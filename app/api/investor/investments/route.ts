@@ -8,6 +8,7 @@ import {
   largestActivePosition,
   weightedAverageAnnualRate,
 } from '@/services/portfolio-metrics';
+import { dealPayoutDates } from '@/services/payout-service';
 
 /**
  * GET /api/investor/investments
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest) {
         term_length, term_unit, payment_frequency, payment_start_date,
         commit_date, expected_funding_date, funding_status, status, notes,
         deals (id, deal_id, name, type, status, target_amount, raised_amount,
-               interest_rate, term, close_date, first_payout_date,
+               interest_rate, term, close_date, first_payout_date, payout_cycle,
                collateral_address, estimated_property_value, loan_to_value_ratio,
                location_state, location_city, borrower_name)
       `)
@@ -113,6 +114,24 @@ export async function GET(request: NextRequest) {
         nextPaymentDate = start.toISOString().split('T')[0];
       }
 
+      // Build the actual payment schedule dates. Prefer the deal-level payout
+      // schedule (first_payout_date + cycle day, `term` months) so dates match
+      // exactly when payouts land; fall back to the allocation's payment_start_date
+      // stepped monthly when the deal has no explicit payout schedule configured.
+      let paymentSchedule: string[] = dealPayoutDates(
+        a.deals?.first_payout_date ?? null,
+        a.deals?.payout_cycle ?? null,
+        termMonths
+      );
+      if (paymentSchedule.length === 0 && a.payment_start_date && termMonths > 0) {
+        const base = new Date(a.payment_start_date);
+        paymentSchedule = Array.from({ length: termMonths }, (_, i) => {
+          const d = new Date(base);
+          d.setMonth(d.getMonth() + i);
+          return d.toISOString().split('T')[0];
+        });
+      }
+
       // Fallback: compute monthly interest if not stored
       const effectiveMonthlyInt = monthlyInt > 0 ? monthlyInt : (amount * rate) / 12;
       // Fallback: compute ownership % if not stored
@@ -133,6 +152,7 @@ export async function GET(request: NextRequest) {
         annualRate: rate,
         paymentsCompleted,
         totalPayments,
+        paymentSchedule,
         nextPaymentDate,
         maturityDate,
         ltv,

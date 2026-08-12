@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { requireAuth } from '@/services/access';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 /**
  * GET /api/broadcasts/deals/[dealId]/documents
- * Returns all documents linked to a deal
+ * Returns all documents linked to a deal (tenant-scoped, service-role reads to
+ * avoid the anon/token-race 404 that made deals fail to load on first click).
  */
 export async function GET(
   request: NextRequest,
@@ -24,30 +21,15 @@ export async function GET(
       );
     }
 
-    // Get authenticated user from Authorization header
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
+    const ctx = await requireAuth(request);
+    const queryClient = getSupabaseAdmin();
 
-    // Create authenticated Supabase client if token is provided
-    const queryClient = token 
-      ? createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          {
-            global: {
-              headers: {
-                authorization: `Bearer ${token}`,
-              },
-            },
-          }
-        )
-      : supabase;
-
-    // Verify deal exists
+    // Verify deal exists and belongs to the caller's company
     const { data: deal, error: dealError } = await queryClient
       .from('deals')
       .select('id')
       .eq('id', dealId)
+      .eq('company_id', ctx.companyId)
       .single();
 
     if (dealError || !deal) {
@@ -92,7 +74,10 @@ export async function GET(
       },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('Error in get documents:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { requireAuth } from '@/services/access';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 /**
  * GET /api/broadcasts/deals/[dealId]
- * Returns deal details with its broadcast updates and investor communication status
+ * Returns deal details with its broadcast updates and investor communication status.
+ *
+ * Uses service-role reads scoped to the caller's company. Previously this fell
+ * back to an anon client when the Bearer token wasn't attached yet (a first-click
+ * / session-hydration race), which RLS turned into a 404 — the deal "wouldn't
+ * load". Authenticating up-front removes that race and closes the IDOR.
  */
 export async function GET(
   request: NextRequest,
@@ -24,30 +25,15 @@ export async function GET(
       );
     }
 
-    // Get authenticated user from Authorization header
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
+    const ctx = await requireAuth(request);
+    const queryClient = getSupabaseAdmin();
 
-    // Create authenticated Supabase client if token is provided
-    const queryClient = token 
-      ? createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          {
-            global: {
-              headers: {
-                authorization: `Bearer ${token}`,
-              },
-            },
-          }
-        )
-      : supabase;
-
-    // Get deal details
+    // Get deal details (tenant-scoped)
     const { data: deal, error: dealError } = await queryClient
       .from('deals')
       .select('*')
       .eq('id', dealId)
+      .eq('company_id', ctx.companyId)
       .single();
 
     if (dealError || !deal) {
@@ -129,7 +115,10 @@ export async function GET(
       },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: any) {
+    if (error.status) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('Error in get deal details:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

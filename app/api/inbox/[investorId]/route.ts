@@ -89,6 +89,41 @@ export async function POST(
     // Use provided source, default to 'user_profiles' for backwards compat
     const source = investorSource || 'user_profiles';
 
+    // Enforce the deal-level "Enable Investor Inbox" toggle server-side:
+    // messaging is only allowed if this investor shares at least one deal in the
+    // company that has the inbox enabled. (Client-side canMessage was bypassable.)
+    // Two explicit queries — no PostgREST embed (deal_investors has no reliable
+    // FK relationship exposed to embeds in this project).
+    // Match by investor_id alone (not source): a signed-up investor's thread is
+    // keyed by user_profiles, but their deal link may sit under the manual
+    // `investors` source — the id spaces don't collide, so this stays correct
+    // while avoiding a false 403 for dual-identity investors.
+    const { data: linkRows } = await supabase
+      .from('deal_investors')
+      .select('deal_id')
+      .eq('investor_id', investorId)
+      .eq('company_id', ctx.companyId);
+
+    const dealIds = [...new Set((linkRows ?? []).map((r: any) => r.deal_id))];
+    let inboxEnabled = false;
+    if (dealIds.length > 0) {
+      const { data: inboxDeals } = await supabase
+        .from('deals')
+        .select('id')
+        .in('id', dealIds)
+        .eq('company_id', ctx.companyId)
+        .eq('enable_investor_inbox', true)
+        .limit(1);
+      inboxEnabled = !!(inboxDeals && inboxDeals.length > 0);
+    }
+
+    if (!inboxEnabled) {
+      return NextResponse.json(
+        { error: 'Messaging is disabled for this investor’s deals.' },
+        { status: 403 }
+      );
+    }
+
     const { data: message, error } = await supabase
       .from('investor_inbox_messages')
       .insert({

@@ -428,6 +428,9 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
   const [timeline, setTimeline] = useState<BroadcastCommunicationTimeline[]>([]);
   const [documents, setDocuments] = useState<BroadcastDocument[]>([]);
   const [dealInvestors, setDealInvestors] = useState<Array<{ id: string; name: string; email: string; investor_source: string }>>([]);
+  // Recipient for the composer: 'everyone' broadcasts to the whole deal group;
+  // otherwise the value is `${investor_id}:${investor_source}` for a 1:1 message.
+  const [recipientTarget, setRecipientTarget] = useState<string>('everyone');
 
   // State for send update form
   const [updateTitle, setUpdateTitle] = useState('');
@@ -530,8 +533,14 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
   const handleSendUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!updateTitle.trim() || !updateMessage.trim()) {
+    // For a 1:1 direct message the title is optional (it becomes a heading line);
+    // a broadcast update requires both a title and a message.
+    if (recipientTarget === 'everyone' && !updateTitle.trim()) {
       setError('Please fill in title and message');
+      return;
+    }
+    if (!updateMessage.trim()) {
+      setError('Please write a message');
       return;
     }
 
@@ -548,6 +557,37 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
 
       if (!session) {
         setError('You are not authenticated');
+        return;
+      }
+
+      // Direct (1:1) message to a single investor → investor inbox thread.
+      if (recipientTarget !== 'everyone') {
+        const [investorId, investorSource] = recipientTarget.split(':');
+        const target = dealInvestors.find(i => i.id === investorId);
+        const res = await fetch(`/api/inbox/${investorId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            content: updateTitle.trim() ? `${updateTitle.trim()}\n\n${updateMessage}` : updateMessage,
+            investorSource,
+          }),
+        });
+        const dm = await res.json();
+        if (res.ok) {
+          setSuccessMessage(`Message sent to ${target?.name ?? 'investor'}.`);
+          setUpdateTitle('');
+          setUpdateMessage('');
+          setUpdateFile(null);
+          setRequireAcknowledgment(false);
+          setRecipientTarget('everyone');
+          setCurrentView(previousView);
+          setTimeout(() => setSuccessMessage(''), 3000);
+        } else {
+          setError(dm.error || 'Failed to send message');
+        }
         return;
       }
 
@@ -575,6 +615,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
         setUpdateMessage('');
         setUpdateFile(null);
         setRequireAcknowledgment(false);
+        setRecipientTarget('everyone');
         setCurrentView(previousView);
         setTimeout(() => setSuccessMessage(''), 3000);
         if (selectedDeal) {
@@ -817,7 +858,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
       {/* Four Buttons */}
       <div className="flex flex-wrap gap-3">
         <button
-          onClick={() => { setPreviousView('deal-detail'); setCurrentView('send-update'); }}
+          onClick={() => { setRecipientTarget('everyone'); setPreviousView('deal-detail'); setCurrentView('send-update'); }}
           className="px-6 py-2 bg-fundex-forest text-white font-medium  hover:bg-fundex-forest/90 transition flex items-center gap-2"
         >
           <Send size={18} />
@@ -1033,9 +1074,13 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
         {/* Header */}
         <div className="bg-white border-b border-stone-100 px-6 py-4 flex justify-between items-center shrink-0">
           <div>
-            <h2 className="text-2xl font-display font-normal text-stone-900">Send Investor Update</h2>
+            <h2 className="text-2xl font-display font-normal text-stone-900">
+              {recipientTarget === 'everyone' ? 'Send Investor Update' : 'Direct Message'}
+            </h2>
             <p className="text-sm text-stone-500 mt-1">
-              Broadcast to all {selectedDeal?.investor_count || 0} investors in {selectedDeal?.name}
+              {recipientTarget === 'everyone'
+                ? <>Broadcast to all {dealInvestors.length || selectedDeal?.investor_count || 0} investors in {selectedDeal?.name}</>
+                : <>Private message to {dealInvestors.find(i => `${i.id}:${i.investor_source}` === recipientTarget)?.name ?? 'investor'} in {selectedDeal?.name}</>}
             </p>
           </div>
           <button
@@ -1063,10 +1108,36 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
           )}
 
           <div className="bg-stone-50 p-6 space-y-5">
+            <h3 className="text-lg font-display font-normal text-stone-900">Recipient</h3>
+            <div>
+              <label className="block text-sm font-normal text-stone-700 mb-1.5">Send to</label>
+              <select
+                value={recipientTarget}
+                onChange={(e) => setRecipientTarget(e.target.value)}
+                className="w-full px-4 py-3 text-sm border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-fundex-gold/30"
+              >
+                <option value="everyone">Everyone — all {dealInvestors.length || selectedDeal?.investor_count || 0} investors (broadcast)</option>
+                {dealInvestors.map((inv) => (
+                  <option key={`${inv.id}:${inv.investor_source}`} value={`${inv.id}:${inv.investor_source}`}>
+                    {inv.name} ({inv.email}) — direct message
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-stone-500 mt-1.5">
+                {recipientTarget === 'everyone'
+                  ? 'A broadcast announcement posted to the whole deal channel.'
+                  : 'A private 1:1 message in this investor’s inbox thread.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-stone-50 p-6 space-y-5">
             <h3 className="text-lg font-display font-normal text-stone-900">Message Details</h3>
 
             <div>
-              <label className="block text-sm font-normal text-stone-700 mb-1.5">Update Title <span className="text-red-600">*</span></label>
+              <label className="block text-sm font-normal text-stone-700 mb-1.5">
+                {recipientTarget === 'everyone' ? <>Update Title <span className="text-red-600">*</span></> : 'Subject (optional)'}
+              </label>
               <input
                 type="text"
                 value={updateTitle}
@@ -1127,7 +1198,9 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
         {/* Footer */}
         <div className="border-t border-stone-100 px-6 py-4 bg-stone-50 shrink-0">
           <p className="text-xs text-stone-500 mb-3">
-            <span className="font-semibold text-stone-900">{selectedDeal?.investor_count || 0} investors</span> will receive this update
+            {recipientTarget === 'everyone'
+              ? <><span className="font-semibold text-stone-900">{dealInvestors.length || selectedDeal?.investor_count || 0} investors</span> will receive this update</>
+              : <>Only <span className="font-semibold text-stone-900">{dealInvestors.find(i => `${i.id}:${i.investor_source}` === recipientTarget)?.name ?? 'this investor'}</span> will receive this message</>}
           </p>
           <div className="flex gap-3">
             <button
@@ -1143,7 +1216,7 @@ export function BroadcastChannels({ companyId, userRole, userName, userId }: Bro
               disabled={sending}
               className="flex-1 px-4 py-2.5 text-sm bg-fundex-forest text-white font-medium hover:bg-fundex-forest/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-              {sending ? 'Sending...' : 'Send Update'}
+              {sending ? 'Sending...' : recipientTarget === 'everyone' ? 'Send Update' : 'Send Message'}
             </button>
           </div>
         </div>

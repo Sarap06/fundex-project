@@ -364,7 +364,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
         loanToValueRatio: initialData.loan_to_value_ratio?.toString() || '',
         assetNotes: initialData.asset_notes || '',
 
-        uploadedFiles: [],
+        uploadedFiles: initialData.uploadedFiles || [],
 
         defaultInvestorAudience: initialData.default_investor_audience || '',
         enableBroadcastChannel: initialData.enable_broadcast_channel ?? true,
@@ -491,6 +491,10 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
     }
   };
 
+  // An actual edit carries an existing deal identifier; a PDF-prefill (or blank
+  // create) does not — so the title reads "Create New Deal", not "Edit Deal".
+  const isExistingDeal = !!(initialData && (initialData.id || initialData.deal_id));
+
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="bg-white border border-stone-200 shadow-2xl overflow-hidden flex flex-col" style={{ width: '100%', maxWidth: '880px', height: '90vh', maxHeight: '95vh', minHeight: '600px' }}>
@@ -499,8 +503,8 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
           {/* Title and Close Button */}
           <div className="px-6 py-4 flex justify-between items-center border-b border-stone-100">
             <div>
-              <h2 className="text-2xl font-display font-normal text-stone-900">{initialData ? 'Edit Deal' : 'Create New Deal'}</h2>
-              <p className="text-sm text-stone-400 mt-1">{initialData ? 'Update the deal information' : 'Set up a new lending contract or investment opportunity'}</p>
+              <h2 className="text-2xl font-display font-normal text-stone-900">{isExistingDeal ? 'Edit Deal' : 'Create New Deal'}</h2>
+              <p className="text-sm text-stone-400 mt-1">{isExistingDeal ? 'Update the deal information' : 'Set up a new lending contract or investment opportunity'}</p>
             </div>
             <button onClick={onClose} className="p-2 text-stone-400 hover:bg-stone-50 hover:text-stone-600 transition">
               <X size={20} />
@@ -547,6 +551,25 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
 
         {/* Form Content - Scrollable */}
         <div className="flex-1 overflow-y-auto p-6">
+          {/* AI extraction review banner — shown when the deal was pre-filled from a PDF */}
+          {initialData?._lowConfidence !== undefined && (
+            <div className="mb-6 rounded-lg border border-fundex-gold/40 bg-fundex-cream/50 px-4 py-3">
+              <p className="text-sm font-semibold text-fundex-forest">
+                Pre-filled from your PDF — please review every field before saving.
+              </p>
+              {Array.isArray(initialData._lowConfidence) && initialData._lowConfidence.length > 0 && (
+                <p className="mt-1 text-xs text-stone-600">
+                  Double-check these fields the AI was unsure about:{' '}
+                  <span className="font-medium">
+                    {initialData._lowConfidence
+                      .map((f: string) => f.replace(/_/g, ' '))
+                      .join(', ')}
+                  </span>
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Step 1: Basic Info */}
           {currentStep === 1 && (
             <div className="space-y-6">

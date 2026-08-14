@@ -111,3 +111,4 @@ All API routes in `/app/api/` must follow this pattern:
 - `BREVO_API_KEY` / `BREVO_SENDER_EMAIL` / `BREVO_SENDER_NAME` — email service
 - `NEXT_PUBLIC_APP_URL` — application base URL
 - `CRON_SECRET` — scheduled job authentication
+- `OPENAI_API_KEY` — server-side AI deal extraction (Create Deal from PDF); optional `OPENAI_DEAL_MODEL` overrides the default `gpt-4o`

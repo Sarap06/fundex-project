@@ -9,10 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/page-header';
 import { StaggerContainer, StaggerItem } from '@/components/motion-wrapper';
-import { TrendingUp, DollarSign, AlertCircle, Plus, X, Filter, Search, Trash2, Edit, Eye } from 'lucide-react';
+import { TrendingUp, DollarSign, AlertCircle, Plus, X, Filter, Search, Trash2, Edit, Eye, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getCurrentUserCompanyId, logOut } from '@/lib/auth';
 import { CreateDealWizard } from '@/components/create-deal-wizard';
+import { DealPdfUploadModal } from '@/components/deal-pdf-upload-modal';
 import { DealQuickViewModal, type DealQuickViewData } from '@/components/deal-quick-view-modal';
 
 interface Deal {
@@ -76,6 +77,8 @@ export default function DealsPage() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [activeFilterCount, setActiveFilterCount] = useState(0);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
+  const [showPdfModal, setShowPdfModal] = useState(false);
+  const [prefillDeal, setPrefillDeal] = useState<any | null>(null);
   const [quickViewDeal, setQuickViewDeal] = useState<DealQuickViewData | null>(null);
   const filterPanelRef = useRef<HTMLDivElement>(null);
 
@@ -675,6 +678,15 @@ export default function DealsPage() {
             </Button>
 
             <Button
+              variant="outline"
+              onClick={() => setShowPdfModal(true)}
+              className="fdx-btn-secondary gap-2"
+            >
+              <Sparkles className="size-4" />
+              Create from PDF
+            </Button>
+
+            <Button
               onClick={() => setIsDrawerOpen(true)}
               className="fdx-btn-primary gap-2"
             >
@@ -716,9 +728,27 @@ export default function DealsPage() {
           onClose={() => {
             setIsDrawerOpen(false);
             setEditingDeal(null);
+            setPrefillDeal(null);
           }}
           onSave={handleAddDeal}
-          initialData={editingDeal}
+          initialData={editingDeal || prefillDeal}
+        />
+      )}
+
+      {/* Create Deal from PDF — AI extraction */}
+      {showPdfModal && (
+        <DealPdfUploadModal
+          onClose={() => setShowPdfModal(false)}
+          onExtracted={({ initialData, file, lowConfidence }) => {
+            setEditingDeal(null);
+            setPrefillDeal({
+              ...initialData,
+              uploadedFiles: [{ file, type: file.type }],
+              _lowConfidence: lowConfidence,
+            });
+            setShowPdfModal(false);
+            setIsDrawerOpen(true);
+          }}
         />
       )}
 

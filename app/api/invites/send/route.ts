@@ -184,7 +184,19 @@ export async function POST(request: NextRequest) {
         .insert({ company_id: companyId, email, role, status: 'pending' });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // Resolve the base URL for the invite link. Prefer the configured app URL,
+    // but fall back to the deployment's own request host so invite emails never
+    // point at localhost in production when NEXT_PUBLIC_APP_URL is unset — which
+    // is exactly what made investors land on localhost and lose access.
+    const configuredUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '');
+    const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+    const requestOrigin = request.headers.get('origin')?.replace(/\/$/, '');
+    const derivedUrl =
+      forwardedHost && !forwardedHost.includes('localhost')
+        ? `${forwardedProto}://${forwardedHost}`
+        : requestOrigin;
+    const appUrl = configuredUrl || derivedUrl || 'http://localhost:3000';
     const inviteLink = `${appUrl}/auth/signup?code=${companyCode}&email=${encodeURIComponent(email)}&type=company`;
 
     const htmlContent = `

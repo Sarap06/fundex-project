@@ -62,19 +62,35 @@ export function DealPdfUploadModal({ onClose, onExtracted }: DealPdfUploadModalP
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-      if (!token) {
+      const userId = session?.user?.id;
+      if (!token || !userId) {
         setError('Your session expired. Please refresh and sign in again.');
         setLoading(false);
         return;
       }
 
-      const body = new FormData();
-      body.append('file', file);
+      // Upload the PDF straight to Supabase Storage first, then send only the
+      // path to the API. Vercel functions cap the request body at 4.5MB, so a
+      // multi-MB scan POSTed directly is rejected at the edge — the browser→storage
+      // upload has no such limit.
+      const safeName = file.name.replace(/[^\w.-]/g, '_');
+      const storagePath = `deal-extractions/${userId}/${Date.now()}-${safeName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(storagePath, file, { cacheControl: '3600', upsert: false, contentType: 'application/pdf' });
+
+      if (uploadError) {
+        console.error('[DealPdfUpload] storage upload failed:', uploadError);
+        setError('Could not upload the PDF. Please try again.');
+        setLoading(false);
+        return;
+      }
 
       const res = await fetch('/api/deals/extract', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body,
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storagePath }),
       });
 
       const data = await res.json();

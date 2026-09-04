@@ -129,7 +129,8 @@ export async function listPayoutsForDate(
     const row = savedById.get(p.investorId);
     const actualAmount = row?.actual_amount != null ? Number(row.actual_amount) : null;
     // Remaining is always expected minus whatever has been paid so far.
-    const remaining = Math.max(0, p.expectedTotal - (actualAmount ?? 0));
+    // Round to cents to avoid float artifacts (e.g. 0.0100000000002).
+    const remaining = Math.max(0, Math.round((p.expectedTotal - (actualAmount ?? 0)) * 100) / 100);
     return {
       ...p,
       status: (row?.status as PayoutStatus) ?? 'pending',
@@ -224,7 +225,7 @@ export async function markPayout(
     actualAmount,
     paidDate: data.paid_date ?? null,
     note: data.note ?? null,
-    remaining: Math.max(0, match.expectedTotal - (actualAmount ?? 0)),
+    remaining: Math.max(0, Math.round((match.expectedTotal - (actualAmount ?? 0)) * 100) / 100),
   };
 }
 

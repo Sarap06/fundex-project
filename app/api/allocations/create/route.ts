@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     // The deal must belong to the caller's company
     const { data: deal, error: dealError } = await supabase
       .from('deals')
-      .select('id, name')
+      .select('id, name, target_amount, raised_amount')
       .eq('id', deal_id)
       .eq('company_id', company_id)
       .single();
@@ -55,6 +55,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'Deal not found' },
         { status: 404 }
+      );
+    }
+
+    // Enforce remaining deal capacity server-side so it can't be bypassed by
+    // hitting the API directly. Remaining = target − already-allocated (raised).
+    const remainingCapacity = Math.max(
+      0,
+      Number(deal.target_amount || 0) - Number(deal.raised_amount || 0)
+    );
+    if (Number(allocation_amount) > remainingCapacity) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Allocation exceeds remaining deal capacity. Only $${remainingCapacity.toLocaleString()} is available on this deal.`,
+        },
+        { status: 400 }
       );
     }
 
@@ -141,6 +157,35 @@ export async function POST(request: NextRequest) {
     }
 
     await recalcDealRaisedAmount(deal_id, company_id);
+
+    // Refresh the investor's stored profile totals so the admin investor view
+    // isn't stale after an allocation. Recompute from the source of truth (all
+    // of this investor's allocations in the company) rather than incrementing,
+    // so it stays correct even after edits/deletes. This updates the manual
+    // `investors` row; for signed-up investors (investor_id = user_id) it simply
+    // matches no row and is a harmless no-op.
+    try {
+      const { data: investorAllocs } = await supabase
+        .from('allocations')
+        .select('allocation_amount')
+        .eq('investor_id', investor_id)
+        .eq('company_id', company_id);
+
+      const totalInvested = (investorAllocs ?? []).reduce(
+        (sum: number, a: any) => sum + Number(a.allocation_amount || 0),
+        0
+      );
+      const numberOfInvestments = (investorAllocs ?? []).length;
+
+      await supabase
+        .from('investors')
+        .update({ total_invested: totalInvested, number_of_investments: numberOfInvestments })
+        .eq('id', investor_id)
+        .eq('company_id', company_id);
+    } catch (profileError) {
+      // Non-fatal: the allocation succeeded; log so the stale-profile gap is traceable.
+      console.error('Error refreshing investor profile totals:', profileError);
+    }
 
     // Log activity (investor name resolved above, scoped to this company)
     await logActivity({

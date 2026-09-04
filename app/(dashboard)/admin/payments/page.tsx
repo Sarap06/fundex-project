@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 // ─── types (mirror the /api/payments response) ───────────────────────
-type PayoutStatus = 'pending' | 'completed' | 'missed';
+type PayoutStatus = 'pending' | 'completed' | 'missed' | 'partial';
 
 interface PayoutLineItem {
   allocationId: string;
@@ -43,6 +43,7 @@ interface InvestorPayoutView {
   actualAmount: number | null;
   paidDate: string | null;
   note: string | null;
+  remaining: number;
 }
 
 // ─── helpers ──────────────────────────────────────────────────────────
@@ -69,6 +70,7 @@ const STATUS_META: Record<DisplayStatus, { label: string; badge: string; icon: R
   pending: { label: 'Pending', badge: 'fdx-badge fdx-badge-pending', icon: <Clock className="size-4 text-amber-600" /> },
   overdue: { label: 'Overdue', badge: 'bg-red-100 text-red-700 border border-red-200', icon: <AlertTriangle className="size-4 text-red-600" /> },
   completed: { label: 'Completed', badge: 'fdx-badge fdx-badge-active', icon: <CheckCircle2 className="size-4 text-emerald-600" /> },
+  partial: { label: 'Partial', badge: 'bg-amber-100 text-amber-800 border border-amber-200', icon: <Clock className="size-4 text-amber-600" /> },
   missed: { label: 'Missed', badge: 'fdx-badge fdx-badge-info', icon: <XCircle className="size-4 text-red-600" /> },
 };
 
@@ -168,13 +170,19 @@ export default function PaymentsPage() {
   // ── summary for the selected date ───────────────────────────────────
   const summary = useMemo(() => {
     const totalExpected = payouts.reduce((s, p) => s + p.expectedTotal, 0);
-    const totalPaid = payouts.filter((p) => p.status === 'completed').reduce((s, p) => s + (p.actualAmount ?? p.expectedTotal), 0);
+    // Total Paid reflects money actually received, including partial payments.
+    const totalPaid = payouts
+      .filter((p) => p.status === 'completed' || p.status === 'partial')
+      .reduce((s, p) => s + (p.actualAmount ?? (p.status === 'completed' ? p.expectedTotal : 0)), 0);
     return {
       investors: payouts.length,
       totalExpected,
       totalPaid,
       completed: payouts.filter((p) => p.status === 'completed').length,
-      pending: payouts.filter((p) => p.status === 'pending').length,
+      // Partial payments are still outstanding — count them with pending so the
+      // obligation doesn't disappear from the "still owed" tally until fully paid.
+      pending: payouts.filter((p) => p.status === 'pending' || p.status === 'partial').length,
+      partial: payouts.filter((p) => p.status === 'partial').length,
       missed: payouts.filter((p) => p.status === 'missed').length,
     };
   }, [payouts]);
@@ -350,20 +358,25 @@ export default function PaymentsPage() {
                         {p.status === 'completed' && p.actualAmount != null && p.actualAmount !== p.expectedTotal && (
                           <p className="text-xs text-emerald-700">Paid {money(p.actualAmount)}</p>
                         )}
-                        {p.status === 'completed' && p.paidDate && (
+                        {p.status === 'partial' && (
+                          <p className="text-xs text-amber-700">
+                            Paid {money(p.actualAmount ?? 0)} · {money(p.remaining)} remaining
+                          </p>
+                        )}
+                        {(p.status === 'completed' || p.status === 'partial') && p.paidDate && (
                           <p className="text-xs text-stone-500">on {formatDate(p.paidDate)}</p>
                         )}
                       </div>
 
                       {/* Actions */}
                       <div className="flex items-center gap-2 shrink-0">
-                        {p.status === 'pending' ? (
+                        {(p.status === 'pending' || p.status === 'partial') && (
                           <>
                             <button
                               onClick={() => setMarkTarget({ payout: p, mode: 'completed' })}
                               className="fdx-btn-primary text-sm px-3 py-1.5 inline-flex items-center gap-1.5"
                             >
-                              <CheckCircle2 className="size-4" /> Mark Paid
+                              <CheckCircle2 className="size-4" /> {p.status === 'partial' ? 'Update Payment' : 'Mark Paid'}
                             </button>
                             <button
                               onClick={() => setMarkTarget({ payout: p, mode: 'missed' })}
@@ -372,7 +385,8 @@ export default function PaymentsPage() {
                               <XCircle className="size-4" /> Missed
                             </button>
                           </>
-                        ) : (
+                        )}
+                        {p.status !== 'pending' && (
                           <button
                             onClick={() => revertPayout(p)}
                             className="fdx-btn-outline text-sm px-3 py-1.5 inline-flex items-center gap-1.5"

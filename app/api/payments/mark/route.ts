@@ -17,8 +17,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = markPayoutSchema.safeParse(body);
     if (!parsed.success) {
+      // Surface the specific validation message (e.g. "Payment amount must be
+      // greater than $0") instead of a generic "Invalid request".
+      const message = parsed.error.issues[0]?.message ?? 'Invalid request';
       return NextResponse.json(
-        { success: false, message: 'Invalid request', errors: parsed.error.flatten() },
+        { success: false, message, errors: parsed.error.flatten() },
         { status: 400 }
       );
     }

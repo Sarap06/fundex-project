@@ -24,6 +24,7 @@ interface Deal {
   interest_rate?: number | null;
   term_length_months?: number | null;
   payout_cycle?: number | null;
+  first_payout_date?: string | null;
 }
 
 interface UploadedFile {
@@ -94,7 +95,7 @@ export function AddAllocationModal({
   const [showDealDropdown, setShowDealDropdown] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -149,7 +150,7 @@ export function AddAllocationModal({
         .eq('company_id', companyId)
         .eq('role', 'investor');
 
-      const manualInvestors: Investor[] = (investorData || []).map((inv: any) => ({
+      const manualInvestors: Investor[] = (investorData || []).map((inv: { id: string; investor_id?: string; full_name: string; email: string; initial_investment: number }) => ({
         id: inv.id,
         investor_code: inv.investor_id,
         full_name: inv.full_name,
@@ -179,7 +180,7 @@ export function AddAllocationModal({
       // Fetch deals for the company
       const { data: dealData } = await supabase
         .from('deals')
-        .select('id, deal_id, name, target_amount, raised_amount, type, interest_rate, term_length_months, payout_cycle')
+        .select('id, deal_id, name, target_amount, raised_amount, type, interest_rate, term_length_months, payout_cycle, first_payout_date')
         .eq('company_id', companyId);
 
       setInvestors(merged);
@@ -200,14 +201,21 @@ export function AddAllocationModal({
   const handleSelectDeal = (deal: Deal) => {
     setSelectedDeal(deal);
     // Pull the real terms from the selected deal so the admin doesn't re-enter
-    // them (and the placeholder rate can't leak through). Rate/term come straight
-    // from the deal record; fall back to sensible defaults only when unset.
+    // them (and the placeholder rate can't leak through). Rate, term, frequency
+    // and payout schedule come straight from the deal record. First Payout Date
+    // is only PREFILLED — it stays editable because an investor may join a deal
+    // mid-term and need their own start date.
     setFormData({
       ...formData,
       deal_id: deal.id,
       annual_rate: deal.interest_rate != null ? Number(deal.interest_rate) : formData.annual_rate,
       term_length: deal.term_length_months != null ? Number(deal.term_length_months) : formData.term_length,
       term_unit: 'months',
+      payment_frequency: 'Monthly',
+      // Always take the newly selected deal's schedule — keeping a previous
+      // deal's date after a switch would silently misdate the payout schedule.
+      // The field stays editable for per-allocation adjustments afterwards.
+      payment_start_date: deal.first_payout_date || formData.payment_start_date || '',
     });
     setDealSearch(deal.name);
     setShowDealDropdown(false);
@@ -218,6 +226,25 @@ export function AddAllocationModal({
   const remainingCapacity = (): number => {
     if (!selectedDeal) return 0;
     return Math.max(0, Number(selectedDeal.target_amount || 0) - Number(selectedDeal.raised_amount || 0));
+  };
+
+  // Full-dollar formatting — abbreviations like $0.10M are fine for dashboard
+  // totals but not for individual investment positions.
+  const fmtMoney = (n: number): string => {
+    const digits = Number.isInteger(n) ? 0 : 2;
+    return `$${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
+  };
+
+  // Maturity = the allocation's first payout month + term. Uses the editable
+  // per-allocation start date so a mid-term joiner sees their own maturity.
+  const maturityDate = (): string | null => {
+    const start = formData.payment_start_date || selectedDeal?.first_payout_date;
+    const term = formData.term_unit === 'years' ? formData.term_length * 12 : formData.term_length;
+    if (!start || !term) return null;
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(start);
+    if (!m) return null;
+    const d = new Date(Number(m[1]), Number(m[2]) - 1 + term, Number(m[3]));
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
   const handleInputChange = (
@@ -532,10 +559,25 @@ export function AddAllocationModal({
                       <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
                     </div>
                     {selectedDeal && (
-                      <div className="mt-2 p-3 bg-cyan-50 border border-cyan-200 ">
-                        <div className="font-medium text-stone-900">{selectedDeal.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          ${(selectedDeal.raised_amount / 1000000).toFixed(2)}M raised of ${(selectedDeal.target_amount / 1000000).toFixed(2)}M
+                      <div className="mt-2 p-3 bg-cyan-50 border border-cyan-200 text-sm">
+                        <div className="font-medium text-stone-900 mb-1">{selectedDeal.name}</div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-muted-foreground">
+                          <span>Deal Size</span>
+                          <span className="text-right text-stone-900">{fmtMoney(Number(selectedDeal.target_amount || 0))}</span>
+                          <span>Already Allocated</span>
+                          <span className="text-right text-stone-900">{fmtMoney(Number(selectedDeal.raised_amount || 0))}</span>
+                          <span>Remaining Before Allocation</span>
+                          <span className="text-right text-stone-900">{fmtMoney(remainingCapacity())}</span>
+                          {formData.allocation_amount > 0 && (
+                            <>
+                              <span>New Allocation</span>
+                              <span className="text-right text-stone-900">{fmtMoney(formData.allocation_amount)}</span>
+                              <span>Remaining After Allocation</span>
+                              <span className={`text-right font-medium ${remainingCapacity() - formData.allocation_amount < 0 ? 'text-red-600' : 'text-stone-900'}`}>
+                                {fmtMoney(remainingCapacity() - formData.allocation_amount)}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     )}
@@ -572,11 +614,22 @@ export function AddAllocationModal({
                         className="ml-2 flex-1 px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
-                    <div className="mt-2 text-sm">
-                      <div className="text-stone-900 font-medium">{calculateDealPercentage()} of deal</div>
-                      <div className="text-muted-foreground">
-                        ${selectedDeal ? ((selectedDeal.target_amount - (formData.allocation_amount || 0)) / 1000000).toFixed(2) : '0.00'} remaining
+                    <div className="mt-2 text-sm flex items-center justify-between gap-2">
+                      <div>
+                        <div className="text-stone-900 font-medium">{calculateDealPercentage()} of deal</div>
+                        <div className={remainingCapacity() - (formData.allocation_amount || 0) < 0 ? 'text-red-600' : 'text-muted-foreground'}>
+                          {selectedDeal ? fmtMoney(remainingCapacity() - (formData.allocation_amount || 0)) : '$0'} remaining after allocation
+                        </div>
                       </div>
+                      {selectedDeal && remainingCapacity() > 0 && formData.allocation_amount !== remainingCapacity() && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, allocation_amount: remainingCapacity() })}
+                          className="shrink-0 text-xs px-3 py-1.5 border border-fundex-forest/30 text-fundex-forest hover:bg-fundex-forest/5 transition font-medium"
+                        >
+                          Allocate Remaining {fmtMoney(remainingCapacity())}
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -610,9 +663,17 @@ export function AddAllocationModal({
                 </div>
               </div>
 
-              {/* Terms */}
+              {/* Terms — rate/term/frequency are locked to the selected deal so
+                  one allocation can't drift to different terms than its parent
+                  deal. First Payout Date stays editable on purpose: an investor
+                  can take over a position mid-deal and start on their own date. */}
               <div className="bg-muted  p-6">
-                <h3 className="text-lg font-display font-normal text-stone-900 mb-4">Terms</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-display font-normal text-stone-900">Terms</h3>
+                  {selectedDeal && (
+                    <span className="text-xs text-muted-foreground">Rate, term &amp; frequency come from the deal</span>
+                  )}
+                </div>
                 <div className="space-y-4">
                   {/* Annual Rate and Term Length */}
                   <div className="grid grid-cols-2 gap-4">
@@ -626,8 +687,9 @@ export function AddAllocationModal({
                         step="0.01"
                         value={formData.annual_rate || ''}
                         onChange={handleInputChange}
-                        placeholder="12.5"
-                        className="w-full px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        readOnly={!!selectedDeal}
+                        placeholder={selectedDeal ? 'From deal' : '12.5'}
+                        className={`w-full px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-blue-500 ${selectedDeal ? 'bg-stone-100 text-stone-600 cursor-not-allowed' : ''}`}
                       />
                     </div>
                     <div>
@@ -640,14 +702,16 @@ export function AddAllocationModal({
                           name="term_length"
                           value={formData.term_length || ''}
                           onChange={handleInputChange}
-                          placeholder="12"
-                          className="flex-1 px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          readOnly={!!selectedDeal}
+                          placeholder={selectedDeal ? 'From deal' : '12'}
+                          className={`flex-1 px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-blue-500 ${selectedDeal ? 'bg-stone-100 text-stone-600 cursor-not-allowed' : ''}`}
                         />
                         <select
                           name="term_unit"
                           value={formData.term_unit}
                           onChange={handleInputChange}
-                          className="px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          disabled={!!selectedDeal}
+                          className={`px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-blue-500 ${selectedDeal ? 'bg-stone-100 text-stone-600 cursor-not-allowed' : ''}`}
                         >
                           <option value="months">months</option>
                           <option value="years">years</option>
@@ -666,17 +730,23 @@ export function AddAllocationModal({
                         name="payment_frequency"
                         value={formData.payment_frequency}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={!!selectedDeal}
+                        className={`w-full px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-blue-500 ${selectedDeal ? 'bg-stone-100 text-stone-600 cursor-not-allowed' : ''}`}
                       >
                         <option value="Monthly">Monthly</option>
                         <option value="Quarterly">Quarterly</option>
                         <option value="Semi-Annual">Semi-Annual</option>
                         <option value="Annual">Annual</option>
                       </select>
+                      {selectedDeal && selectedDeal.payout_cycle != null && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Deal pays on the {Number(selectedDeal.payout_cycle) === 15 ? '15th' : '1st'} of every month
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-normal text-stone-700 mb-1">
-                        Payment Start Date <span className="text-red-600">*</span>
+                        First Payout Date <span className="text-red-600">*</span>
                       </label>
                       <input
                         type="date"
@@ -686,7 +756,7 @@ export function AddAllocationModal({
                         className="w-full px-4 py-2 border border-border  focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        First payout cycle begins from this date
+                        Editable per allocation — an investor joining mid-deal can start on their own date
                       </p>
                     </div>
                   </div>
@@ -820,7 +890,7 @@ export function AddAllocationModal({
                     Allocation Amount
                   </p>
                   <p className="text-3xl font-display font-normal text-stone-900 mt-2">
-                    ${(formData.allocation_amount / 1000000).toFixed(2)}M
+                    {fmtMoney(formData.allocation_amount)}
                   </p>
                 </div>
 
@@ -845,14 +915,35 @@ export function AddAllocationModal({
                     Monthly Interest (Estimated)
                   </p>
                   <p className="text-2xl font-display font-normal text-stone-900 mt-2">
-                    ${calculateMonthlyInterest()}
+                    {fmtMoney(Number(calculateMonthlyInterest()))}
                   </p>
+                </div>
+
+                {/* Final review — everything the admin should confirm before
+                    clicking Create Allocation, in one place. */}
+                <div className="mb-6 pb-6 border-b border-border space-y-1.5 text-sm">
+                  {[
+                    ['Investor', selectedInvestor?.full_name ?? '—'],
+                    ['Deal', selectedDeal?.name ?? '—'],
+                    ['Deal Size', selectedDeal ? fmtMoney(Number(selectedDeal.target_amount || 0)) : '—'],
+                    ['Already Allocated', selectedDeal ? fmtMoney(Number(selectedDeal.raised_amount || 0)) : '—'],
+                    ['Remaining After', selectedDeal ? fmtMoney(remainingCapacity() - (formData.allocation_amount || 0)) : '—'],
+                    ['Rate', formData.annual_rate ? `${formData.annual_rate}%` : '—'],
+                    ['Payout Cycle', selectedDeal?.payout_cycle != null ? `${Number(selectedDeal.payout_cycle) === 15 ? '15th' : '1st'} of month` : '—'],
+                    ['First Payout Date', formData.payment_start_date || '—'],
+                    ['Maturity', maturityDate() ?? '—'],
+                  ].map(([label, value]) => (
+                    <div key={label} className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">{label}</span>
+                      <span className="text-stone-900 font-medium text-right truncate">{value}</span>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Status */}
                 <div className="mb-6">
                   <p className="text-xs font-medium text-stone-400 uppercase mb-2">
-                    Status
+                    Funding Status
                   </p>
                   <span
                     className={`inline-block px-3 py-1  text-xs font-semibold ${

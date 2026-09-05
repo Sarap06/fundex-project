@@ -486,8 +486,25 @@ function MarkPayoutModal({
   const [paidDate, setPaidDate] = useState<string>(dueDate);
   const [note, setNote] = useState<string>('');
   const [saving, setSaving] = useState(false);
+  const [amountError, setAmountError] = useState<string | null>(null);
 
   const submit = async () => {
+    // Validate the amount before hitting the API (the server enforces the same
+    // rules — this just gives instant, in-dialog feedback).
+    if (mode === 'completed') {
+      const amt = Number(actualAmount);
+      if (!Number.isFinite(amt) || amt <= 0) {
+        setAmountError('Payment amount must be greater than $0.');
+        return;
+      }
+      if (amt > payout.expectedTotal) {
+        setAmountError(
+          `Amount exceeds the ${money(payout.expectedTotal)} due. Overpayments are not allowed.`
+        );
+        return;
+      }
+    }
+    setAmountError(null);
     setSaving(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -546,11 +563,20 @@ function MarkPayoutModal({
                 <input
                   type="number"
                   min={0}
+                  max={payout.expectedTotal}
+                  step="0.01"
                   value={actualAmount}
-                  onChange={(e) => setActualAmount(e.target.value)}
+                  onChange={(e) => { setActualAmount(e.target.value); setAmountError(null); }}
                   onFocus={(e) => e.target.select()}
                   className="fdx-input w-full mt-1.5 px-3 py-2"
                 />
+                {amountError ? (
+                  <p className="text-xs text-red-600 mt-1">{amountError}</p>
+                ) : (
+                  <p className="text-xs text-stone-500 mt-1">
+                    Up to {money(payout.expectedTotal)}. A smaller amount is recorded as a partial payment.
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-stone-700">Date paid</label>

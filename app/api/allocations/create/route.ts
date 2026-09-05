@@ -172,7 +172,8 @@ export async function POST(request: NextRequest) {
         .eq('company_id', company_id);
 
       const totalInvested = (investorAllocs ?? []).reduce(
-        (sum: number, a: any) => sum + Number(a.allocation_amount || 0),
+        (sum: number, a: { allocation_amount: number | string | null }) =>
+          sum + Number(a.allocation_amount || 0),
         0
       );
       const numberOfInvestments = (investorAllocs ?? []).length;
@@ -193,7 +194,11 @@ export async function POST(request: NextRequest) {
       activityType: 'allocation_created',
       title: `New allocation of $${(allocation_amount / 1000000).toFixed(2)}M`,
       description: `${investor?.full_name} allocated to ${deal.name}`,
-      investorId: investor_id,
+      // activity_logs.investor_id has an FK to investors.id — only link it when
+      // this allocation is for a manual investors row. For signed-up investors
+      // (investor_id = user_profiles.user_id) the FK would reject the insert and
+      // the log entry would be silently lost; the name still identifies them.
+      investorId: manualInvestor ? investor_id : undefined,
       investorName: investor?.full_name,
       dealId: deal_id,
       dealName: deal.name,

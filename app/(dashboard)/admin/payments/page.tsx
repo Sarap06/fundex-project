@@ -48,7 +48,11 @@ interface InvestorPayoutView {
 
 // ─── helpers ──────────────────────────────────────────────────────────
 function money(value: number): string {
-  return `$${Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  // Whole-dollar amounts stay clean ($8,333); fractional amounts keep their
+  // cents ($8,332.99) so a 1¢ shortfall never displays as fully paid / $0 left.
+  const n = Number(value || 0);
+  const digits = Number.isInteger(n) ? 0 : 2;
+  return `$${n.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
 }
 
 // Format a 'YYYY-MM-DD' as local calendar parts (no UTC-midnight shift).

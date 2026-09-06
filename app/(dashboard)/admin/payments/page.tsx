@@ -33,6 +33,14 @@ interface PayoutLineItem {
   totalPayments: number;
 }
 
+interface PayoutTransaction {
+  id: string;
+  amount: number;
+  paidDate: string;
+  note: string | null;
+  createdAt: string;
+}
+
 interface InvestorPayoutView {
   investorId: string;
   investorSource?: string | null;
@@ -40,10 +48,12 @@ interface InvestorPayoutView {
   expectedTotal: number;
   deals: PayoutLineItem[];
   status: PayoutStatus;
+  // Cumulative total paid across all recorded payments for this obligation.
   actualAmount: number | null;
   paidDate: string | null;
   note: string | null;
   remaining: number;
+  transactions: PayoutTransaction[];
 }
 
 // ─── helpers ──────────────────────────────────────────────────────────
@@ -418,6 +428,29 @@ export default function PaymentsPage() {
                             </div>
                           ))}
                         </div>
+                        {/* Payment history — every recorded transaction stays visible */}
+                        {p.transactions?.length > 0 && (
+                          <div className="mt-3 border-t border-stone-100 pt-2">
+                            <p className="text-xs font-medium text-stone-600 mb-1.5">
+                              Payment history ({p.transactions.length})
+                            </p>
+                            <div className="space-y-1">
+                              {p.transactions.map((t, i) => (
+                                <div key={t.id} className="flex items-center justify-between text-xs text-stone-600">
+                                  <span>
+                                    Payment {i + 1} · {formatDate(t.paidDate)}
+                                    {t.note ? <span className="text-stone-400"> — {t.note}</span> : null}
+                                  </span>
+                                  <span className="font-medium text-stone-800">{money(t.amount)}</span>
+                                </div>
+                              ))}
+                              <div className="flex items-center justify-between text-xs border-t border-stone-100 pt-1 mt-1">
+                                <span className="text-stone-600">Total Paid · {money(p.remaining)} remaining</span>
+                                <span className="font-semibold text-stone-900">{money(p.actualAmount ?? 0)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                         {p.note && (
                           <p className="mt-3 text-xs text-stone-500 border-t border-stone-100 pt-2">
                             <span className="font-medium text-stone-600">Note:</span> {p.note}
@@ -482,7 +515,10 @@ function MarkPayoutModal({
   onSaved: () => void;
   onError: (msg: string) => void;
 }) {
-  const [actualAmount, setActualAmount] = useState<string>(String(payout.expectedTotal));
+  // Payments accumulate — each mark records another transaction against the
+  // remaining balance, so the dialog defaults to (and caps at) what's left.
+  const remainingDue = payout.remaining ?? payout.expectedTotal;
+  const [actualAmount, setActualAmount] = useState<string>(String(remainingDue));
   const [paidDate, setPaidDate] = useState<string>(dueDate);
   const [note, setNote] = useState<string>('');
   const [saving, setSaving] = useState(false);
@@ -497,9 +533,9 @@ function MarkPayoutModal({
         setAmountError('Payment amount must be greater than $0.');
         return;
       }
-      if (amt > payout.expectedTotal) {
+      if (amt > remainingDue) {
         setAmountError(
-          `Amount exceeds the ${money(payout.expectedTotal)} due. Overpayments are not allowed.`
+          `Amount exceeds the ${money(remainingDue)} remaining due. Overpayments are not allowed.`
         );
         return;
       }
@@ -518,7 +554,7 @@ function MarkPayoutModal({
         note: note.trim() || null,
       };
       if (mode === 'completed') {
-        body.actual_amount = Number(actualAmount) || payout.expectedTotal;
+        body.actual_amount = Number(actualAmount) || remainingDue;
         body.paid_date = paidDate;
       }
 
@@ -553,7 +589,12 @@ function MarkPayoutModal({
         <div className="p-5 space-y-4">
           <div className="text-sm text-stone-600">
             <p><span className="font-medium text-stone-800">{payout.investorName}</span></p>
-            <p>{formatDate(dueDate, { year: 'numeric', month: 'long', day: 'numeric' })} · expected {money(payout.expectedTotal)}</p>
+            <p>
+              {formatDate(dueDate, { year: 'numeric', month: 'long', day: 'numeric' })} · expected {money(payout.expectedTotal)}
+              {(payout.actualAmount ?? 0) > 0 && (
+                <> · paid so far {money(payout.actualAmount ?? 0)} · <span className="font-medium text-stone-800">{money(remainingDue)} remaining</span></>
+              )}
+            </p>
           </div>
 
           {mode === 'completed' && (
@@ -563,7 +604,7 @@ function MarkPayoutModal({
                 <input
                   type="number"
                   min={0}
-                  max={payout.expectedTotal}
+                  max={remainingDue}
                   step="0.01"
                   value={actualAmount}
                   onChange={(e) => { setActualAmount(e.target.value); setAmountError(null); }}
@@ -574,7 +615,7 @@ function MarkPayoutModal({
                   <p className="text-xs text-red-600 mt-1">{amountError}</p>
                 ) : (
                   <p className="text-xs text-stone-500 mt-1">
-                    Up to {money(payout.expectedTotal)}. A smaller amount is recorded as a partial payment.
+                    Up to {money(remainingDue)}. A smaller amount is recorded as another partial payment.
                   </p>
                 )}
               </div>

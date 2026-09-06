@@ -8,14 +8,26 @@ import {
 } from './payout-service';
 import type { MarkPayoutInput, RevertPayoutInput } from '@/schemas/payout';
 
+// One recorded payment against an obligation (several may accumulate).
+export interface PayoutTransaction {
+  id: string;
+  amount: number;
+  paidDate: string;
+  note: string | null;
+  createdAt: string;
+}
+
 // InvestorPayout plus the persisted status overlay (Pending = no saved row).
 export interface InvestorPayoutView extends InvestorPayout {
   status: PayoutStatus;
+  // Cumulative total paid across all recorded transactions for this obligation.
   actualAmount: number | null;
   paidDate: string | null;
   note: string | null;
-  // expected - actual (0 when fully paid; equals expected when nothing paid).
+  // expected - total paid (0 when fully paid; equals expected when nothing paid).
   remaining: number;
+  // Every individual payment stays visible in history.
+  transactions: PayoutTransaction[];
 }
 
 // ─── GATHER (company-scoped) ──────────────────────────────────────────
@@ -102,6 +114,28 @@ export async function listPayoutDates(companyId: string): Promise<string[]> {
 }
 
 /**
+ * Next scheduled payout date per deal — THE single source Payments and
+ * Performance both read, so the same payout can never show different dates
+ * on different pages. Returns the next date on/after `todayIso`, falling
+ * back to the deal's last scheduled date once its schedule is exhausted.
+ */
+export async function listDealNextPayoutDates(
+  companyId: string,
+  todayIso: string
+): Promise<Map<string, string | null>> {
+  const inputs = await gatherPayoutInputs(companyId);
+  const byDeal = new Map<string, string | null>();
+
+  for (const a of inputs) {
+    if (byDeal.has(a.dealId)) continue;
+    const dates = dealPayoutDates(a.dealFirstPayoutDate, a.dealPayoutCycle, a.dealTermMonths);
+    const next = dates.find((d) => d >= todayIso) ?? (dates.length ? dates[dates.length - 1] : null);
+    byDeal.set(a.dealId, next);
+  }
+  return byDeal;
+}
+
+/**
  * Expected payouts for a payroll date, grouped by investor, with any saved
  * status overlaid. Investors with no saved row are Pending.
  */
@@ -114,16 +148,37 @@ export async function listPayoutsForDate(
   const inputs = await gatherPayoutInputs(companyId);
   const computed = computePayoutsForDate(inputs, dateIso);
 
-  // Saved status rows for this exact date (company-scoped).
-  const { data: saved, error } = await supabase
-    .from('investor_payouts')
-    .select('investor_id, status, actual_amount, paid_date, note')
-    .eq('company_id', companyId)
-    .eq('due_date', dateIso);
+  // Saved status rows + individual payment transactions for this exact date.
+  const [{ data: saved, error }, { data: txns, error: txnError }] = await Promise.all([
+    supabase
+      .from('investor_payouts')
+      .select('investor_id, status, actual_amount, paid_date, note')
+      .eq('company_id', companyId)
+      .eq('due_date', dateIso),
+    supabase
+      .from('payout_transactions')
+      .select('id, investor_id, amount, paid_date, note, created_at')
+      .eq('company_id', companyId)
+      .eq('due_date', dateIso)
+      .order('created_at', { ascending: true }),
+  ]);
 
   if (error) throw error;
+  if (txnError) throw txnError;
 
   const savedById = new Map(saved?.map((r) => [r.investor_id, r]) ?? []);
+  const txnsById = new Map<string, PayoutTransaction[]>();
+  for (const t of txns ?? []) {
+    const list = txnsById.get(t.investor_id) ?? [];
+    list.push({
+      id: t.id,
+      amount: Number(t.amount),
+      paidDate: t.paid_date,
+      note: t.note ?? null,
+      createdAt: t.created_at,
+    });
+    txnsById.set(t.investor_id, list);
+  }
 
   return computed.map((p) => {
     const row = savedById.get(p.investorId);
@@ -138,6 +193,7 @@ export async function listPayoutsForDate(
       paidDate: row?.paid_date ?? null,
       note: row?.note ?? null,
       remaining,
+      transactions: txnsById.get(p.investorId) ?? [],
     };
   });
 }
@@ -166,49 +222,92 @@ export async function markPayout(
     throw new PaymentsError('No scheduled payout for this investor on this date', 404);
   }
 
-  // Amount recorded on a "paid" action (defaults to the full expected amount).
-  const actual =
+  // What has already been paid against this obligation — the sum of every
+  // recorded transaction. Multiple payments accumulate ($1,000 + $500 + $750
+  // against $2,250 → Completed); nothing is ever overwritten.
+  const { data: priorTxns, error: txnError } = await supabase
+    .from('payout_transactions')
+    .select('id, amount, paid_date, note, created_at')
+    .eq('company_id', companyId)
+    .eq('investor_id', input.investor_id)
+    .eq('due_date', input.due_date)
+    .order('created_at', { ascending: true });
+  if (txnError) throw txnError;
+
+  const cents = (n: number) => Math.round(n * 100) / 100;
+  const alreadyPaid = cents((priorTxns ?? []).reduce((s, t) => s + Number(t.amount), 0));
+  const remainingBefore = cents(match.expectedTotal - alreadyPaid);
+
+  // Amount recorded on a "paid" action (defaults to the remaining balance).
+  const payment =
     input.status === 'completed'
       ? input.actual_amount != null
         ? input.actual_amount
-        : match.expectedTotal
+        : remainingBefore
       : null;
 
-  // Overpayments are rejected outright — exact currency compare, no rounding,
-  // so even a $0.01 overage is refused. Enforced here (not just the UI) so a
-  // direct API call can't slip a $100M payment past a $2,250 obligation.
-  if (actual != null) {
-    if (actual <= 0) {
+  // Overpayments are rejected outright — exact currency compare against what
+  // is still owed, no rounding, so even a $0.01 overage is refused. Enforced
+  // here (not just the UI) so a direct API call can't slip a $100M payment
+  // past a $2,250 obligation.
+  if (payment != null) {
+    if (payment <= 0) {
       throw new PaymentsError('Payment amount must be greater than $0', 400);
     }
-    if (actual > match.expectedTotal) {
+    if (cents(payment) > remainingBefore) {
       throw new PaymentsError(
-        `Payment of $${actual.toLocaleString('en-US')} exceeds the amount due ($${match.expectedTotal.toLocaleString('en-US')}). Overpayments are not allowed.`,
+        `Payment of $${payment.toLocaleString('en-US')} exceeds the remaining balance due ($${remainingBefore.toLocaleString('en-US')}). Overpayments are not allowed.`,
         400
       );
     }
   }
 
-  // Derive the STORED status from the amount actually paid — the caller's
-  // "completed" is an intent to record a payment, not a guarantee it's full.
-  //   • missed                     -> 'missed'
-  //   • paid >= expected (exact)   -> 'completed'  (remaining 0)
-  //   • 0 < paid < expected        -> 'partial'    (stays outstanding)
-  // Exact comparison — a 2249.99 payment against 2250.00 is Partial, not Completed.
+  const paidDate = input.paid_date ?? input.due_date;
+
+  // Record this payment as its own transaction so all of them stay visible
+  // in payment history.
+  let newTxn: PayoutTransaction | null = null;
+  if (payment != null) {
+    const { data: inserted, error: insertError } = await supabase
+      .from('payout_transactions')
+      .insert({
+        company_id: companyId,
+        investor_id: input.investor_id,
+        investor_source: input.investor_source ?? match.investorSource ?? null,
+        due_date: input.due_date,
+        amount: payment,
+        paid_date: paidDate,
+        note: input.note ?? null,
+        created_by: userId,
+      })
+      .select('id, amount, paid_date, note, created_at')
+      .single();
+    if (insertError) throw insertError;
+    newTxn = {
+      id: inserted.id,
+      amount: Number(inserted.amount),
+      paidDate: inserted.paid_date,
+      note: inserted.note ?? null,
+      createdAt: inserted.created_at,
+    };
+  }
+
+  const totalPaid = cents(alreadyPaid + (payment ?? 0));
+
+  // Derive the STORED status from the balance, never from the caller's intent:
+  //   • missed                       -> 'missed' (recorded payments are kept)
+  //   • Total Paid = 0               -> would be pending (but a mark always pays or misses)
+  //   • Remaining > 0, Total Paid >0 -> 'partial'
+  //   • Remaining = 0                -> 'completed'
+  // Exact comparison — $2,249.99 paid against $2,250.00 is Partial, not Completed.
   let storedStatus: PayoutStatus;
   if (input.status === 'missed') {
     storedStatus = 'missed';
-  } else if ((actual ?? 0) >= match.expectedTotal) {
+  } else if (totalPaid >= match.expectedTotal) {
     storedStatus = 'completed';
   } else {
     storedStatus = 'partial';
   }
-
-  // A partial payment still happened on a date, so record paid_date for it too.
-  const paidDate =
-    storedStatus === 'completed' || storedStatus === 'partial'
-      ? input.paid_date ?? input.due_date
-      : null;
 
   const { data, error } = await supabase
     .from('investor_payouts')
@@ -220,8 +319,10 @@ export async function markPayout(
         due_date: input.due_date,
         expected_amount: match.expectedTotal,
         status: storedStatus,
-        actual_amount: actual,
-        paid_date: paidDate,
+        // Cumulative total actually received (sum of all transactions).
+        actual_amount: totalPaid > 0 ? totalPaid : null,
+        // Latest payment date; on-time vs late compares this to the due date.
+        paid_date: totalPaid > 0 ? paidDate : null,
         note: input.note ?? null,
         created_by: userId,
         updated_at: new Date().toISOString(),
@@ -234,13 +335,24 @@ export async function markPayout(
   if (error) throw error;
 
   const actualAmount = data.actual_amount != null ? Number(data.actual_amount) : null;
+  const transactions: PayoutTransaction[] = [
+    ...(priorTxns ?? []).map((t) => ({
+      id: t.id,
+      amount: Number(t.amount),
+      paidDate: t.paid_date,
+      note: t.note ?? null,
+      createdAt: t.created_at,
+    })),
+    ...(newTxn ? [newTxn] : []),
+  ];
   return {
     ...match,
     status: (data.status as PayoutStatus) ?? storedStatus,
     actualAmount,
     paidDate: data.paid_date ?? null,
     note: data.note ?? null,
-    remaining: Math.max(0, Math.round((match.expectedTotal - (actualAmount ?? 0)) * 100) / 100),
+    remaining: Math.max(0, cents(match.expectedTotal - (actualAmount ?? 0))),
+    transactions,
   };
 }
 
@@ -262,6 +374,17 @@ export async function revertPayout(
     .eq('due_date', input.due_date);
 
   if (error) throw error;
+
+  // The obligation is fully back to Pending, so its recorded payments go too —
+  // Total Paid, Remaining, status and all downstream counts recalculate cleanly.
+  const { error: txnError } = await supabase
+    .from('payout_transactions')
+    .delete()
+    .eq('company_id', companyId)
+    .eq('investor_id', input.investor_id)
+    .eq('due_date', input.due_date);
+
+  if (txnError) throw txnError;
 }
 
 // ─── OPERATIONS SUMMARY (for the Performance dashboard) ───────────────
@@ -276,7 +399,7 @@ export interface PayoutOperationsSummary {
   upcomingThisWeek: number; // payouts due within the next 7 days
   totalPaidYTD: number; // sum of actual amounts of completed payouts paid this year
   avgPaymentThisCycle: number;
-  onTimeRate: number | null; // completed / (completed + missed), across all resolved payouts
+  onTimeRate: number | null; // paid on/before due date ÷ resolved (completed + missed); late payment ≠ on time
   lateAlerts: LatePaymentAlert[]; // per-deal overdue payouts (real risk alerts)
 }
 
@@ -341,6 +464,7 @@ export async function getPayoutOperationsSummary(
   let totalPaidYTD = 0;
   let completed = 0;
   let missed = 0;
+  let onTime = 0;
   const lateByDeal = new Map<string, LatePaymentAlert>();
 
   for (const date of dates) {
@@ -382,6 +506,9 @@ export async function getPayoutOperationsSummary(
       if (status === 'completed') {
         completed += 1;
         const paid = row?.paid_date ?? date;
+        // On-time means fully paid ON OR BEFORE the scheduled date. Paying late
+        // clears the balance but does not erase the fact that it was late.
+        if (paid <= date) onTime += 1;
         if (paid.slice(0, 4) === yearPrefix) {
           totalPaidYTD += row?.actual_amount != null ? Number(row.actual_amount) : p.expectedTotal;
         }
@@ -402,7 +529,7 @@ export async function getPayoutOperationsSummary(
     upcomingThisWeek,
     totalPaidYTD,
     avgPaymentThisCycle: nextPayoutInvestors > 0 ? nextPayoutAmount / nextPayoutInvestors : 0,
-    onTimeRate: resolved > 0 ? Math.round((completed / resolved) * 1000) / 10 : null,
+    onTimeRate: resolved > 0 ? Math.round((onTime / resolved) * 1000) / 10 : null,
     lateAlerts: Array.from(lateByDeal.values()).sort((a, b) => a.since.localeCompare(b.since)),
   };
 }

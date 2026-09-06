@@ -41,6 +41,10 @@ const ExtractedFields = z.object({
   loan_to_value_ratio: z.number().nullable().describe('LTV as a percentage number, if stated or derivable.'),
   asset_notes: z.string().nullable().describe('Folio number, legal description, and any other collateral detail worth keeping.'),
   notes: z.string().nullable().describe('Other salient terms: monthly payment amount, interest-only vs amortizing, late fee, prepayment, balloon nature.'),
+  is_closed: z
+    .boolean()
+    .nullable()
+    .describe('true ONLY if the document explicitly indicates the loan is finished — a satisfaction/release of mortgage, "paid in full", "satisfied", "discharged", or similar. null/false for an active or merely matured note.'),
 });
 
 const ExtractionResult = z.object({

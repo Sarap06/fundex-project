@@ -632,16 +632,6 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                   </div>
 
                   <div>
-                    <Label>Borrower Contact</Label>
-                    <Input
-                      placeholder="Enter email or phone"
-                      name="borrowerContact"
-                      value={formData.borrowerContact}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-
-                  <div>
                     <Label>Property Address *</Label>
                     <Input
                       placeholder="Street address"
@@ -654,9 +644,9 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>City *</Label>
+                      <Label>County *</Label>
                       <Input
-                        placeholder="City"
+                        placeholder="e.g., Miami-Dade"
                         name="city"
                         value={formData.city}
                         onChange={handleInputChange}
@@ -728,37 +718,41 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
 
                   <div>
                     <Label>Property Type</Label>
-                    <Input
-                      placeholder="e.g., Multi-family residential"
-                      name="propertyType"
-                      value={formData.propertyType}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Funding Status *</Label>
-                    <Select value={formData.status} onValueChange={(value) => handleSelectChange('status', value)}>
+                    {/* Standardized options (not free text) so property names stay
+                        consistent and filterable across the platform. */}
+                    <Select value={formData.propertyType || undefined} onValueChange={(value) => handleSelectChange('propertyType', value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select funding status" />
+                        <SelectValue placeholder="Select property type" />
                       </SelectTrigger>
                       <SelectContent className="z-[9999]">
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Funding">Funding</SelectItem>
-                        <SelectItem value="Due Diligence">Due Diligence</SelectItem>
+                        <SelectItem value="Single Family">Single Family</SelectItem>
+                        <SelectItem value="Multifamily">Multifamily</SelectItem>
+                        <SelectItem value="Condo">Condo</SelectItem>
+                        <SelectItem value="Townhouse">Townhouse</SelectItem>
+                        <SelectItem value="Commercial">Commercial</SelectItem>
+                        <SelectItem value="Land">Land</SelectItem>
+                        <SelectItem value="Mixed Use">Mixed Use</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div>
-                    <Label>Loan Purpose</Label>
-                    <Textarea
-                      placeholder="Describe the purpose of the loan"
-                      name="loanPurpose"
-                      value={formData.loanPurpose}
-                      onChange={handleInputChange}
-                      rows={3}
-                    />
+                    {/* "Status", not "Funding Status" — this field tracks the whole
+                        deal lifecycle (through Closed), not just fundraising. */}
+                    <Label>Status *</Label>
+                    <Select value={formData.status} onValueChange={(value) => handleSelectChange('status', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[9999]">
+                        <SelectItem value="Funding">Funding</SelectItem>
+                        <SelectItem value="Due Diligence">Due Diligence</SelectItem>
+                        <SelectItem value="Awaiting Docs">Awaiting Docs</SelectItem>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Closed">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -973,17 +967,6 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>Minimum Investment ($) *</Label>
-                      <Input
-                        type="number"
-                        placeholder="e.g., 50000"
-                        name="minimumInvestment"
-                        value={formData.minimumInvestment}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                    <div>
                       <Label>Interest Rate (%) *</Label>
                       <Input
                         type="number"
@@ -995,9 +978,6 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                         required
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4">
                     <div>
                       <Label>Term Length (months) *</Label>
                       <Input
@@ -1418,7 +1398,7 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                       <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Financial Terms</h4>
                       <div className="space-y-2 text-sm">
                         <p><span className="text-muted-foreground">Target Raise:</span> <span className="font-medium">${parseFloat(formData.targetAmount || '0').toLocaleString()}</span></p>
-                        <p><span className="text-muted-foreground">Min. Investment:</span> <span className="font-medium">${parseFloat(formData.minimumInvestment || '0').toLocaleString()}</span></p>
+                        <p><span className="text-muted-foreground">Status:</span> <span className="font-medium">{formData.status}</span></p>
                         <p><span className="text-muted-foreground">Interest Rate:</span> <span className="font-medium">{formData.interestRate}%</span></p>
                         <p><span className="text-muted-foreground">Term:</span> <span className="font-medium">{formData.termLengthMonths} months</span></p>
                       </div>

@@ -97,6 +97,21 @@ export async function POST(req: NextRequest) {
       metadata: { allocationsCreated },
     });
 
+    // A deal arriving as Closed (e.g. the AI detected a satisfied/paid-off
+    // contract in the PDF) still gets a status-change record for the audit
+    // trail — closed contracts are kept, never lost.
+    if (deal.status === 'Closed') {
+      await logActivity({
+        companyId: ctx.companyId,
+        activityType: 'deal_status_changed',
+        title: `Deal marked Closed — ${deal.name}`,
+        description: 'Deal was created with status Closed (detected as a closed contract)',
+        dealId: deal.id,
+        dealName: deal.name,
+        metadata: { status: 'Closed' },
+      });
+    }
+
     return NextResponse.json({ success: true, deal, allocationsCreated }, { status: 201 });
   } catch (error) {
     if (error instanceof AuthError) {

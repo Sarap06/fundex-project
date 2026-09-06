@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
-import { buildDealPaymentSchedule, type PaymentScheduleRow } from '@/services/payment-schedule';
+import { dealPayoutDates } from '@/services/payout-service';
 import { OpenBroadcastModal } from '@/components/deal-modals/open-broadcast-modal';
 import { ViewDocumentsModal } from '@/components/deal-modals/view-documents-modal';
 import { ViewAllocationsModal } from '@/components/deal-modals/view-allocations-modal';
@@ -43,7 +43,18 @@ interface DealQuickViewModalProps {
   onDealUpdated?: () => void;
 }
 
+// Real payout-schedule row: dates come from the deal's payout schedule (the
+// same source Payments uses) and statuses from what was actually recorded —
+// never projected from "past date + funded = paid".
+interface ScheduleRow {
+  number: number;
+  dueDate: string;
+  amount: number;
+  status: 'paid' | 'pending' | 'upcoming' | 'late';
+}
+
 interface AllocationRow {
+  investorId: string;
   investorName: string;
   committedAmount: number;
   status: 'Confirmed' | 'Soft Commit';
@@ -55,6 +66,7 @@ interface AllocationRow {
   termLength: number | null;
   monthlyInterest: number | null;
   annualRate: number | null;
+  payoutSchedule: ScheduleRow[];
 }
 
 interface DocumentRow {
@@ -97,7 +109,7 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [allocationsData, setAllocationsData] = useState<AllocationRow[]>([]);
   const [documentsData, setDocumentsData] = useState<DocumentRow[]>([]);
-  const [paymentSchedule, setPaymentSchedule] = useState<PaymentScheduleRow[]>([]);
+  const [paymentSchedule, setPaymentSchedule] = useState<ScheduleRow[]>([]);
   const [broadcastsData, setBroadcastsData] = useState<
     { title: string; content: string; date: string; audience: string; acknowledged: number; total: number }[]
   >([]);
@@ -126,25 +138,63 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
   // allocations.investor_id has no single FK (dual investor identity), so
   // `investors(full_name)` embedding returns a 400.
   const fetchAllocations = async (cid: string, dealId: string) => {
-    const { data: allocs } = await supabase
-      .from('allocations')
-      .select('id, investor_id, allocation_amount, status, funding_status, payment_start_date, term_length, monthly_interest, annual_rate')
-      .eq('company_id', cid)
-      .eq('deal_id', dealId);
+    const [{ data: allocs }, { data: dealRow }] = await Promise.all([
+      supabase
+        .from('allocations')
+        .select('id, investor_id, allocation_amount, status, funding_status, payment_start_date, term_length, monthly_interest, annual_rate')
+        .eq('company_id', cid)
+        .eq('deal_id', dealId),
+      supabase
+        .from('deals')
+        .select('first_payout_date, payout_cycle, term_length_months, status, close_date')
+        .eq('company_id', cid)
+        .eq('id', dealId)
+        .single(),
+    ]);
 
     if (!allocs) return;
     const investorIds = [...new Set(allocs.map((a) => a.investor_id))];
     const nameMap = new Map<string, string>();
+    // Recorded payout statuses for this deal's investors, keyed inv:date —
+    // the SAME truth the Payments page shows (completed / partial / missed).
+    const payoutStatus = new Map<string, string>();
     if (investorIds.length > 0) {
-      const [{ data: manualInvs }, { data: profileInvs }] = await Promise.all([
+      const [{ data: manualInvs }, { data: profileInvs }, { data: payoutRows }] = await Promise.all([
         supabase.from('investors').select('id, full_name').in('id', investorIds),
         supabase.from('user_profiles').select('user_id, full_name').in('user_id', investorIds),
+        supabase.from('investor_payouts').select('investor_id, due_date, status').eq('company_id', cid).in('investor_id', investorIds),
       ]);
       (manualInvs || []).forEach((i) => nameMap.set(i.id, i.full_name));
       (profileInvs || []).forEach((p) => nameMap.set(p.user_id, p.full_name));
+      (payoutRows || []).forEach((r) => payoutStatus.set(`${r.investor_id}:${r.due_date}`, r.status));
     }
 
+    // One payout-date source: the deal-level schedule Payments runs on.
+    const schedDates = dealPayoutDates(
+      dealRow?.first_payout_date ?? null,
+      dealRow?.payout_cycle ?? null,
+      dealRow?.term_length_months ?? null,
+      dealRow?.status ?? null,
+      dealRow?.close_date ?? null
+    );
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const fmt = (iso: string) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+      return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : iso;
+    };
+    const rowStatus = (invId: string, date: string): ScheduleRow['status'] => {
+      const st = payoutStatus.get(`${invId}:${date}`);
+      if (st === 'completed') return 'paid';
+      if (st === 'missed') return 'late';
+      if (date > todayIso) return 'upcoming';
+      return 'pending'; // partial or nothing recorded on a due/past date
+    };
+    const scheduleFor = (invId: string, monthly: number): ScheduleRow[] =>
+      schedDates.map((d, i) => ({ number: i + 1, dueDate: fmt(d), amount: Math.round(monthly), status: rowStatus(invId, d) }));
+
     setAllocationsData(allocs.map((a) => ({
+      investorId: a.investor_id,
+      payoutSchedule: a.funding_status === 'Funded' ? scheduleFor(a.investor_id, Number(a.monthly_interest || 0)) : [],
       investorName: nameMap.get(a.investor_id) || 'Unknown',
       committedAmount: Number(a.allocation_amount || 0),
       status: a.status === 'confirmed' ? 'Confirmed' as const : 'Soft Commit' as const,
@@ -162,7 +212,19 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
       monthlyInterest: a.monthly_interest != null ? Number(a.monthly_interest) : null,
       annualRate: a.annual_rate != null ? Number(a.annual_rate) : null,
     })));
-    setPaymentSchedule(buildDealPaymentSchedule(allocs));
+    // Deal-level schedule: sum funded allocations per scheduled date; a date is
+    // paid only when EVERY funded investor's recorded payout is completed.
+    const funded = allocs.filter((a) => a.funding_status === 'Funded');
+    const dealTotal = funded.reduce((s2, a) => s2 + Math.round(Number(a.monthly_interest || 0)), 0);
+    setPaymentSchedule(schedDates.map((d, i) => {
+      const statuses = funded.map((a) => payoutStatus.get(`${a.investor_id}:${d}`));
+      let status: ScheduleRow['status'];
+      if (funded.length > 0 && statuses.every((st) => st === 'completed')) status = 'paid';
+      else if (funded.length > 0 && statuses.every((st) => st === 'missed')) status = 'late';
+      else if (d > todayIso) status = 'upcoming';
+      else status = 'pending';
+      return { number: i + 1, dueDate: fmt(d), amount: dealTotal, status };
+    }));
   };
 
   // Fetch this deal's broadcast updates (title, content, date) with real

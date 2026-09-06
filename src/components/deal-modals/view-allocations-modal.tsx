@@ -3,7 +3,6 @@
 import { Calendar, Edit, Trash2, UserPlus, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { buildPaymentSchedule } from '@/services/payment-schedule';
 import { ModalShell } from './modal-shell';
 import { PaymentHistoryModal } from './payment-history-modal';
 
@@ -19,6 +18,9 @@ interface Allocation {
   termLength?: number | null;
   monthlyInterest?: number | null;
   annualRate?: number | null;
+  // Real recorded payout schedule (deal payout dates + Payments statuses),
+  // provided by the quick-view. Falls back to [] — never a projected schedule.
+  payoutSchedule?: { number: number; dueDate: string; amount: number; status: 'paid' | 'pending' | 'upcoming' | 'late' }[];
 }
 
 interface ViewAllocationsModalProps {
@@ -157,14 +159,7 @@ export function ViewAllocationsModal({ isOpen, onClose, dealName, allocations, o
         onClose={() => setPaymentHistoryOpen(false)}
         dealName={dealName}
         investorName={selectedAllocation?.investorName}
-        payments={selectedAllocation ? buildPaymentSchedule({
-          payment_start_date: selectedAllocation.paymentStartDate,
-          term_length: selectedAllocation.termLength,
-          monthly_interest: selectedAllocation.monthlyInterest,
-          allocation_amount: selectedAllocation.committedAmount,
-          annual_rate: selectedAllocation.annualRate,
-          funding_status: selectedAllocation.fundingStatus,
-        }) : []}
+        payments={selectedAllocation?.payoutSchedule ?? []}
       />
     </>
   );

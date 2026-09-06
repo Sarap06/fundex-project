@@ -197,10 +197,13 @@ export function AddAllocationModal({
       });
 
       // Fetch deals for the company
+      // Closed deals take no new allocations, so they're not selectable here
+      // (the API enforces the same rule server-side).
       const { data: dealData } = await supabase
         .from('deals')
         .select('id, deal_id, name, target_amount, raised_amount, type, interest_rate, term_length_months, payout_cycle, first_payout_date')
-        .eq('company_id', companyId);
+        .eq('company_id', companyId)
+        .neq('status', 'Closed');
 
       setInvestors(merged);
       setDeals(dealData || []);

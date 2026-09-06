@@ -53,7 +53,8 @@ async function gatherPayoutInputs(companyId: string): Promise<PayoutAllocationIn
         status,
         first_payout_date,
         payout_cycle,
-        term_length_months
+        term_length_months,
+        close_date
       )
     `)
     .eq('company_id', companyId);
@@ -91,6 +92,7 @@ async function gatherPayoutInputs(companyId: string): Promise<PayoutAllocationIn
       dealFirstPayoutDate: deal?.first_payout_date ?? null,
       dealTermMonths: deal?.term_length_months ?? null,
       dealStatus: deal?.status ?? null,
+      dealCloseDate: deal?.close_date ?? null,
     } satisfies PayoutAllocationInput;
   });
 }
@@ -106,7 +108,7 @@ export async function listPayoutDates(companyId: string): Promise<string[]> {
 
   const seen = new Set<string>();
   for (const a of inputs) {
-    for (const d of dealPayoutDates(a.dealFirstPayoutDate, a.dealPayoutCycle, a.dealTermMonths)) {
+    for (const d of dealPayoutDates(a.dealFirstPayoutDate, a.dealPayoutCycle, a.dealTermMonths, a.dealStatus, a.dealCloseDate)) {
       seen.add(d);
     }
   }
@@ -128,7 +130,7 @@ export async function listDealNextPayoutDates(
 
   for (const a of inputs) {
     if (byDeal.has(a.dealId)) continue;
-    const dates = dealPayoutDates(a.dealFirstPayoutDate, a.dealPayoutCycle, a.dealTermMonths);
+    const dates = dealPayoutDates(a.dealFirstPayoutDate, a.dealPayoutCycle, a.dealTermMonths, a.dealStatus, a.dealCloseDate);
     const next = dates.find((d) => d >= todayIso) ?? (dates.length ? dates[dates.length - 1] : null);
     byDeal.set(a.dealId, next);
   }
@@ -434,7 +436,7 @@ export async function getPayoutOperationsSummary(
   // Every scheduled payroll date across the company's deals.
   const dateSet = new Set<string>();
   for (const a of inputs) {
-    for (const d of dealPayoutDates(a.dealFirstPayoutDate, a.dealPayoutCycle, a.dealTermMonths)) {
+    for (const d of dealPayoutDates(a.dealFirstPayoutDate, a.dealPayoutCycle, a.dealTermMonths, a.dealStatus, a.dealCloseDate)) {
       dateSet.add(d);
     }
   }

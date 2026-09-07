@@ -5,10 +5,9 @@ import {
   activeDeployedCapital,
   capitalInDeployment,
   currentMonthlyIncome,
-  projectUpcomingPayments,
   weightedAverageAnnualRate,
 } from '@/services/portfolio-metrics';
-import { getPayoutOperationsSummary } from '@/services/payments-service';
+import { getPayoutOperationsSummary, listDealNextPayoutDates } from '@/services/payments-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,10 +63,6 @@ export async function GET(request: NextRequest) {
     const avgRate = weightedAverageAnnualRate(allAllocsForMetrics);
     const netSpread = (totalActivePrincipal * (avgRate / 100)) / 12;
 
-    const contractsAtRisk = allDeals.filter(d =>
-      d.milestone_type === 'urgent' || d.milestone_type === 'attention'
-    ).length;
-
     const now = new Date();
 
     // ── Payment Operations (real payout data) ──────────────────────────
@@ -77,9 +72,17 @@ export async function GET(request: NextRequest) {
     const totalPaidYTD = payoutOps.totalPaidYTD;
     const overdue = payoutOps.overdue;
 
-    // Kept only for the contract table's "next payment" column and capital chart.
-    const payoutProjection = projectUpcomingPayments(allAllocsForMetrics, { windowDays: 30, now });
-    const nextPayoutDate = payoutProjection.nextPaymentDate;
+    // ONE risk definition for the whole page: a deal is at risk when it has
+    // overdue payouts (the same data Risk Details shows). The KPI, the
+    // per-contract Risk column and the Risk & Exceptions panel all read this.
+    const lateDealIds = new Set(payoutOps.lateAlerts.map((a) => a.dealId));
+    const contractsAtRisk = lateDealIds.size;
+
+    // ONE payout-date source: the deal payout schedule the Payments page uses.
+    // Per-deal next dates come from listDealNextPayoutDates — never a separate
+    // allocation-based projection that could disagree with Payments.
+    const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const nextDateByDeal = await listDealNextPayoutDates(companyId, todayIso);
 
     // ── Capital Flow Chart (last 7 months) ───────────────────────────
     const months: { month: string; label: string }[] = [];
@@ -145,10 +148,11 @@ export async function GET(request: NextRequest) {
         monthlyInterest: totalMonthly,
         paymentsCompleted,
         totalPayments: termMonths,
-        nextPaymentDate: nextPayoutDate,
+        nextPaymentDate: nextDateByDeal.get(deal.id) ?? null,
         outstandingBalance: principalDeployed,
         status: deal.status,
-        riskLevel: deal.milestone_type === 'urgent' ? 'Late Payment' : 'On Schedule',
+        // Same risk source as the KPI and Risk Details: overdue payouts.
+        riskLevel: lateDealIds.has(deal.id) ? 'Late Payment' : 'On Schedule',
       };
     });
 

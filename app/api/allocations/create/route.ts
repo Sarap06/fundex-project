@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     // The deal must belong to the caller's company
     const { data: deal, error: dealError } = await supabase
       .from('deals')
-      .select('id, name, target_amount, raised_amount')
+      .select('id, name, status, target_amount, raised_amount')
       .eq('id', deal_id)
       .eq('company_id', company_id)
       .single();
@@ -55,6 +55,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'Deal not found' },
         { status: 404 }
+      );
+    }
+
+    // A closed deal takes no new allocations — the record is kept for audit,
+    // but the investment is finished. Enforced here so the UI can't be bypassed.
+    if ((deal.status ?? '').toLowerCase() === 'closed') {
+      return NextResponse.json(
+        { success: false, message: `${deal.name} is closed and no longer accepting allocations.` },
+        { status: 400 }
       );
     }
 

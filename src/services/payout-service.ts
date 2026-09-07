@@ -28,6 +28,9 @@ export interface PayoutAllocationInput {
   dealFirstPayoutDate: string | null; // 'YYYY-MM-DD'
   dealTermMonths: number | string | null;
   dealStatus: string | null;
+  // set when the deal was closed — obligations after this date stop accruing,
+  // but everything on/before it stays visible (closed deals keep full history)
+  dealCloseDate: string | null;
 }
 
 export interface PayoutLineItem {
@@ -66,6 +69,14 @@ function isDealActive(status: string | null): boolean {
   return !INACTIVE_DEAL_STATUSES.has((status ?? '').toLowerCase());
 }
 
+// A closed deal stops accruing NEW obligations, but its history must survive:
+// payouts scheduled on/before the close date remain real obligations (paid or
+// not), so Payments and Performance keep showing them for audit.
+function accruesOn(a: PayoutAllocationInput, dateIso: string): boolean {
+  if (isDealActive(a.dealStatus)) return true;
+  return !!a.dealCloseDate && dateIso <= a.dealCloseDate;
+}
+
 function isFunded(status: string | null): boolean {
   return (status ?? '').toLowerCase() === 'funded';
 }
@@ -73,7 +84,8 @@ function isFunded(status: string | null): boolean {
 /**
  * If a payout is due for this allocation on the given payroll date, return the
  * line item; otherwise null. A payout is due when:
- *  - the allocation is Funded and its deal is not Closed/Completed
+ *  - the allocation is Funded and its deal is open, OR the deal is closed but
+ *    the payroll date is on/before the close date (history is preserved)
  *  - the payroll date's day equals the deal's payout cycle (1 or 15)
  *  - the payroll month is within [firstPayoutMonth … +term-1]
  */
@@ -81,7 +93,7 @@ export function payoutDueOn(
   a: PayoutAllocationInput,
   payrollDateIso: string
 ): PayoutLineItem | null {
-  if (!isFunded(a.fundingStatus) || !isDealActive(a.dealStatus)) return null;
+  if (!isFunded(a.fundingStatus) || !accruesOn(a, payrollDateIso)) return null;
 
   const cycle = num(a.dealPayoutCycle);
   const term = Math.floor(num(a.dealTermMonths));
@@ -158,7 +170,9 @@ export function computePayoutsForDate(
 export function dealPayoutDates(
   firstPayoutDate: string | null,
   payoutCycle: number | string | null,
-  termMonths: number | string | null
+  termMonths: number | string | null,
+  dealStatus?: string | null,
+  dealCloseDate?: string | null
 ): string[] {
   const start = firstPayoutDate ? parseYmd(firstPayoutDate) : null;
   const cycle = num(payoutCycle);
@@ -176,6 +190,10 @@ export function dealPayoutDates(
     const y = start.y + Math.floor(absMonth / 12);
     const m = ((absMonth % 12) + 12) % 12;
     dates.push(`${y}-${String(m + 1).padStart(2, '0')}-${String(cycle).padStart(2, '0')}`);
+  }
+  // Closed deal: keep only the dates that had accrued by the close date.
+  if (dealStatus != null && INACTIVE_DEAL_STATUSES.has((dealStatus ?? '').toLowerCase())) {
+    return dealCloseDate ? dates.filter((d) => d <= dealCloseDate) : [];
   }
   return dates;
 }

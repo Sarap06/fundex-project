@@ -57,6 +57,10 @@ interface AddAllocationModalProps {
   onClose: () => void;
   onSave: (data: AllocationFormData) => Promise<void>;
   companyId: string;
+  // When opened from inside a deal (e.g. the deal quick-view), pre-select that
+  // deal — it's the SAME single allocation workflow, just pre-scoped, so an
+  // investor can never enter a deal through a second, divergent form.
+  preselectedDealId?: string;
 }
 
 export function AddAllocationModal({
@@ -64,6 +68,7 @@ export function AddAllocationModal({
   onClose,
   onSave,
   companyId,
+  preselectedDealId,
 }: AddAllocationModalProps) {
   const [formData, setFormData] = useState<AllocationFormData>({
     investor_id: '',
@@ -118,6 +123,16 @@ export function AddAllocationModal({
     }
   };
 
+  // Apply the deal preselection once deals have loaded (and again if the modal
+  // reopens without a selection). Goes through handleSelectDeal so the deal's
+  // rate/term/frequency/first-payout prefill and locks all apply.
+  useEffect(() => {
+    if (isOpen && preselectedDealId && !selectedDeal && deals.length > 0) {
+      const deal = deals.find((d) => d.id === preselectedDealId);
+      if (deal) handleSelectDeal(deal);
+    }
+  }, [isOpen, preselectedDealId, deals]);
+
   useEffect(() => {
     const filtered = investors.filter((inv) =>
       inv.full_name.toLowerCase().includes(investorSearch.toLowerCase()) ||
@@ -136,6 +151,10 @@ export function AddAllocationModal({
   }, [dealSearch, deals]);
 
   const loadInvestorsAndDeals = async () => {
+    // companyId can arrive a beat after the modal opens (e.g. quick-view still
+    // resolving the profile) — the [isOpen, companyId] effect re-runs this once
+    // it lands, so just skip the empty-tenant query instead of 400ing.
+    if (!companyId) return;
     try {
       // Fetch manually-added investors
       const { data: investorData } = await supabase
@@ -178,10 +197,13 @@ export function AddAllocationModal({
       });
 
       // Fetch deals for the company
+      // Closed deals take no new allocations, so they're not selectable here
+      // (the API enforces the same rule server-side).
       const { data: dealData } = await supabase
         .from('deals')
         .select('id, deal_id, name, target_amount, raised_amount, type, interest_rate, term_length_months, payout_cycle, first_payout_date')
-        .eq('company_id', companyId);
+        .eq('company_id', companyId)
+        .neq('status', 'Closed');
 
       setInvestors(merged);
       setDeals(dealData || []);

@@ -98,6 +98,15 @@ function computeNextPayout(allocs: Allocation[]): string {
     : '-';
 }
 
+// Full-dollar formatting for individual investment positions ($1,000,000 —
+// never $1.00M). Cents shown only when the amount is fractional; dashboard
+// TOTALS may stay abbreviated, individual positions may not.
+function fullMoney(value: number): string {
+  const n = Number(value || 0);
+  const digits = Number.isInteger(n) ? 0 : 2;
+  return `$${n.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
+}
+
 export default function AllocationsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -700,13 +709,13 @@ export default function AllocationsPage() {
                           <span className="text-stone-900">{allocation.deal_name}</span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="font-medium text-stone-900">${(allocation.amount / 1000000).toFixed(2)}M</span>
+                          <span className="font-medium text-stone-900">{fullMoney(allocation.amount)}</span>
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-stone-500">{allocation.percentage.toFixed(1)}%</span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="font-medium text-stone-900">${(allocation.monthly_interest / 1000).toFixed(1)}K</span>
+                          <span className="font-medium text-stone-900">{fullMoney(allocation.monthly_interest)}</span>
                         </td>
                         <td className="px-6 py-4">
                           {allocation.total_payments > 0 ? (
@@ -859,7 +868,7 @@ export default function AllocationsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-stone-600">Amount</p>
-                      <p className="text-lg font-semibold text-stone-900 mt-1">${(selectedAllocation.amount / 1000000).toFixed(2)}M</p>
+                      <p className="text-lg font-semibold text-stone-900 mt-1">{fullMoney(selectedAllocation.amount)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-stone-600">% of Deal</p>
@@ -867,7 +876,7 @@ export default function AllocationsPage() {
                     </div>
                     <div>
                       <p className="text-sm text-stone-600">Monthly Interest</p>
-                      <p className="text-lg font-semibold text-purple-600 mt-1">${(selectedAllocation.monthly_interest / 1000).toFixed(1)}K</p>
+                      <p className="text-lg font-semibold text-purple-600 mt-1">{fullMoney(selectedAllocation.monthly_interest)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-stone-600">Status</p>
@@ -1043,11 +1052,11 @@ export default function AllocationsPage() {
                     </div>
                     <div className="fdx-card p-4">
                       <p className="text-sm text-stone-600">Monthly Interest</p>
-                      <p className="text-2xl font-semibold text-purple-600 mt-1">${(selectedAllocation.monthly_interest / 1000).toFixed(1)}K</p>
+                      <p className="text-2xl font-semibold text-purple-600 mt-1">{fullMoney(selectedAllocation.monthly_interest)}</p>
                     </div>
                     <div className="fdx-card p-4">
                       <p className="text-sm text-stone-600">Total Interest</p>
-                      <p className="text-2xl font-semibold text-stone-900 mt-1">${(totalInterest / 1000).toFixed(1)}K</p>
+                      <p className="text-2xl font-semibold text-stone-900 mt-1">{fullMoney(totalInterest)}</p>
                     </div>
                   </div>
 
@@ -1068,7 +1077,7 @@ export default function AllocationsPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <p className="font-semibold text-stone-900">${(p.amount / 1000).toFixed(1)}K</p>
+                            <p className="font-semibold text-stone-900">{fullMoney(p.amount)}</p>
                             <span className={`fdx-badge text-xs ${isPast ? 'fdx-badge-info' : 'fdx-badge-pending'}`}>
                               {isPast ? 'Elapsed' : 'Scheduled'}
                             </span>

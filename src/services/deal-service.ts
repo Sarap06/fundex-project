@@ -135,7 +135,12 @@ export async function updateDeal(
  * enforced downstream by allocation writes checking the deal's status.
  */
 export async function closeDeal(dealId: string, companyId: string) {
-  return updateDeal(dealId, companyId, { status: 'Closed' });
+  // Stamp the close date — the closed record keeps its full history (terms,
+  // investors, allocations, payments, docs); nothing is deleted on close.
+  return updateDeal(dealId, companyId, {
+    status: 'Closed',
+    close_date: new Date().toISOString().slice(0, 10),
+  });
 }
 
 /**

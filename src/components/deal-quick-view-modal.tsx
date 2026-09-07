@@ -32,7 +32,6 @@ export interface DealQuickViewData {
   progress: number;
   interestRate: number;
   monthlyInterest: number;
-  minimumInvestment: number;
   term: string;
   investorCount: number;
 }
@@ -420,7 +419,7 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
               <div className="mb-5 h-2 w-full overflow-hidden bg-stone-100">
                 <div className="h-full bg-gradient-to-r from-fundex-forest to-fundex-green transition-all" style={{ width: `${deal.progress}%` }} />
               </div>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <p className="text-xs text-stone-500 mb-1">Interest Rate</p>
                   <p className="text-sm font-semibold text-stone-900">{deal.interestRate}%</p>
@@ -428,10 +427,6 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
                 <div>
                   <p className="text-xs text-stone-500 mb-1">Monthly Interest</p>
                   <p className="text-sm font-semibold text-purple-600">{fmtM(deal.monthlyInterest)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-stone-500 mb-1">Min Investment</p>
-                  <p className="text-sm font-semibold text-stone-900">{fmtM(deal.minimumInvestment)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-stone-500 mb-1">Term</p>
@@ -504,7 +499,6 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
         targetAmount: deal.targetAmount,
         interestRate: deal.interestRate,
         term: deal.term,
-        minimumInvestment: deal.minimumInvestment,
       }}
         onSave={async (d) => {
           const num = (s: string) => Number(String(s).replace(/[^0-9.]/g, '')) || 0;
@@ -513,7 +507,6 @@ export function DealQuickViewModal({ isOpen, onClose, deal, onDealUpdated }: Dea
             target_amount: num(d.targetAmount),
             interest_rate: num(d.interestRate),
             term: d.term,
-            minimum_investment: num(d.minimumInvestment),
           });
         }}
       />

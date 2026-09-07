@@ -181,8 +181,13 @@ export default function DealsPage() {
         if (!matchesSearch) return false;
       }
 
-      // Status tab filter
-      if (statusTab !== 'all') {
+      // Status tab filter. Closed deals live ONLY under the Closed tab — they're
+      // removed from the default (All Open) view but the full record is kept.
+      // An active search still surfaces them (closed deals must remain
+      // searchable for audit purposes).
+      if (statusTab === 'all') {
+        if (!searchTerm && deal.status?.toLowerCase() === 'closed') return false;
+      } else {
         const tabStatusMap: Record<string, string[]> = {
           funding: ['Funding', 'funding'],
           active: ['Active', 'active'],
@@ -700,7 +705,7 @@ export default function DealsPage() {
       {/* Status Tabs */}
       <div className="flex items-center gap-1 overflow-x-auto pb-1 mt-4">
         {[
-          { key: 'all', label: 'All' },
+          { key: 'all', label: 'All Open' },
           { key: 'funding', label: 'Funding' },
           { key: 'active', label: 'Active' },
           { key: 'due-diligence', label: 'Due Diligence' },
@@ -817,7 +822,7 @@ export default function DealsPage() {
                 />
                 <Input
                   className="fdx-input"
-                  placeholder="City"
+                  placeholder="County (e.g., Miami-Dade)"
                   value={filters.location.city}
                   onChange={(e) => setFilters({ ...filters, location: { ...filters.location, city: e.target.value } })}
                 />
@@ -952,7 +957,6 @@ export default function DealsPage() {
                           progress: deal.progress,
                           interestRate: deal.interest_rate,
                           monthlyInterest: (deal.raised_amount || 0) * (deal.interest_rate / 100) / 12,
-                          minimumInvestment: deal.minimum_investment ?? 0,
                           term: deal.term || '',
                           investorCount: deal.dealInvestors?.length ?? deal.investor_count,
                         })}

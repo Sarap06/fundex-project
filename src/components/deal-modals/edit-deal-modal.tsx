@@ -14,9 +14,8 @@ interface EditDealModalProps {
     targetAmount: number;
     interestRate: number;
     term: string;
-    minimumInvestment: number;
   };
-  onSave?: (data: { name: string; targetAmount: string; interestRate: string; term: string; minimumInvestment: string }) => void;
+  onSave?: (data: { name: string; targetAmount: string; interestRate: string; term: string }) => void;
 }
 
 export function EditDealModal({ isOpen, onClose, deal, onSave }: EditDealModalProps) {
@@ -24,7 +23,6 @@ export function EditDealModal({ isOpen, onClose, deal, onSave }: EditDealModalPr
   const [targetAmount, setTargetAmount] = useState(`$${deal.targetAmount.toLocaleString()}`);
   const [interestRate, setInterestRate] = useState(`${deal.interestRate}%`);
   const [term, setTerm] = useState(deal.term);
-  const [minimumInvestment, setMinimumInvestment] = useState(`$${deal.minimumInvestment.toLocaleString()}`);
 
   useEffect(() => {
     if (isOpen) {
@@ -32,12 +30,11 @@ export function EditDealModal({ isOpen, onClose, deal, onSave }: EditDealModalPr
       setTargetAmount(`$${deal.targetAmount.toLocaleString()}`);
       setInterestRate(`${deal.interestRate}%`);
       setTerm(deal.term);
-      setMinimumInvestment(`$${deal.minimumInvestment.toLocaleString()}`);
     }
   }, [isOpen, deal]);
 
   const handleSave = () => {
-    onSave?.({ name, targetAmount, interestRate, term, minimumInvestment });
+    onSave?.({ name, targetAmount, interestRate, term });
     onClose();
   };
 
@@ -72,10 +69,6 @@ export function EditDealModal({ isOpen, onClose, deal, onSave }: EditDealModalPr
         <div>
           <label className="block text-sm font-medium text-stone-700">Term Length</label>
           <Input value={term} onChange={(e) => setTerm(e.target.value)} className="mt-1.5" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-stone-700">Minimum Investment</label>
-          <Input value={minimumInvestment} onChange={(e) => setMinimumInvestment(e.target.value)} className="mt-1.5" />
         </div>
       </div>
     </ModalShell>

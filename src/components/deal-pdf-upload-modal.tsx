@@ -109,6 +109,14 @@ export function DealPdfUploadModal({ onClose, onExtracted }: DealPdfUploadModalP
         if (v !== null && v !== undefined && v !== '') initialData[k] = v;
       });
 
+      // AI-detected closed contract: keep the deal, prefill it as Closed
+      // (instead of losing it). The admin reviews before saving, and the
+      // create API logs the status so there's an activity record.
+      if (initialData.is_closed === true) {
+        initialData.status = 'Closed';
+      }
+      delete initialData.is_closed; // not a deals column — never send it to the DB
+
       onExtracted({ initialData, file, lowConfidence: low_confidence || [], summary: summary || '' });
     } catch (e) {
       console.error('[DealPdfUpload] extract failed:', e);

@@ -384,6 +384,20 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
     }
   }, [initialData, investorsLoading, investors]);
 
+  // Auto-calculate LTV from loan amount (target) ÷ appraised property value.
+  // Recomputes live as either figure changes (covers both first entry and edits),
+  // so the admin never types LTV by hand and it can't drift out of sync.
+  React.useEffect(() => {
+    const loan = parseFloat(formData.targetAmount);
+    const value = parseFloat(formData.estimatedPropertyValue);
+    if (loan > 0 && value > 0) {
+      const ltv = String(Math.round((loan / value) * 1000) / 10); // 1 decimal place
+      setFormData(prev => (prev.loanToValueRatio === ltv ? prev : { ...prev, loanToValueRatio: ltv }));
+    } else {
+      setFormData(prev => (prev.loanToValueRatio === '' ? prev : { ...prev, loanToValueRatio: '' }));
+    }
+  }, [formData.targetAmount, formData.estimatedPropertyValue]);
+
   const getFilteredInvestors = () => {
     if (!investorSearch.trim()) return investors;
     const search = investorSearch.toLowerCase();
@@ -1088,16 +1102,19 @@ export function CreateDealWizard({ onClose, onSave, initialData }: CreateDealWiz
                       />
                     </div>
                     <div>
-                      <Label>Loan-to-Value (LTV %) *</Label>
+                      <Label>Loan-to-Value (LTV %)</Label>
                       <Input
                         type="number"
-                        placeholder="e.g., 65"
+                        placeholder="Auto-calculated"
                         name="loanToValueRatio"
                         value={formData.loanToValueRatio}
-                        onChange={handleInputChange}
-                        step="0.1"
-                        required
+                        readOnly
+                        tabIndex={-1}
+                        className="bg-stone-50 text-stone-600 cursor-not-allowed"
                       />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Auto-calculated from loan amount ÷ property value.
+                      </p>
                     </div>
                   </div>
 

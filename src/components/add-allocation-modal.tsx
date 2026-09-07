@@ -21,6 +21,9 @@ interface Deal {
   target_amount: number;
   raised_amount: number;
   type: string;
+  interest_rate?: number | null;
+  term_length_months?: number | null;
+  payout_cycle?: number | null;
 }
 
 interface UploadedFile {
@@ -176,7 +179,7 @@ export function AddAllocationModal({
       // Fetch deals for the company
       const { data: dealData } = await supabase
         .from('deals')
-        .select('id, deal_id, name, target_amount, raised_amount, type')
+        .select('id, deal_id, name, target_amount, raised_amount, type, interest_rate, term_length_months, payout_cycle')
         .eq('company_id', companyId);
 
       setInvestors(merged);
@@ -196,10 +199,25 @@ export function AddAllocationModal({
 
   const handleSelectDeal = (deal: Deal) => {
     setSelectedDeal(deal);
-    setFormData({ ...formData, deal_id: deal.id });
+    // Pull the real terms from the selected deal so the admin doesn't re-enter
+    // them (and the placeholder rate can't leak through). Rate/term come straight
+    // from the deal record; fall back to sensible defaults only when unset.
+    setFormData({
+      ...formData,
+      deal_id: deal.id,
+      annual_rate: deal.interest_rate != null ? Number(deal.interest_rate) : formData.annual_rate,
+      term_length: deal.term_length_months != null ? Number(deal.term_length_months) : formData.term_length,
+      term_unit: 'months',
+    });
     setDealSearch(deal.name);
     setShowDealDropdown(false);
     setShowInvestorDropdown(false);
+  };
+
+  // Remaining capacity on the selected deal = target − already-allocated (raised).
+  const remainingCapacity = (): number => {
+    if (!selectedDeal) return 0;
+    return Math.max(0, Number(selectedDeal.target_amount || 0) - Number(selectedDeal.raised_amount || 0));
   };
 
   const handleInputChange = (
@@ -296,6 +314,17 @@ export function AddAllocationModal({
 
     if (!formData.expected_funding_date || !formData.payment_start_date) {
       alert('Please fill in all date fields (Commit Date, Expected Funding Date, and Payment Start Date)');
+      return;
+    }
+
+    // Block allocations that exceed the deal's remaining capacity (front-end guard;
+    // the API enforces the same rule so it can't be bypassed).
+    const remaining = remainingCapacity();
+    if (formData.allocation_amount > remaining) {
+      alert(
+        `Allocation exceeds remaining deal capacity by $${(formData.allocation_amount - remaining).toLocaleString()}. ` +
+        `Only $${remaining.toLocaleString()} is available on this deal.`
+      );
       return;
     }
 

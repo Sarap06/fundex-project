@@ -8,7 +8,9 @@
 // These are pure functions — no DB access — so they can be unit-checked and
 // reused by the API and the dashboard.
 
-export type PayoutStatus = 'pending' | 'completed' | 'missed';
+// 'partial' = a payment was recorded but less than the expected amount, so the
+// obligation stays outstanding (remaining = expected - actual) until fully paid.
+export type PayoutStatus = 'pending' | 'completed' | 'missed' | 'partial';
 
 export interface PayoutAllocationInput {
   allocationId: string;

@@ -14,6 +14,8 @@ export interface InvestorPayoutView extends InvestorPayout {
   actualAmount: number | null;
   paidDate: string | null;
   note: string | null;
+  // expected - actual (0 when fully paid; equals expected when nothing paid).
+  remaining: number;
 }
 
 // ─── GATHER (company-scoped) ──────────────────────────────────────────
@@ -125,12 +127,17 @@ export async function listPayoutsForDate(
 
   return computed.map((p) => {
     const row = savedById.get(p.investorId);
+    const actualAmount = row?.actual_amount != null ? Number(row.actual_amount) : null;
+    // Remaining is always expected minus whatever has been paid so far.
+    // Round to cents to avoid float artifacts (e.g. 0.0100000000002).
+    const remaining = Math.max(0, Math.round((p.expectedTotal - (actualAmount ?? 0)) * 100) / 100);
     return {
       ...p,
       status: (row?.status as PayoutStatus) ?? 'pending',
-      actualAmount: row?.actual_amount != null ? Number(row.actual_amount) : null,
+      actualAmount,
       paidDate: row?.paid_date ?? null,
       note: row?.note ?? null,
+      remaining,
     };
   });
 }
@@ -159,11 +166,33 @@ export async function markPayout(
     throw new PaymentsError('No scheduled payout for this investor on this date', 404);
   }
 
+  // Amount recorded on a "paid" action (defaults to the full expected amount).
   const actual =
     input.status === 'completed'
       ? input.actual_amount != null
         ? input.actual_amount
         : match.expectedTotal
+      : null;
+
+  // Derive the STORED status from the amount actually paid — the caller's
+  // "completed" is an intent to record a payment, not a guarantee it's full.
+  //   • missed                     -> 'missed'
+  //   • paid >= expected (exact)   -> 'completed'  (remaining 0)
+  //   • 0 < paid < expected        -> 'partial'    (stays outstanding)
+  // Exact comparison — a 2249.99 payment against 2250.00 is Partial, not Completed.
+  let storedStatus: PayoutStatus;
+  if (input.status === 'missed') {
+    storedStatus = 'missed';
+  } else if ((actual ?? 0) >= match.expectedTotal) {
+    storedStatus = 'completed';
+  } else {
+    storedStatus = 'partial';
+  }
+
+  // A partial payment still happened on a date, so record paid_date for it too.
+  const paidDate =
+    storedStatus === 'completed' || storedStatus === 'partial'
+      ? input.paid_date ?? input.due_date
       : null;
 
   const { data, error } = await supabase
@@ -175,9 +204,9 @@ export async function markPayout(
         investor_source: input.investor_source ?? match.investorSource ?? null,
         due_date: input.due_date,
         expected_amount: match.expectedTotal,
-        status: input.status,
+        status: storedStatus,
         actual_amount: actual,
-        paid_date: input.status === 'completed' ? input.paid_date ?? input.due_date : null,
+        paid_date: paidDate,
         note: input.note ?? null,
         created_by: userId,
         updated_at: new Date().toISOString(),
@@ -189,12 +218,14 @@ export async function markPayout(
 
   if (error) throw error;
 
+  const actualAmount = data.actual_amount != null ? Number(data.actual_amount) : null;
   return {
     ...match,
-    status: (data.status as PayoutStatus) ?? input.status,
-    actualAmount: data.actual_amount != null ? Number(data.actual_amount) : null,
+    status: (data.status as PayoutStatus) ?? storedStatus,
+    actualAmount,
     paidDate: data.paid_date ?? null,
     note: data.note ?? null,
+    remaining: Math.max(0, Math.round((match.expectedTotal - (actualAmount ?? 0)) * 100) / 100),
   };
 }
 
@@ -307,7 +338,9 @@ export async function getPayoutOperationsSummary(
         nextPayoutInvestors += 1;
         nextPayoutAmount += p.expectedTotal;
         if (status === 'completed') paidThisCycle += 1;
-        if (status === 'pending') pending += 1;
+        // A partial payment is NOT done — it stays counted as outstanding
+        // alongside pending until the full amount is paid.
+        if (status === 'pending' || status === 'partial') pending += 1;
       }
       if (date < today && status !== 'completed') {
         overdue += 1;

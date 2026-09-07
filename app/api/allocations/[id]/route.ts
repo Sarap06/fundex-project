@@ -75,12 +75,14 @@ export async function PATCH(
       await recalcDealRaisedAmount(existing.deal_id, ctx.companyId);
     }
 
+    // Absence is expected here: investor_id may reference a signed-up
+    // user_profiles row instead of a manual investors row.
     const { data: investor } = await supabase
       .from('investors')
       .select('full_name')
       .eq('id', existing.investor_id)
       .eq('company_id', ctx.companyId)
-      .single();
+      .maybeSingle();
 
     await logActivity({
       companyId: ctx.companyId,
@@ -89,7 +91,9 @@ export async function PATCH(
       description: investor?.full_name
         ? `Updated allocation for ${investor.full_name}`
         : 'Allocation updated',
-      investorId: existing.investor_id,
+      // activity_logs.investor_id FKs investors.id — only link when the id is a
+      // manual investors row, or the insert fails and the log entry is lost.
+      investorId: investor ? existing.investor_id : undefined,
       investorName: investor?.full_name,
       dealId: existing.deal_id,
       allocationId: existing.id,
@@ -155,12 +159,14 @@ export async function DELETE(
       await recalcDealRaisedAmount(allocation.deal_id, ctx.companyId);
     }
 
+    // Absence is expected here: investor_id may reference a signed-up
+    // user_profiles row instead of a manual investors row.
     const { data: investor } = await supabase
       .from('investors')
       .select('full_name')
       .eq('id', allocation.investor_id)
       .eq('company_id', ctx.companyId)
-      .single();
+      .maybeSingle();
 
     await logActivity({
       companyId: ctx.companyId,
@@ -169,7 +175,8 @@ export async function DELETE(
       description: investor?.full_name
         ? `Removed allocation for ${investor.full_name}`
         : 'Allocation removed',
-      investorId: allocation.investor_id,
+      // Same FK guard as the update branch above.
+      investorId: investor ? allocation.investor_id : undefined,
       investorName: investor?.full_name,
       dealId: allocation.deal_id,
       allocationId: allocation.id,

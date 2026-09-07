@@ -174,6 +174,21 @@ export async function markPayout(
         : match.expectedTotal
       : null;
 
+  // Overpayments are rejected outright — exact currency compare, no rounding,
+  // so even a $0.01 overage is refused. Enforced here (not just the UI) so a
+  // direct API call can't slip a $100M payment past a $2,250 obligation.
+  if (actual != null) {
+    if (actual <= 0) {
+      throw new PaymentsError('Payment amount must be greater than $0', 400);
+    }
+    if (actual > match.expectedTotal) {
+      throw new PaymentsError(
+        `Payment of $${actual.toLocaleString('en-US')} exceeds the amount due ($${match.expectedTotal.toLocaleString('en-US')}). Overpayments are not allowed.`,
+        400
+      );
+    }
+  }
+
   // Derive the STORED status from the amount actually paid — the caller's
   // "completed" is an intent to record a payment, not a guarantee it's full.
   //   • missed                     -> 'missed'

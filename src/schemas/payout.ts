@@ -9,8 +9,14 @@ export const markPayoutSchema = z.object({
   investor_source: z.string().max(50).optional().nullable(),
   due_date: isoDate,
   status: z.enum(['completed', 'missed']),
-  // amount actually paid; defaults to expected when omitted on completion
-  actual_amount: z.number().min(0).optional().nullable(),
+  // amount actually paid; defaults to expected when omitted on completion.
+  // Zero/negative rejected here with a clear message; the exceeds-remaining
+  // check lives in markPayout where the expected amount is known.
+  actual_amount: z
+    .number()
+    .gt(0, 'Payment amount must be greater than $0')
+    .optional()
+    .nullable(),
   paid_date: isoDate.optional().nullable(),
   note: z.string().max(1000).optional().nullable(),
 });
